@@ -1,0 +1,73 @@
+'use client';
+
+import React from 'react';
+import NextLink from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, FileCheck2, BedDouble, User, ShieldCheck } from 'lucide-react';
+import { LogoutButton } from '@/components/layout/LogoutButton';
+
+export const CalonNav: React.FC = () => {
+  const pathname = usePathname();
+
+  const links = [
+    { href: '/calon/dashboard', label: 'Dasbor', icon: LayoutDashboard },
+    { href: '/calon/reservasi', label: 'Reservasi Saya', icon: FileCheck2 },
+    { href: '/kamar', label: 'Katalog Kamar', icon: BedDouble },
+    { href: '/calon/profil', label: 'Profil', icon: User },
+  ];
+
+  return (
+    <div className="bg-white border-b border-zinc-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between py-2.5 gap-2.5">
+          <div className="flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span className="text-xs font-bold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] px-2.5 py-1 rounded-md border border-[hsl(186,50%,82%)] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                <ShieldCheck className="w-3.5 h-3.5 text-[hsl(186,72%,24%)] shrink-0" />
+                <span>Calon Penghuni</span>
+              </span>
+            </div>
+            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+              <LogoutButton showHomeLink label="Keluar" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between md:justify-end gap-2 min-w-0">
+            <nav className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+              {links.map((link) => {
+                const isCalonHome =
+                  link.href === '/calon/dashboard' &&
+                  (pathname === '/calon' || pathname === '/calon/dashboard');
+                const active =
+                  isCalonHome ||
+                  pathname === link.href ||
+                  (link.href !== '/calon/dashboard' &&
+                    link.href !== '/kamar' &&
+                    Boolean(pathname?.startsWith(link.href)));
+                const Icon = link.icon;
+                return (
+                  <NextLink
+                    key={link.href}
+                    href={link.href}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-[hsl(186,72%,24%)] text-white'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{link.label}</span>
+                  </NextLink>
+                );
+              })}
+            </nav>
+
+            <div className="hidden md:flex items-center pl-2 border-l border-zinc-200 shrink-0">
+              <LogoutButton showHomeLink label="Keluar" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

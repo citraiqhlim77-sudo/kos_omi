@@ -1,0 +1,20 @@
+{
+  "..\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts": {
+    "id": "..\\node_modules\\next\\dist\\client\\dev\\hot-reloader\\app\\use-websocket.js -> @vercel/turbopack-ecmascript-runtime/browser/dev/hmr-client/hmr-client.ts",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
+    ]
+  },
+  "components\\calon\\CalonDashboardClient.tsx -> @/components/calon/PaymentModal": {
+    "id": "components\\calon\\CalonDashboardClient.tsx -> @/components/calon/PaymentModal",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_calon_PaymentModal_tsx.js"
+    ]
+  },
+  "components\\keuangan\\KeuanganDashboardClient.tsx -> @/components/keuangan/FinancialTrendChart": {
+    "id": "components\\keuangan\\KeuanganDashboardClient.tsx -> @/components/keuangan/FinancialTrendChart",
+    "files": [
+      "static/chunks/_app-pages-browser_src_components_keuangan_FinancialTrendChart_tsx.js"
+    ]
+  }
+}

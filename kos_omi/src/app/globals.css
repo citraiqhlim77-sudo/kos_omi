@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 217 91% 45%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 214 95% 96%;
+  --secondary-foreground: 222 47% 11%;
+  
+  --accent: 152 69% 36%;
+  --warning: 38 92% 50%;
+  --destructive: 0 72% 51%;
+  
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  
+  --surface: 210 20% 98%;
+  --surface-border: 214 20% 90%;
+  
+  --text-primary: 222 47% 11%;
+  --text-secondary: 215 16% 47%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color: hsl(var(--text-primary));
+  background-color: hsl(var(--background));
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+  letter-spacing: -0.02em;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touch targets and accessibility */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}

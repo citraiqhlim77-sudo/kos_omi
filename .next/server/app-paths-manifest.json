@@ -1,0 +1,8 @@
+{
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/penghuni/tagihan/page": "app/penghuni/tagihan/page.js",
+  "/keuangan/dashboard/page": "app/keuangan/dashboard/page.js",
+  "/keuangan/laporan/page": "app/keuangan/laporan/page.js",
+  "/keuangan/tagihan/page": "app/keuangan/tagihan/page.js"
+}
