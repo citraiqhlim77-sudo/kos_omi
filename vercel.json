@@ -8,7 +8,7 @@
     },
     {
       "path": "/api/cron/cancel-expired-reservations",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "headers": [
