@@ -25,6 +25,7 @@ next-env.d.ts
 .agents/
 AGENTS.md
 skill.md
+kos_omi/
 
 # Testing & coverage
 coverage/
