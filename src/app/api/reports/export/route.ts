@@ -60,17 +60,19 @@ export async function GET(request: NextRequest) {
     let filename = '';
     let csvData = '';
 
+    const formatIdr = (num: number) =>
+      `Rp ${Number(num || 0).toLocaleString('id-ID')}`;
+
     const headers = [
-      type === 'daily' ? 'Tanggal' : 'Bulan',
-      'Total Pemasukan (IDR)',
+      'No',
+      type === 'daily' ? 'Tanggal Transaksi' : 'Bulan Periode',
       'Jumlah Transaksi',
-      'Sewa Semesteran (Rp 5.000.000/semester) (IDR)',
-      'Booking (IDR)',
-      'Deposit (IDR)',
-      'Denda (IDR)',
-      'QRIS (IDR)',
-      'Virtual Account (IDR)',
-      'E-Wallet (IDR)',
+      'Sewa Semesteran (Rp 5.000.000/semester)',
+      'Booking Kamar Baru',
+      'Via QRIS',
+      'Via Virtual Account Bank',
+      'Via DANA / E-Wallet',
+      'Total Pemasukan Bersih',
     ];
 
     if (type === 'daily') {
@@ -81,48 +83,42 @@ export async function GET(request: NextRequest) {
       let grandTotalTx = 0;
       let grandTotalSewa = 0;
       let grandTotalBooking = 0;
-      let grandTotalDeposit = 0;
-      let grandTotalDenda = 0;
       let grandTotalQris = 0;
       let grandTotalVa = 0;
       let grandTotalEwallet = 0;
 
-      const rows = data.map((d) => {
+      const rows = data.map((d, idx) => {
         grandTotalIncome += d.totalIncome;
         grandTotalTx += d.transactionCount;
         grandTotalSewa += d.byCategory.sewaBulanan;
         grandTotalBooking += d.byCategory.booking;
-        grandTotalDeposit += d.byCategory.deposit;
-        grandTotalDenda += d.byCategory.denda;
         grandTotalQris += d.byPaymentMethod.qris || 0;
         grandTotalVa += d.byPaymentMethod.va || 0;
         grandTotalEwallet += d.byPaymentMethod.ewallet || 0;
 
         return [
+          idx + 1,
           d.dateOrMonth,
-          d.totalIncome,
-          d.transactionCount,
-          d.byCategory.sewaBulanan,
-          d.byCategory.booking,
-          d.byCategory.deposit,
-          d.byCategory.denda,
-          d.byPaymentMethod.qris || 0,
-          d.byPaymentMethod.va || 0,
-          d.byPaymentMethod.ewallet || 0,
+          `${d.transactionCount} Transaksi`,
+          formatIdr(d.byCategory.sewaBulanan),
+          formatIdr(d.byCategory.booking),
+          formatIdr(d.byPaymentMethod.qris || 0),
+          formatIdr(d.byPaymentMethod.va || 0),
+          formatIdr(d.byPaymentMethod.ewallet || 0),
+          formatIdr(d.totalIncome),
         ];
       });
 
       const summaryRow = [
+        '',
         'TOTAL KESELURUHAN',
-        grandTotalIncome,
-        grandTotalTx,
-        grandTotalSewa,
-        grandTotalBooking,
-        grandTotalDeposit,
-        grandTotalDenda,
-        grandTotalQris,
-        grandTotalVa,
-        grandTotalEwallet,
+        `${grandTotalTx} Transaksi`,
+        formatIdr(grandTotalSewa),
+        formatIdr(grandTotalBooking),
+        formatIdr(grandTotalQris),
+        formatIdr(grandTotalVa),
+        formatIdr(grandTotalEwallet),
+        formatIdr(grandTotalIncome),
       ];
 
       const title = `Laporan Keuangan Harian Kos Omi - Periode ${monthStr}/${year}`;
@@ -135,48 +131,42 @@ export async function GET(request: NextRequest) {
       let grandTotalTx = 0;
       let grandTotalSewa = 0;
       let grandTotalBooking = 0;
-      let grandTotalDeposit = 0;
-      let grandTotalDenda = 0;
       let grandTotalQris = 0;
       let grandTotalVa = 0;
       let grandTotalEwallet = 0;
 
-      const rows = data.map((d) => {
+      const rows = data.map((d, idx) => {
         grandTotalIncome += d.totalIncome;
         grandTotalTx += d.transactionCount;
         grandTotalSewa += d.byCategory.sewaBulanan;
         grandTotalBooking += d.byCategory.booking;
-        grandTotalDeposit += d.byCategory.deposit;
-        grandTotalDenda += d.byCategory.denda;
         grandTotalQris += d.byPaymentMethod.qris || 0;
         grandTotalVa += d.byPaymentMethod.va || 0;
         grandTotalEwallet += d.byPaymentMethod.ewallet || 0;
 
         return [
+          idx + 1,
           d.dateOrMonth,
-          d.totalIncome,
-          d.transactionCount,
-          d.byCategory.sewaBulanan,
-          d.byCategory.booking,
-          d.byCategory.deposit,
-          d.byCategory.denda,
-          d.byPaymentMethod.qris || 0,
-          d.byPaymentMethod.va || 0,
-          d.byPaymentMethod.ewallet || 0,
+          `${d.transactionCount} Transaksi`,
+          formatIdr(d.byCategory.sewaBulanan),
+          formatIdr(d.byCategory.booking),
+          formatIdr(d.byPaymentMethod.qris || 0),
+          formatIdr(d.byPaymentMethod.va || 0),
+          formatIdr(d.byPaymentMethod.ewallet || 0),
+          formatIdr(d.totalIncome),
         ];
       });
 
       const summaryRow = [
+        '',
         'TOTAL KESELURUHAN',
-        grandTotalIncome,
-        grandTotalTx,
-        grandTotalSewa,
-        grandTotalBooking,
-        grandTotalDeposit,
-        grandTotalDenda,
-        grandTotalQris,
-        grandTotalVa,
-        grandTotalEwallet,
+        `${grandTotalTx} Transaksi`,
+        formatIdr(grandTotalSewa),
+        formatIdr(grandTotalBooking),
+        formatIdr(grandTotalQris),
+        formatIdr(grandTotalVa),
+        formatIdr(grandTotalEwallet),
+        formatIdr(grandTotalIncome),
       ];
 
       const title = `Laporan Keuangan Bulanan Kos Omi - Tahun Buku ${year}`;

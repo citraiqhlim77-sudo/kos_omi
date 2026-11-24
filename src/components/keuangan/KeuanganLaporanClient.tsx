@@ -63,7 +63,124 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
   const totalIncomeBulanan = monthlyRows.reduce((sum, r) => sum + r.totalAmount, 0);
   const totalTxBulanan = monthlyRows.reduce((sum, r) => sum + r.transactionCount, 0);
 
-  // Ekspor CSV resmi via endpoint /api/reports/export dengan BOM UTF-8 (Bab 8 & Bab 11 Task 2.10 PRD)
+  // Ekspor Laporan Rapi ke Microsoft Excel (.xls dengan tabel bergaris & warna header)
+  const handleExportExcel = () => {
+    const periodLabel = activeTab === 'HARIAN' ? `Periode Bulan ${selectedMonth}` : `Tahun Buku ${selectedYear}`;
+    const isHarian = activeTab === 'HARIAN';
+    const rowsData = isHarian
+      ? dailyRows.map((r, i) => ({
+          no: i + 1,
+          period: r.date,
+          txCount: r.transactionCount,
+          qris: r.qrisAmount,
+          va: r.vaAmount,
+          ewallet: r.ewalletAmount,
+          rent: r.rentAmount,
+          booking: r.bookingAmount,
+          total: r.totalAmount,
+        }))
+      : monthlyRows.map((r, i) => ({
+          no: i + 1,
+          period: r.monthName,
+          txCount: r.transactionCount,
+          qris: r.qrisAmount,
+          va: r.vaAmount,
+          ewallet: r.ewalletAmount,
+          rent: r.rentAmount,
+          booking: r.bookingAmount,
+          total: r.totalAmount,
+        }));
+
+    const sumQris = rowsData.reduce((s, r) => s + r.qris, 0);
+    const sumVa = rowsData.reduce((s, r) => s + r.va, 0);
+    const sumEwallet = rowsData.reduce((s, r) => s + r.ewallet, 0);
+    const sumRent = rowsData.reduce((s, r) => s + r.rent, 0);
+    const sumBooking = rowsData.reduce((s, r) => s + r.booking, 0);
+    const sumTotal = isHarian ? totalIncomeHarian : totalIncomeBulanan;
+    const sumTx = isHarian ? totalTxHarian : totalTxBulanan;
+
+    const htmlTable = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11pt; }
+    table { border-collapse: collapse; width: 100%; }
+    th { background-color: #115e69; color: #ffffff; font-weight: bold; padding: 8px 12px; border: 1px solid #333333; text-align: center; }
+    td { padding: 7px 12px; border: 1px solid #999999; }
+    .title { font-size: 14pt; font-weight: bold; color: #115e69; text-align: left; border: none; }
+    .subtitle { font-size: 10pt; color: #475569; text-align: left; border: none; }
+    .num { text-align: right; font-weight: 600; }
+    .center { text-align: center; }
+    .total-row td { background-color: #ecfdf5; font-weight: bold; border-top: 2px solid #047857; border-bottom: 2px solid #047857; color: #064e3b; }
+  </style>
+</head>
+<body>
+  <table>
+    <tr><td colspan="9" class="title">LAPORAN KEUANGAN RESMI KOS OMI SUNGAI BANGEK, PADANG</td></tr>
+    <tr><td colspan="9" class="subtitle">Jenis Laporan: Rekapitulasi ${isHarian ? 'Harian' : 'Bulanan'} (${periodLabel}) | Lokasi: Sungai Bangek, Kota Padang (67 Kamar)</td></tr>
+    <tr><td colspan="9" class="subtitle">Saluran Pembayaran: Transfer Bank VA, QRIS, &amp; DANA (082246424353) — Tervalidasi Pengelola Kos</td></tr>
+    <tr><td colspan="9" style="border:none; height:10px;"></td></tr>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>${isHarian ? 'Tanggal Transaksi' : 'Bulan Periode'}</th>
+        <th>Jumlah Transaksi</th>
+        <th>Via QRIS</th>
+        <th>Via Virtual Account Bank</th>
+        <th>Via DANA / E-Wallet</th>
+        <th>Sewa Semesteran (Rp 5.000.000/semester)</th>
+        <th>Booking Kamar Baru</th>
+        <th>Total Pemasukan Bersih</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsData
+        .map(
+          (r) => `<tr>
+        <td class="center">${r.no}</td>
+        <td class="center"><b>${r.period}</b></td>
+        <td class="center">${r.txCount} Transaksi</td>
+        <td class="num">${formatRupiah(r.qris)}</td>
+        <td class="num">${formatRupiah(r.va)}</td>
+        <td class="num">${formatRupiah(r.ewallet)}</td>
+        <td class="num">${formatRupiah(r.rent)}</td>
+        <td class="num">${formatRupiah(r.booking)}</td>
+        <td class="num">${formatRupiah(r.total)}</td>
+      </tr>`
+        )
+        .join('')}
+      <tr class="total-row">
+        <td colspan="2" class="center">TOTAL KESELURUHAN</td>
+        <td class="center">${sumTx} Transaksi</td>
+        <td class="num">${formatRupiah(sumQris)}</td>
+        <td class="num">${formatRupiah(sumVa)}</td>
+        <td class="num">${formatRupiah(sumEwallet)}</td>
+        <td class="num">${formatRupiah(sumRent)}</td>
+        <td class="num">${formatRupiah(sumBooking)}</td>
+        <td class="num">${formatRupiah(sumTotal)}</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+    const blob = new Blob(['\uFEFF', htmlTable], {
+      type: 'application/vnd.ms-excel;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `Laporan_Keuangan_Kos_Omi_${activeTab}_${isHarian ? selectedMonth : selectedYear}.xls`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Ekspor CSV resmi via endpoint /api/reports/export dengan BOM UTF-8 & pemisah titik-koma (;)
   const handleExportCsv = async () => {
     try {
       const type = activeTab === 'HARIAN' ? 'daily' : 'monthly';
@@ -93,21 +210,21 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
       console.warn('Gagal memanggil endpoint ekspor CSV, beralih ke generator lokal:', err);
     }
 
-    // Fallback client-side dengan UTF-8 BOM
-    let csvContent = '\uFEFF'; // UTF-8 BOM untuk Microsoft Excel
+    // Fallback client-side dengan UTF-8 BOM & pemisah titik-koma (;) untuk Excel Indonesia
+    let csvContent = '\uFEFF';
 
     if (activeTab === 'HARIAN') {
-      csvContent += 'Tanggal,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Semesteran (Rp 5.000.000/semester),Booking Kamar Baru,Total Pemasukan (IDR)\r\n';
-      dailyRows.forEach((r) => {
-        csvContent += `"${r.date}",${r.transactionCount},${r.qrisAmount},${r.vaAmount},${r.ewalletAmount},${r.rentAmount},${r.bookingAmount},${r.totalAmount}\r\n`;
+      csvContent += 'No;Tanggal Transaksi;Jumlah Transaksi;Via QRIS;Via Virtual Account;Via DANA / E-Wallet;Sewa Semesteran (Rp 5.000.000/semester);Booking Kamar Baru;Total Pemasukan Bersih\r\n';
+      dailyRows.forEach((r, idx) => {
+        csvContent += `${idx + 1};"${r.date}";"${r.transactionCount} Transaksi";"${formatRupiah(r.qrisAmount)}";"${formatRupiah(r.vaAmount)}";"${formatRupiah(r.ewalletAmount)}";"${formatRupiah(r.rentAmount)}";"${formatRupiah(r.bookingAmount)}";"${formatRupiah(r.totalAmount)}"\r\n`;
       });
-      csvContent += `Total Keseluruhan,${totalTxHarian},,,,,"${totalIncomeHarian}"\r\n`;
+      csvContent += `;TOTAL KESELURUHAN;"${totalTxHarian} Transaksi";;;;;;"${formatRupiah(totalIncomeHarian)}"\r\n`;
     } else {
-      csvContent += 'Bulan,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Semesteran (Rp 5.000.000/semester),Booking Kamar Baru,Total Pemasukan (IDR)\r\n';
-      monthlyRows.forEach((r) => {
-        csvContent += `"${r.monthName}",${r.transactionCount},${r.qrisAmount},${r.vaAmount},${r.ewalletAmount},${r.rentAmount},${r.bookingAmount},${r.totalAmount}\r\n`;
+      csvContent += 'No;Bulan Periode;Jumlah Transaksi;Via QRIS;Via Virtual Account;Via DANA / E-Wallet;Sewa Semesteran (Rp 5.000.000/semester);Booking Kamar Baru;Total Pemasukan Bersih\r\n';
+      monthlyRows.forEach((r, idx) => {
+        csvContent += `${idx + 1};"${r.monthName}";"${r.transactionCount} Transaksi";"${formatRupiah(r.qrisAmount)}";"${formatRupiah(r.vaAmount)}";"${formatRupiah(r.ewalletAmount)}";"${formatRupiah(r.rentAmount)}";"${formatRupiah(r.bookingAmount)}";"${formatRupiah(r.totalAmount)}"\r\n`;
       });
-      csvContent += `Total Keseluruhan,${totalTxBulanan},,,,,"${totalIncomeBulanan}"\r\n`;
+      csvContent += `;TOTAL KESELURUHAN;"${totalTxBulanan} Transaksi";;;;;;"${formatRupiah(totalIncomeBulanan)}"\r\n`;
     }
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -165,7 +282,7 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={handleReconcile}
@@ -178,8 +295,17 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
 
           <button
             type="button"
+            onClick={handleExportExcel}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99]"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Unduh Tabel Excel Rapi (.xls)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleExportCsv}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99]"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99]"
           >
             <Download className="w-4 h-4" />
             <span>Ekspor CSV ({activeTab === 'HARIAN' ? 'Harian' : 'Bulanan'})</span>

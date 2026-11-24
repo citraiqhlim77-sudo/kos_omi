@@ -472,9 +472,9 @@ export async function getMonthlyRevenueReport(year: number): Promise<RevenueAggr
 }
 
 /**
- * Generator CSV dengan UTF-8 Byte Order Mark (\uFEFF)
- * Memastikan kompatibilitas mutlak dengan Microsoft Excel di Windows & macOS
- * tanpa masalah encoding karakter atau pembagian kolom.
+ * Generator CSV dengan UTF-8 Byte Order Mark (\uFEFF) dan pemisah titik-koma (;)
+ * Memastikan saat dibuka di Microsoft Excel (regional Indonesia / Windows),
+ * setiap kolom langsung terpisah otomatis ke Kolom A, B, C, dst. dengan rapi.
  */
 export function generateRevenueCsv(
   title: string,
@@ -484,21 +484,39 @@ export function generateRevenueCsv(
 ): string {
   // UTF-8 Byte Order Mark (BOM)
   const BOM = '\uFEFF';
+  const SEP = ';';
 
   const escapeCsv = (val: string | number | null | undefined): string => {
     if (val === null || val === undefined) return '';
     const str = String(val);
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    if (str.includes(SEP) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
       return `"${str.replace(/"/g, '""')}"`;
     }
     return str;
   };
 
-  const headerLine = headers.map(escapeCsv).join(',');
-  const rowLines = rows.map((r) => r.map(escapeCsv).join(',')).join('\r\n');
-  const summaryLine = summaryRow ? `\r\n${summaryRow.map(escapeCsv).join(',')}` : '';
+  const colCount = headers.length;
+  const padRow = (cells: (string | number)[]) => {
+    const padded = [...cells];
+    while (padded.length < colCount) padded.push('');
+    return padded.map(escapeCsv).join(SEP);
+  };
 
-  return `${BOM}# ${title}\r\n# Zona Waktu: Asia/Jakarta (WIB) | Status: Settlement & Capture (Accept)\r\n${headerLine}\r\n${rowLines}${summaryLine}\r\n`;
+  const metaLines = [
+    padRow(['LAPORAN KEUANGAN RESMI KOS OMI SUNGAI BANGEK, PADANG']),
+    padRow([title]),
+    padRow(['Alamat', 'Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang']),
+    padRow(['Zona Waktu', 'Asia/Jakarta (WIB) - Status Transaksi: LUNAS (Settlement & Tervalidasi Pengelola)']),
+    padRow([]),
+  ].join('\r\n');
+
+  const headerLine = headers.map(escapeCsv).join(SEP);
+  const rowLines = rows.map((r) => r.map(escapeCsv).join(SEP)).join('\r\n');
+  const summaryLine = summaryRow
+    ? `\r\n${padRow([])}\r\n${summaryRow.map(escapeCsv).join(SEP)}`
+    : '';
+
+  return `${BOM}${metaLines}\r\n${headerLine}\r\n${rowLines}${summaryLine}\r\n`;
 }
 
 // ============================================================================
