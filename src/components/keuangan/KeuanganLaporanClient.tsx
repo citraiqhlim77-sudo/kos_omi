@@ -180,52 +180,53 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Ekspor CSV resmi via endpoint /api/reports/export dengan BOM UTF-8 & pemisah titik-koma (;)
+  // Ekspor CSV resmi (100% identik dengan baris tabel yang tampil di layar)
   const handleExportCsv = async () => {
-    try {
-      const type = activeTab === 'HARIAN' ? 'daily' : 'monthly';
-      const year = activeTab === 'HARIAN' ? selectedMonth.split('-')[0] : selectedYear;
-      const month = activeTab === 'HARIAN' ? parseInt(selectedMonth.split('-')[1], 10) : '';
+    const isHarian = activeTab === 'HARIAN';
+    const rowsData = isHarian
+      ? dailyRows.map((r, i) => ({
+          no: i + 1,
+          period: r.date,
+          txCount: r.transactionCount,
+          qris: r.qrisAmount,
+          va: r.vaAmount,
+          ewallet: r.ewalletAmount,
+          rent: r.rentAmount,
+          booking: r.bookingAmount,
+          total: r.totalAmount,
+        }))
+      : monthlyRows.map((r, i) => ({
+          no: i + 1,
+          period: r.monthName,
+          txCount: r.transactionCount,
+          qris: r.qrisAmount,
+          va: r.vaAmount,
+          ewallet: r.ewalletAmount,
+          rent: r.rentAmount,
+          booking: r.bookingAmount,
+          total: r.totalAmount,
+        }));
 
-      const exportUrl = `/api/reports/export?type=${type}&year=${year}${month ? `&month=${month}` : ''}`;
-      const response = await fetch(exportUrl);
+    const sumQris = rowsData.reduce((s, r) => s + r.qris, 0);
+    const sumVa = rowsData.reduce((s, r) => s + r.va, 0);
+    const sumEwallet = rowsData.reduce((s, r) => s + r.ewallet, 0);
+    const sumRent = rowsData.reduce((s, r) => s + r.rent, 0);
+    const sumBooking = rowsData.reduce((s, r) => s + r.booking, 0);
+    const sumTotal = isHarian ? totalIncomeHarian : totalIncomeBulanan;
+    const sumTx = isHarian ? totalTxHarian : totalTxBulanan;
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const disposition = response.headers.get('Content-Disposition');
-        const filename =
-          disposition?.split('filename=')[1]?.replace(/"/g, '') ||
-          `Laporan_Keuangan_Kos_Omi_${activeTab}_${activeTab === 'HARIAN' ? selectedMonth : selectedYear}.csv`;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        return;
-      }
-    } catch (err) {
-      console.warn('Gagal memanggil endpoint ekspor CSV, beralih ke generator lokal:', err);
-    }
-
-    // Fallback client-side dengan UTF-8 BOM & pemisah titik-koma (;) untuk Excel Indonesia
     let csvContent = '\uFEFF';
+    csvContent += `LAPORAN KEUANGAN RESMI KOS OMI SUNGAI BANGEK, PADANG;;;;;;;;\r\n`;
+    csvContent += `Rekapitulasi ${isHarian ? `Harian Periode ${selectedMonth}` : `Bulanan Tahun ${selectedYear}`};;;;;;;;\r\n`;
+    csvContent += `;;;;;;;;\r\n`;
+    csvContent += `No;${isHarian ? 'Tanggal Transaksi' : 'Bulan Periode'};Jumlah Transaksi;Via QRIS;Via Virtual Account;Via DANA / E-Wallet;Sewa Semesteran (Rp 5.000.000/semester);Booking Kamar Baru;Total Pemasukan\r\n`;
 
-    if (activeTab === 'HARIAN') {
-      csvContent += 'No;Tanggal Transaksi;Jumlah Transaksi;Via QRIS;Via Virtual Account;Via DANA / E-Wallet;Sewa Semesteran (Rp 5.000.000/semester);Booking Kamar Baru;Total Pemasukan Bersih\r\n';
-      dailyRows.forEach((r, idx) => {
-        csvContent += `${idx + 1};"${r.date}";"${r.transactionCount} Transaksi";"${formatRupiah(r.qrisAmount)}";"${formatRupiah(r.vaAmount)}";"${formatRupiah(r.ewalletAmount)}";"${formatRupiah(r.rentAmount)}";"${formatRupiah(r.bookingAmount)}";"${formatRupiah(r.totalAmount)}"\r\n`;
-      });
-      csvContent += `;TOTAL KESELURUHAN;"${totalTxHarian} Transaksi";;;;;;"${formatRupiah(totalIncomeHarian)}"\r\n`;
-    } else {
-      csvContent += 'No;Bulan Periode;Jumlah Transaksi;Via QRIS;Via Virtual Account;Via DANA / E-Wallet;Sewa Semesteran (Rp 5.000.000/semester);Booking Kamar Baru;Total Pemasukan Bersih\r\n';
-      monthlyRows.forEach((r, idx) => {
-        csvContent += `${idx + 1};"${r.monthName}";"${r.transactionCount} Transaksi";"${formatRupiah(r.qrisAmount)}";"${formatRupiah(r.vaAmount)}";"${formatRupiah(r.ewalletAmount)}";"${formatRupiah(r.rentAmount)}";"${formatRupiah(r.bookingAmount)}";"${formatRupiah(r.totalAmount)}"\r\n`;
-      });
-      csvContent += `;TOTAL KESELURUHAN;"${totalTxBulanan} Transaksi";;;;;;"${formatRupiah(totalIncomeBulanan)}"\r\n`;
-    }
+    rowsData.forEach((r) => {
+      csvContent += `${r.no};"${r.period}";"${r.txCount} Transaksi";"${formatRupiah(r.qris)}";"${formatRupiah(r.va)}";"${formatRupiah(r.ewallet)}";"${formatRupiah(r.rent)}";"${formatRupiah(r.booking)}";"${formatRupiah(r.total)}"\r\n`;
+    });
+
+    csvContent += `;;;;;;;;\r\n`;
+    csvContent += `;TOTAL AKUMULASI;"${sumTx} Transaksi";"${formatRupiah(sumQris)}";"${formatRupiah(sumVa)}";"${formatRupiah(sumEwallet)}";"${formatRupiah(sumRent)}";"${formatRupiah(sumBooking)}";"${formatRupiah(sumTotal)}"\r\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -408,9 +409,9 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
           <span className="text-xs text-zinc-500">Mata uang: Rupiah (IDR)</span>
         </div>
 
-        {/* Desktop Table View (>= 640px) */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-xs text-left">
+        {/* Tabel Laporan Responsif (Sama di Laptop & HP, 100% Identik dengan Isi File Excel/CSV) */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[780px] text-xs text-left">
             <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
               <tr>
                 <th className="p-3.5">{activeTab === 'HARIAN' ? 'Tanggal' : 'Bulan'}</th>
@@ -462,78 +463,52 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
                 <td className="p-3.5 text-center tabular-nums">
                   {activeTab === 'HARIAN' ? totalTxHarian : totalTxBulanan}
                 </td>
-                <td colSpan={5} className="p-3.5 text-right">Total Pendapatan Terverifikasi:</td>
+                <td className="p-3.5 text-right tabular-nums">
+                  {formatRupiah(
+                    (activeTab === 'HARIAN' ? dailyRows : monthlyRows).reduce(
+                      (s, r) => s + r.qrisAmount,
+                      0
+                    )
+                  )}
+                </td>
+                <td className="p-3.5 text-right tabular-nums">
+                  {formatRupiah(
+                    (activeTab === 'HARIAN' ? dailyRows : monthlyRows).reduce(
+                      (s, r) => s + r.vaAmount,
+                      0
+                    )
+                  )}
+                </td>
+                <td className="p-3.5 text-right tabular-nums">
+                  {formatRupiah(
+                    (activeTab === 'HARIAN' ? dailyRows : monthlyRows).reduce(
+                      (s, r) => s + r.ewalletAmount,
+                      0
+                    )
+                  )}
+                </td>
+                <td className="p-3.5 text-right tabular-nums">
+                  {formatRupiah(
+                    (activeTab === 'HARIAN' ? dailyRows : monthlyRows).reduce(
+                      (s, r) => s + r.rentAmount,
+                      0
+                    )
+                  )}
+                </td>
+                <td className="p-3.5 text-right tabular-nums">
+                  {formatRupiah(
+                    (activeTab === 'HARIAN' ? dailyRows : monthlyRows).reduce(
+                      (s, r) => s + r.bookingAmount,
+                      0
+                    )
+                  )}
+                </td>
                 <td className="p-3.5 text-right tabular-nums text-sm text-[hsl(186,72%,24%)] font-heading">
                   {formatRupiah(activeTab === 'HARIAN' ? totalIncomeHarian : totalIncomeBulanan)}
                 </td>
               </tr>
             </tfoot>
           </table>
-        </div>
-
-        {/* Mobile Card View (< 640px) */}
-        <div className="sm:hidden divide-y divide-zinc-100 p-3 space-y-3">
-          {activeTab === 'HARIAN'
-            ? dailyRows.map((row) => (
-                <div key={row.date} className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-heading font-extrabold text-zinc-900 text-sm">
-                      {row.date}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                      {row.transactionCount} Transaksi
-                    </span>
-                  </div>
-                  <div className="text-xs space-y-1 pt-1 text-zinc-600">
-                    <div className="flex justify-between">
-                      <span>QRIS:</span>
-                      <span className="tabular-nums font-medium">{formatRupiah(row.qrisAmount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Virtual Account:</span>
-                      <span className="tabular-nums font-medium">{formatRupiah(row.vaAmount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Sewa Semesteran (Rp 5.000.000/semester):</span>
-                      <span className="tabular-nums font-medium">{formatRupiah(row.rentAmount)}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-zinc-200 text-xs font-bold">
-                    <span className="text-zinc-800">Total Hari Ini:</span>
-                    <span className="text-[hsl(186,72%,24%)] font-heading font-extrabold text-sm tabular-nums">
-                      {formatRupiah(row.totalAmount)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            : monthlyRows.map((row) => (
-                <div key={row.month} className="p-3.5 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-heading font-extrabold text-zinc-900 text-sm">
-                      {row.monthName}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                      {row.transactionCount} Transaksi
-                    </span>
-                  </div>
-                  <div className="text-xs space-y-1 pt-1 text-zinc-600">
-                    <div className="flex justify-between">
-                      <span>QRIS / VA:</span>
-                      <span className="tabular-nums font-medium">{formatRupiah(row.qrisAmount + row.vaAmount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Pemasukan Sewa:</span>
-                      <span className="tabular-nums font-medium">{formatRupiah(row.rentAmount)}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-zinc-200 text-xs font-bold">
-                    <span className="text-zinc-800">Total Bulan Ini:</span>
-                    <span className="text-[hsl(186,72%,24%)] font-heading font-extrabold text-sm tabular-nums">
-                      {formatRupiah(row.totalAmount)}
-                    </span>
-                  </div>
-                </div>
-              ))}
         </div>
       </div>
     </div>

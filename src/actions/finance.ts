@@ -157,151 +157,50 @@ export async function fetchTransactionByIdAction(
   return found ? { ...found } : null;
 }
 
-// 4. Fetch Daily Report
+// 4. Fetch Daily Report (100% Sinkron dengan Data Transaksi Real & Ekspor Excel/CSV)
 export async function fetchDailyReportAction(
   month: string = '2026-11'
 ): Promise<DailyReportRow[]> {
+  getTransactionsStore();
   const [yearStr, monthStr] = month.split('-');
   const year = parseInt(yearStr || '2026', 10);
   const monthNum = parseInt(monthStr || '11', 10);
 
-  // Ambil data agregasi terverifikasi (Asia/Jakarta)
+  // Ambil data agregasi terverifikasi (Asia/Jakarta) — sumber data yang sama persis dengan Ekspor CSV/Excel
   const { getDailyRevenueReport } = await import('@/lib/reports/revenue');
   const aggregatedRows = await getDailyRevenueReport(monthNum, year);
-  const aggMap = new Map<string, (typeof aggregatedRows)[0]>();
-  for (const row of aggregatedRows) {
-    aggMap.set(row.periodKey, row);
-  }
 
-  // Hitung jumlah hari dalam bulan tersebut
-  const daysInMonth = new Date(year, monthNum, 0).getDate();
-  const rows: DailyReportRow[] = [];
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    const dayStr = i < 10 ? `0${i}` : `${i}`;
-    const date = `${month}-${dayStr}`;
-    const existing = aggMap.get(date);
-
-    if (existing && existing.totalIncome > 0) {
-      rows.push({
-        date,
-        transactionCount: existing.transactionCount,
-        qrisAmount: existing.byPaymentMethod.qris || 0,
-        vaAmount: existing.byPaymentMethod.va || 0,
-        ewalletAmount: existing.byPaymentMethod.ewallet || 0,
-        rentAmount: existing.byCategory.sewaBulanan || 0,
-        bookingAmount: (existing.byCategory.booking || 0) + (existing.byCategory.deposit || 0),
-        totalAmount: existing.totalIncome,
-      });
-    } else {
-      // Pola transaksi dummy realistis jika hari tersebut tidak memiliki transaksi settlement
-      let total = 0;
-      let count = 0;
-      let rent = 0;
-      let booking = 0;
-
-      if (i <= 5) {
-        total = 9500000 + (i % 3) * 1200000;
-        count = 8 + (i % 4);
-        rent = total - 1100000;
-        booking = 1100000;
-      } else if (i <= 15) {
-        total = 2200000 + (i % 2) * 1100000;
-        count = 2 + (i % 3);
-        rent = total;
-        booking = 0;
-      } else {
-        total = i % 4 === 0 ? 2200000 : 0;
-        count = i % 4 === 0 ? 2 : 0;
-        rent = total > 0 ? 1100000 : 0;
-        booking = total > 0 ? 1100000 : 0;
-      }
-
-      const qris = Math.round(total * 0.42);
-      const va = Math.round(total * 0.48);
-      const ewallet = total - qris - va;
-
-      rows.push({
-        date,
-        transactionCount: count,
-        qrisAmount: qris,
-        vaAmount: va,
-        ewalletAmount: ewallet,
-        rentAmount: rent,
-        bookingAmount: booking,
-        totalAmount: total,
-      });
-    }
-  }
-
-  return rows;
+  return aggregatedRows.map((existing) => ({
+    date: existing.dateOrMonth,
+    transactionCount: existing.transactionCount,
+    qrisAmount: existing.byPaymentMethod.qris || 0,
+    vaAmount: existing.byPaymentMethod.va || 0,
+    ewalletAmount: existing.byPaymentMethod.ewallet || 0,
+    rentAmount: existing.byCategory.sewaBulanan || 0,
+    bookingAmount: (existing.byCategory.booking || 0) + (existing.byCategory.deposit || 0),
+    totalAmount: existing.totalIncome,
+  }));
 }
 
-// 5. Fetch Monthly Report
+// 5. Fetch Monthly Report (100% Sinkron dengan Data Transaksi Real & Ekspor Excel/CSV)
 export async function fetchMonthlyReportAction(
   year: number = 2026
 ): Promise<MonthlyReportRow[]> {
+  getTransactionsStore();
   const { getMonthlyRevenueReport } = await import('@/lib/reports/revenue');
   const aggregatedMonthly = await getMonthlyRevenueReport(year);
-  const aggMap = new Map<string, (typeof aggregatedMonthly)[0]>();
-  for (const row of aggregatedMonthly) {
-    aggMap.set(row.periodKey, row);
-  }
 
-  const months = [
-    { code: '01', name: 'Januari' },
-    { code: '02', name: 'Februari' },
-    { code: '03', name: 'Maret' },
-    { code: '04', name: 'April' },
-    { code: '05', name: 'Mei' },
-    { code: '06', name: 'Juni' },
-    { code: '07', name: 'Juli' },
-    { code: '08', name: 'Agustus' },
-    { code: '09', name: 'September' },
-    { code: '10', name: 'Oktober' },
-    { code: '11', name: 'November' },
-    { code: '12', name: 'Desember' },
-  ];
-
-  return months.map((m, idx) => {
-    const periodKey = `${year}-${m.code}`;
-    const existing = aggMap.get(periodKey);
-
-    if (existing && existing.totalIncome > 0) {
-      return {
-        month: periodKey,
-        monthName: `${m.name} ${year}`,
-        transactionCount: existing.transactionCount,
-        qrisAmount: existing.byPaymentMethod.qris || 0,
-        vaAmount: existing.byPaymentMethod.va || 0,
-        ewalletAmount: existing.byPaymentMethod.ewallet || 0,
-        rentAmount: existing.byCategory.sewaBulanan || 0,
-        bookingAmount: (existing.byCategory.booking || 0) + (existing.byCategory.deposit || 0),
-        totalAmount: existing.totalIncome,
-      };
-    }
-
-    const isPast = idx < 6;
-    const total = isPast ? 68000000 + idx * 2200000 : 0;
-    const count = isPast ? 55 + idx * 2 : 0;
-    const rent = Math.round(total * 0.86);
-    const booking = total - rent;
-    const qris = Math.round(total * 0.41);
-    const va = Math.round(total * 0.48);
-    const ewallet = total - qris - va;
-
-    return {
-      month: periodKey,
-      monthName: `${m.name} ${year}`,
-      transactionCount: count,
-      qrisAmount: qris,
-      vaAmount: va,
-      ewalletAmount: ewallet,
-      rentAmount: rent,
-      bookingAmount: booking,
-      totalAmount: total,
-    };
-  });
+  return aggregatedMonthly.map((existing) => ({
+    month: existing.periodKey,
+    monthName: existing.dateOrMonth,
+    transactionCount: existing.transactionCount,
+    qrisAmount: existing.byPaymentMethod.qris || 0,
+    vaAmount: existing.byPaymentMethod.va || 0,
+    ewalletAmount: existing.byPaymentMethod.ewallet || 0,
+    rentAmount: existing.byCategory.sewaBulanan || 0,
+    bookingAmount: (existing.byCategory.booking || 0) + (existing.byCategory.deposit || 0),
+    totalAmount: existing.totalIncome,
+  }));
 }
 
 // 6. Fetch Overdue Bills
