@@ -1,4 +1,7 @@
 {
-  "/kamar/page": "app/kamar/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/kontak/page": "app/kontak/page.js",
+  "/login/page": "app/login/page.js",
+  "/admin/pengguna/page": "app/admin/pengguna/page.js",
+  "/admin/dashboard/page": "app/admin/dashboard/page.js"
 }

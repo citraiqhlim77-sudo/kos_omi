@@ -361,9 +361,9 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
         </div>
       </div>
 
-      {/* Desktop Table View */}
-      <div className="hidden sm:block bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-        <table className="w-full text-left border-collapse text-xs">
+      {/* Tabel Reservasi Responsif (Tampilan & Peletakan Tombol Sama di Laptop maupun HP) */}
+      <div className="bg-white rounded-2xl border border-zinc-200 overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left border-collapse text-xs">
           <thead>
             <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold">
               <th className="py-3 px-4">Kode & Waktu</th>
@@ -472,104 +472,6 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
             )}
           </tbody>
         </table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="sm:hidden space-y-3">
-        {filtered.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-zinc-200 text-xs text-zinc-500">
-            Tidak ada reservasi ditemukan.
-          </div>
-        ) : (
-          filtered.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white p-4 rounded-2xl border border-zinc-200 space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="tabular-nums text-xs font-bold text-zinc-900 block">
-                    {item.code}
-                  </span>
-                  <span className="text-sm font-extrabold text-blue-700">
-                    Kamar {item.roomCode} · {item.userName}
-                  </span>
-                </div>
-                {getStatusBadge(item.status, item.payment?.status)}
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-zinc-50 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Nomor Kontak:</span>
-                  <span className="font-semibold text-zinc-800">{item.userPhone}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Tgl Masuk:</span>
-                  <span className="font-semibold text-zinc-800">{item.checkInDate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Durasi:</span>
-                  <span className="font-semibold text-zinc-800">{item.durationMonths} Bulan</span>
-                </div>
-                <div className="flex justify-between border-t border-zinc-200 pt-1 mt-1 font-bold">
-                  <span className="text-zinc-800">Total Biaya:</span>
-                  <span className="text-[hsl(186,72%,24%)] tabular-nums">
-                    {formatRupiah(item.totalInitialPayment)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {item.status === 'PENDING_REVIEW' && (
-                  <button
-                    type="button"
-                    disabled={approvingCode === item.code}
-                    onClick={() => handleQuickApprove(item.code)}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>
-                      {approvingCode === item.code
-                        ? 'Menyetujui...'
-                        : 'Setujui & Kirim Invoice Sekarang'}
-                    </span>
-                  </button>
-                )}
-                {item.status === 'APPROVED' && (
-                  <div className="grid grid-cols-1 gap-2">
-                    <button
-                      type="button"
-                      disabled={validatingInvoice === item.payment?.invoiceCode}
-                      onClick={() => handleValidatePayment(item)}
-                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Validasi Pembayaran Lunas (Dana Masuk)</span>
-                    </button>
-                    {item.payment?.status === 'PENDING' && (
-                      <button
-                        type="button"
-                        disabled={validatingInvoice === item.payment?.invoiceCode}
-                        onClick={() => handleRejectPaymentNotReceived(item)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-50 transition-colors cursor-pointer"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span>Tolak (Dana Belum Masuk ke Rekening/DANA)</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-                <NextLink
-                  href={`/pengelola/reservasi/${item.code}`}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[hsl(186,72%,24%)] text-white hover:bg-[hsl(186,74%,18%)] transition-colors"
-                >
-                  <span>Tinjau KTM/KRS & Detail</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </NextLink>
-              </div>
-            </div>
-          ))
-        )}
       </div>
     </div>
   );

@@ -75,7 +75,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
           title="Kembali ke Beranda Publik"
         >
           <Home className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="hidden sm:inline">Beranda</span>
+          <span>Beranda</span>
         </NextLink>
       )}
       <button

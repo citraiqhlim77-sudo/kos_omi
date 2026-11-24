@@ -33,20 +33,18 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   if (isInternalDashboard) {
     return (
-      <div className="flex-grow w-full flex flex-col bg-zinc-50 min-h-screen pb-16 md:pb-0">
+      <div className="flex-grow w-full flex flex-col bg-zinc-50 min-h-screen">
         {children}
-        <MobileBottomNav />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 md:pb-0">
+    <div className="flex flex-col min-h-screen">
       <PublicHeader />
       {isCalonArea && <CalonNav />}
       <main className="flex-grow">{children}</main>
       <PublicFooter />
-      <MobileBottomNav />
     </div>
   );
 };

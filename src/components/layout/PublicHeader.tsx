@@ -63,27 +63,29 @@ export const PublicHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[hsl(240,6%,90%)] transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20 gap-2">
+        <div className="flex flex-wrap items-center justify-between py-2.5 lg:py-0 lg:h-20 gap-2 sm:gap-3">
           {/* Logo Brand */}
-          <NextLink href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[hsl(186,72%,24%)] flex items-center justify-center text-white font-bold text-xl transition-transform group-hover:scale-105 overflow-hidden p-0 shrink-0">
+          <NextLink href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[hsl(186,72%,24%)] flex items-center justify-center text-white font-bold text-xl transition-transform group-hover:scale-105 overflow-hidden p-0 shrink-0">
               <img src="/logo-kos-omi.png" alt="Logo Kos Omi" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight text-[hsl(240,6%,10%)] truncate">
+              <span className="font-heading font-extrabold text-base sm:text-xl tracking-tight text-[hsl(240,6%,10%)] truncate">
                 Kos Omi
               </span>
-              <span className="text-[11px] sm:text-xs text-[hsl(240,4%,46%)] -mt-1 font-medium flex items-center gap-1 truncate">
-                <span className="hidden xl:inline">Sungai Bangek, Padang (UIN Imam Bonjol)</span>
-                <span className="xl:hidden">Sungai Bangek, Padang</span>
+              <span className="text-[10px] sm:text-xs text-[hsl(240,4%,46%)] -mt-0.5 font-medium flex items-center gap-1 truncate">
+                <span>Sungai Bangek, Padang</span>
                 <span className="inline-block w-1 h-1 rounded-full bg-emerald-500 shrink-0"></span>
                 <span className="shrink-0">67 Kamar</span>
               </span>
             </div>
           </NextLink>
 
-          {/* Desktop Navigation (lg+) */}
-          <nav aria-label="Navigasi Utama" className="hidden lg:flex items-center gap-1">
+          {/* Navigation Links (Peletakan sama di Laptop & HP, responsif menyesuaikan layar) */}
+          <nav
+            aria-label="Navigasi Utama"
+            className="order-3 lg:order-2 w-full lg:w-auto flex items-center gap-1 overflow-x-auto pt-1.5 lg:pt-0 border-t lg:border-t-0 border-zinc-100 scrollbar-none"
+          >
             {navLinks.map((link) => {
               const active = isActive(link.href);
               const Icon = link.icon;
@@ -91,26 +93,26 @@ export const PublicHeader: React.FC = () => {
                 <NextLink
                   key={link.href}
                   href={link.href}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                     active
                       ? 'text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] font-semibold'
                       : 'text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] hover:bg-[hsl(210,20%,98%)]'
                   }`}
                 >
-                  <Icon size={16} className={active ? 'text-[hsl(186,72%,24%)]' : 'text-zinc-400'} />
+                  <Icon size={15} className={active ? 'text-[hsl(186,72%,24%)]' : 'text-zinc-400'} />
                   {link.label}
                 </NextLink>
               );
             })}
           </nav>
 
-          {/* Auth CTA Buttons (lg+) */}
-          <div className="hidden lg:flex items-center gap-2 shrink-0">
+          {/* Auth CTA Buttons (Peletakan & tombol sama persis di Laptop & HP) */}
+          <div className="order-2 lg:order-3 flex items-center gap-1.5 sm:gap-2 shrink-0">
             {sessionUser || isOnCalonPortal ? (
               <>
                 <NextLink
                   href={dashboardHref}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] hover:bg-[hsl(180,33%,90%)] px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] hover:bg-[hsl(180,33%,90%)] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <LayoutDashboard size={15} />
                   <span>{sessionUser ? sessionUser.name.split(' ')[0] : 'Dasbor Saya'}</span>
@@ -125,132 +127,22 @@ export const PublicHeader: React.FC = () => {
               <>
                 <NextLink
                   href="/login"
-                  className="text-sm font-medium text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] px-3 py-2 transition-colors whitespace-nowrap"
+                  className="text-xs sm:text-sm font-medium text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-zinc-200 lg:border-transparent transition-colors whitespace-nowrap"
                 >
                   Masuk
                 </NextLink>
                 <NextLink
                   href="/daftar"
-                  className="inline-flex items-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-all active:scale-[0.99] whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-lg transition-all active:scale-[0.99] whitespace-nowrap"
                 >
-                  Daftar Akun
-                  <ArrowRight size={16} />
+                  <span>Daftar Akun</span>
+                  <ArrowRight size={15} />
                 </NextLink>
               </>
             )}
-          </div>
-
-          {/* Mobile & Tablet Menu Button (< lg) */}
-          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 shrink-0">
-            {sessionUser || isOnCalonPortal ? (
-              <NextLink
-                href={dashboardHref}
-                className="inline-flex items-center gap-1 text-xs bg-[hsl(180,33%,95%)] text-[hsl(186,72%,24%)] font-semibold px-2.5 py-1.5 rounded-lg"
-              >
-                <LayoutDashboard size={14} />
-                <span className="max-w-[90px] truncate">
-                  {sessionUser ? sessionUser.name.split(' ')[0] : 'Dasbor'}
-                </span>
-              </NextLink>
-            ) : (
-              <NextLink
-                href="/kamar"
-                className="text-xs bg-[hsl(180,33%,95%)] text-[hsl(186,72%,24%)] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap"
-              >
-                Cari Kamar
-              </NextLink>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors focus:outline-none border border-zinc-200/80"
-              aria-label="Toggle menu navigasi"
-              aria-expanded={isMobileMenuOpen}
-            >
-              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Mobile & Tablet Menu Drawer (< lg) */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-[hsl(240,6%,90%)] bg-white px-4 pt-3 pb-6 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
-          {sessionUser && (
-            <div className="mb-3 p-3 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs font-extrabold text-zinc-900 truncate">{sessionUser.name}</p>
-                <p className="text-[11px] text-zinc-500 truncate">{sessionUser.email}</p>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[hsl(180,33%,95%)] text-[hsl(186,72%,24%)] border border-[hsl(186,50%,82%)] shrink-0">
-                {sessionUser.roleLabel}
-              </span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-            {navLinks.map((link) => {
-              const active = isActive(link.href);
-              const Icon = link.icon;
-              return (
-                <NextLink
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? 'text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] font-semibold'
-                      : 'text-[hsl(240,6%,10%)] hover:bg-[hsl(210,20%,98%)]'
-                  }`}
-                >
-                  <Icon size={18} className={active ? 'text-[hsl(186,72%,24%)]' : 'text-zinc-400'} />
-                  {link.label}
-                </NextLink>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col sm:flex-row gap-2.5">
-            {sessionUser || isOnCalonPortal ? (
-              <>
-                <NextLink
-                  href={dashboardHref}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 px-4 rounded-lg bg-[hsl(186,72%,24%)] text-white text-sm font-semibold hover:bg-[hsl(186,74%,18%)] transition-colors"
-                >
-                  Buka Dasbor Akun Saya
-                </NextLink>
-                <LogoutButton
-                  variant="danger"
-                  label="Keluar dari Akun"
-                  className="w-full"
-                  onAfterLogout={() => {
-                    setSessionUser(null);
-                    setIsMobileMenuOpen(false);
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <NextLink
-                  href="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 px-4 rounded-lg border border-[hsl(240,6%,90%)] text-sm font-semibold text-[hsl(240,6%,10%)] hover:bg-zinc-50 transition-colors"
-                >
-                  Masuk ke Akun
-                </NextLink>
-                <NextLink
-                  href="/daftar"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 px-4 rounded-lg bg-[hsl(186,72%,24%)] text-white text-sm font-semibold hover:bg-[hsl(186,74%,18%)] transition-colors"
-                >
-                  Daftar Calon Penghuni
-                </NextLink>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 };
