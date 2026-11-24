@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { MonthlyBill, TenantProfile } from '@/types/billing';
 import { Room, ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
-import { payMonthlyBillAction } from '@/actions/billing';
+import {
+  payMonthlyBillAction,
+  fetchTenantProfileAction,
+  fetchCurrentMonthlyBillAction,
+  fetchMonthlyBillsAction,
+} from '@/actions/billing';
+import { getClientSession } from '@/lib/auth-client';
 import {
   CreditCard,
   Clock,
@@ -38,11 +44,44 @@ interface PenghuniDashboardClientProps {
 export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = ({
   currentBill: initialCurrentBill,
   recentBills: initialRecentBills,
-  profile,
+  profile: initialProfile,
   room,
 }) => {
+  const [profile, setProfile] = useState<TenantProfile>(initialProfile);
   const [currentBill, setCurrentBill] = useState<MonthlyBill | null>(initialCurrentBill);
   const [recentBills, setRecentBills] = useState<MonthlyBill[]>(initialRecentBills);
+
+  useEffect(() => {
+    const clientUser = getClientSession();
+    if (clientUser && clientUser.email) {
+      const clientEmail = clientUser.email.toLowerCase().trim();
+      if (
+        clientEmail !== 'penghuni@example.com' &&
+        clientEmail !== initialProfile.email.toLowerCase().trim()
+      ) {
+        Promise.all([
+          fetchTenantProfileAction(clientEmail),
+          fetchCurrentMonthlyBillAction(clientEmail),
+          fetchMonthlyBillsAction(clientEmail),
+        ]).then(([syncedProfile, syncedCurrentBill, syncedBills]) => {
+          if (syncedProfile && syncedProfile.email.toLowerCase().trim() === clientEmail) {
+            setProfile(syncedProfile);
+          } else if (clientUser.name && clientUser.name !== 'Pengguna Terdaftar') {
+            setProfile((prev) => ({
+              ...prev,
+              name: clientUser.name,
+              email: clientUser.email,
+              roomCode: clientUser.roomCode || prev.roomCode,
+            }));
+          }
+          if (syncedCurrentBill) setCurrentBill(syncedCurrentBill);
+          if (Array.isArray(syncedBills) && syncedBills.length > 0) {
+            setRecentBills(syncedBills.slice(0, 5));
+          }
+        });
+      }
+    }
+  }, [initialProfile.email]);
 
   // Quick Pay Modal State
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);

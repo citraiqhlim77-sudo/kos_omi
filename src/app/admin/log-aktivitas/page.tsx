@@ -3,6 +3,8 @@ import { fetchAuditLogsAction } from '@/actions/admin';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { AdminAuditClient } from '@/components/admin/AdminAuditClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Log Aktivitas Sistem - Administrator Kos Omi',
   description: 'Catatan audit mutasi data dan aktivitas operasional Kos Omi.',

@@ -1,6 +1,7 @@
 'use server';
 
 import { createHash, randomBytes } from 'node:crypto';
+import { revalidatePath } from 'next/cache';
 import { AuthError, CredentialsSignin } from 'next-auth';
 import { signIn, signOut } from '@/auth';
 import { hashPassword } from '@/lib/auth/password';
@@ -11,6 +12,7 @@ import {
   getResetTokensStore,
   getRoleDashboardPath,
 } from '@/lib/auth-store';
+import { dbGetReservationsByUserEmail } from '@/server/db';
 import {
   validateEmail,
   validateFullName,
@@ -44,7 +46,18 @@ function sha256(value: string): string {
 export async function loginAction(
   email: string,
   password: string
-): Promise<{ success: boolean; message: string; redirectUrl?: string }> {
+): Promise<{
+  success: boolean;
+  message: string;
+  redirectUrl?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserAuthState['role'];
+    phone?: string;
+  };
+}> {
   // Sanitasi & Normalisasi
   const sanitizedEmail = sanitizeString(email).toLowerCase();
 
@@ -80,10 +93,34 @@ export async function loginAction(
   }
 
   const user = findUserByEmail(sanitizedEmail);
+
+  // Jika pengguna adalah CALON_PENGHUNI yang reservasinya sudah divalidasi LUNAS (PAID)
+  // atau sudah masuk daftar Penghuni Aktif (__kosOmiTenancies), promosikan otomatis ke PENGHUNI
+  if (user && user.role === 'CALON_PENGHUNI') {
+    const userReservations = await dbGetReservationsByUserEmail(sanitizedEmail);
+    const hasPaidReservation = userReservations.some((r) => r.status === 'PAID');
+    const tenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
+    const hasActiveTenancy = tenancies.some(
+      (t) => t.userEmail?.toLowerCase().trim() === sanitizedEmail && t.status === 'AKTIF'
+    );
+    if (hasPaidReservation || hasActiveTenancy) {
+      user.role = 'PENGHUNI';
+    }
+  }
+
   return {
     success: true,
     message: 'Login berhasil.',
     redirectUrl: user ? getRoleDashboardPath(user.role) : '/',
+    user: user
+      ? {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+        }
+      : undefined,
   };
 }
 
@@ -140,6 +177,48 @@ export async function registerAction(data: {
     lockedUntil: null,
   };
   getAuthUsersStore().push(newUser);
+
+  // Sinkronkan otomatis ke Daftar Pengguna Admin Kos (/admin/pengguna)
+  const nowIso = new Date().toISOString();
+  if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
+    const existsInAdmin = (global as any).__kosOmiAdminUsers.some(
+      (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+    );
+    if (!existsInAdmin) {
+      (global as any).__kosOmiAdminUsers.unshift({
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: data.phone.trim(),
+        role: 'CALON_PENGHUNI',
+        isActive: true,
+        createdAt: nowIso,
+        lastLoginAt: nowIso,
+      });
+    }
+  }
+
+  // Catat ke Log Notifikasi & Audit Log
+  if (!(global as any).__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 8) {
+    (global as any).__kosOmiNotifLogs = [];
+    (global as any).__kosOmiNotifVer = 8;
+  }
+  (global as any).__kosOmiNotifLogs.unshift({
+    id: `ntf-reg-${Date.now()}`,
+    recipient: newUser.email,
+    recipientName: newUser.name,
+    channel: 'EMAIL',
+    template: `registrasi_akun_calon_penghuni_${newUser.name}`,
+    status: 'SENT',
+    attempts: 1,
+    sentAt: nowIso,
+    createdAt: nowIso,
+  });
+
+  revalidatePath('/admin/pengguna');
+  revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/notifikasi');
+  revalidatePath('/admin/log-aktivitas');
 
   // Auto-login setelah registrasi melalui Auth.js
   try {

@@ -302,7 +302,6 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
                 <th className="py-3 px-4">Lantai</th>
                 <th className="py-3 px-4">Tipe & Spesifikasi</th>
                 <th className="py-3 px-4">Tarif / Semester</th>
-                <th className="py-3 px-4">Deposit</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Aksi Pengelola</th>
               </tr>
@@ -310,7 +309,7 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
             <tbody className="divide-y divide-zinc-100">
               {filteredRooms.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-zinc-500">
+                  <td colSpan={6} className="text-center py-12 text-zinc-500">
                     Tidak ada kamar yang cocok dengan kriteria filter aktif.
                   </td>
                 </tr>
@@ -340,10 +339,6 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
 
                     <td className="py-3.5 px-4 font-bold text-zinc-900 tabular-nums">
                       {formatRupiah(room.monthlyPrice)}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-medium text-zinc-600 tabular-nums">
-                      {formatRupiah(room.depositAmount)}
                     </td>
 
                     <td className="py-3.5 px-4">{getStatusBadge(room.status)}</td>
@@ -428,9 +423,9 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-zinc-500 block">Luas & Deposit</span>
+                  <span className="text-[10px] text-zinc-500 block">Luas & Kapasitas</span>
                   <span className="font-medium text-zinc-700">
-                    {room.areaSqm} m² · Dep. {formatRupiah(room.depositAmount)}
+                    {room.areaSqm} m² · Maks. 2 Orang
                   </span>
                 </div>
               </div>

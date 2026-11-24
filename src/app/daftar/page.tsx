@@ -106,10 +106,28 @@ export default function RegisterPage() {
         return;
       }
 
+      const clientUser: AuthUser = {
+        id: `usr-calon-${Date.now()}`,
+        name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        role: 'CALON_PENGHUNI',
+        roleLabel: 'Calon Penghuni',
+        dashboardPath: '/calon/dashboard',
+        token: `jwt-calon-${Date.now()}`,
+      };
+      setClientSession(clientUser);
+
       setIsSuccess(true);
 
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const customRedirect = searchParams?.get('redirect');
+      const targetUrl =
+        customRedirect && customRedirect.startsWith('/')
+          ? customRedirect
+          : '/kamar';
+
       setTimeout(() => {
-        router.push(res.redirectUrl || '/calon/dashboard');
+        router.push(targetUrl);
         router.refresh();
       }, 1000);
     } catch {
@@ -149,7 +167,7 @@ export default function RegisterPage() {
               <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
               <div>
                 <p className="font-bold text-sm">Pendaftaran Berhasil!</p>
-                <p>Akun Anda telah aktif sebagai Calon Penghuni. Mengalihkan ke dasbor reservasi...</p>
+                <p>Akun Anda telah aktif sebagai Calon Penghuni. Mengalihkan ke halaman pemilihan/reservasi kamar...</p>
               </div>
             </div>
           )}
@@ -158,7 +176,7 @@ export default function RegisterPage() {
             {/* Full Name */}
             <div className="space-y-1.5">
               <label htmlFor="fullName" className="block text-xs font-bold text-zinc-700">
-                Nama Lengkap (Sesuai KTP) <span className="text-rose-500">*</span>
+                Nama Lengkap (Sesuai KTM / KRS) <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">

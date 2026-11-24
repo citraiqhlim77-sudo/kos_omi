@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       type === 'daily' ? 'Tanggal' : 'Bulan',
       'Total Pemasukan (IDR)',
       'Jumlah Transaksi',
-      'Sewa Bulanan (IDR)',
+      'Sewa Semesteran (Rp 5.000.000/semester) (IDR)',
       'Booking (IDR)',
       'Deposit (IDR)',
       'Denda (IDR)',

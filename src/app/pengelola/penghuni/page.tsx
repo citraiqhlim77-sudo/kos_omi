@@ -4,6 +4,8 @@ import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { PenghuniManagerClient } from '@/components/pengelola/PenghuniManagerClient';
 import { fetchAllTenantsAction } from '@/actions/tenancy';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Daftar Penghuni Aktif | Pengelola Kos Omi',
   description: 'Daftar penghuni resmi 67 kamar Kos Omi Sungai Bangek, Padang, status tagihan, dan kontak darurat.',

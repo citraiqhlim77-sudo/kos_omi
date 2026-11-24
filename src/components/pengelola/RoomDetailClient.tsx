@@ -222,15 +222,15 @@ export const RoomDetailClient: React.FC<RoomDetailClientProps> = ({
                   <span className="font-extrabold text-zinc-900 text-sm tabular-nums">
                     {formatRupiah(room.monthlyPrice)}
                   </span>
-                  <span className="text-[10px] text-zinc-400">/bulan</span>
+                  <span className="text-[10px] text-zinc-400 block">/semester (6 bln)</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                  <span className="text-[10px] text-zinc-500 block">Deposit Jaminan</span>
+                  <span className="text-[10px] text-zinc-500 block">Kapasitas Kamar</span>
                   <span className="font-extrabold text-zinc-900 text-sm tabular-nums">
-                    {formatRupiah(room.depositAmount)}
+                    Maks. 2 Orang
                   </span>
-                  <span className="text-[10px] text-zinc-400">1x sewa</span>
+                  <span className="text-[10px] text-zinc-400 block">Rp 2,5 Jt / orang</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100">
@@ -347,15 +347,19 @@ export const RoomDetailClient: React.FC<RoomDetailClientProps> = ({
                       </div>
 
                       <div className="p-2.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-0.5">
-                        <span className="text-[10px] text-zinc-500 block">Tarif Sewa Saat Itu</span>
+                        <span className="text-[10px] text-zinc-500 block">Tarif Sewa Semester</span>
                         <span className="font-bold text-zinc-900 tabular-nums">
-                          {formatRupiah(item.monthlyRent)}/bln
+                          {formatRupiah(item.monthlyRent)} / smt
                         </span>
                       </div>
 
                       <div className="p-2.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-0.5">
-                        <span className="text-[10px] text-zinc-500 block">Status Deposit</span>
-                        <div>{getDepositBadge(item.depositStatus)}</div>
+                        <span className="text-[10px] text-zinc-500 block">Status Pembayaran</span>
+                        <div>
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            {item.status === 'RESERVASI' ? 'Menunggu Pembayaran' : 'Lunas Terverifikasi'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

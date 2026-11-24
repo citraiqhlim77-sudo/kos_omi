@@ -1,34 +1,26 @@
 import { Room, RoomType, RoomStatus } from '@/types/room';
 
-// Koleksi foto kamar kos mahasiswi modern, estetik, hangat, bersih, dan profesional
+// Koleksi foto kamar kos mahasiswi menggunakan aset lokal /rooms/kamar-1.png s/d /rooms/kamar-67.png (100% bebas 404)
 export const AESTHETIC_ROOM_PHOTOS = [
-  'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=85',
+  '/rooms/kamar-1.png',
+  '/rooms/kamar-2.png',
+  '/rooms/kamar-3.png',
+  '/rooms/kamar-4.png',
+  '/rooms/kamar-5.png',
+  '/rooms/kamar-6.png',
+  '/rooms/kamar-7.png',
+  '/rooms/kamar-8.png',
 ];
 
-export const AESTHETIC_BATHROOM_PHOTO =
-  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=85';
+export const AESTHETIC_BATHROOM_PHOTO = '/rooms/kamar-9.png';
 
-export const AESTHETIC_STUDY_PHOTO =
-  'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1200&q=85';
+export const AESTHETIC_STUDY_PHOTO = '/rooms/kamar-10.png';
 
-// 9 Fasilitas Resmi Kos Omi
+// Fasilitas di dalam kamar Kos Omi
 export const KOS_OMI_FACILITIES = [
-  'Kasur & Lemari (2 Orang)',
   'Kamar Mandi Dalam',
-  'Ruang Belajar Umum',
-  'Dapur & Area Cuci',
-  'CCTV 24 Jam',
-  'Wi-Fi, TV & Kulkas',
-  'Alat Olahraga',
-  'Parkir Motor Dalam',
-  'Keamanan 24 Jam',
+  'Kasur',
+  'Lemari',
 ];
 
 function generateRooms(): Room[] {
@@ -50,13 +42,15 @@ function generateRooms(): Room[] {
       type = 'STANDAR_NON_AC';
     }
 
-    const primaryPhoto = AESTHETIC_ROOM_PHOTOS[(num - 1) % AESTHETIC_ROOM_PHOTOS.length];
-    const secondaryPhoto = AESTHETIC_ROOM_PHOTOS[(num + 2) % AESTHETIC_ROOM_PHOTOS.length];
+    const primaryPhoto = `/rooms/kamar-${num}.png`;
+    const secondaryPhoto = `/rooms/kamar-${(num % 67) + 1}.png`;
+    const tertiaryPhoto = `/rooms/kamar-${((num + 1) % 67) + 1}.png`;
+    const quaternaryPhoto = `/rooms/kamar-${((num + 2) % 67) + 1}.png`;
     const photos = [
       primaryPhoto,
       secondaryPhoto,
-      AESTHETIC_BATHROOM_PHOTO,
-      AESTHETIC_STUDY_PHOTO,
+      tertiaryPhoto,
+      quaternaryPhoto,
     ];
 
     // Tarif seragam Rp 5.000.000 per semester per kamar (Lantai 1 & Lantai 2, kapasitas 1 kamar 2 orang putri)

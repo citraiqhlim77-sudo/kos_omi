@@ -36,7 +36,7 @@ export function KontakClient() {
   };
 
   const googleMapsUrl =
-    'https://www.google.com/maps/search/?api=1&query=59F5%2B25+Balai+Gadang,+Jalan+Ekora,+Sungai+Bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586';
+    'https://www.google.com/maps/search/?api=1&query=Kostan+Omi,+Jalan+ekora,+sungai+bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586';
 
   return (
     <div className="bg-zinc-50 min-h-screen py-10 md:py-16">
@@ -138,8 +138,8 @@ export function KontakClient() {
               </div>
               <div className="rounded-lg overflow-hidden border border-zinc-200 h-56 bg-zinc-100">
                 <iframe
-                  title="Lokasi Kos Omi Sungai Bangek"
-                  src="https://maps.google.com/maps?q=59F5%2B25+Balai+Gadang,+Jalan+Ekora,+Sungai+Bangek,+Kota+Padang,+Sumatera+Barat+25586&ll=-0.827438,100.357938&z=18&ie=UTF8&iwloc=&output=embed"
+                  title="Lokasi Kostan Omi Sungai Bangek"
+                  src="https://maps.google.com/maps?q=Kostan+Omi,+Jalan+ekora,+sungai+bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586&hl=id&z=18&output=embed"
                   className="w-full h-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"

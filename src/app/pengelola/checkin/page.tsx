@@ -4,6 +4,8 @@ import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { CheckinManagerClient } from '@/components/pengelola/CheckinManagerClient';
 import { fetchCheckinCandidatesAction } from '@/actions/tenancy';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Check-in Penghuni | Pengelola Kos Omi',
   description: 'Penerimaan dan proses check-in calon penghuni dengan status reservasi lunas di Kos Omi Sungai Bangek, Padang.',

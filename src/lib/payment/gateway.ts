@@ -74,6 +74,24 @@ export interface PaymentGateway {
   ): boolean;
 }
 
+/**
+ * Daftar kanal pembayaran resmi Midtrans Snap yang diaktifkan:
+ * Transfer Bank / Virtual Account (bca_va, bri_va, bni_va, echannel, permata_va), QRIS (qris), & E-Wallet (dana, gopay, shopeepay)
+ */
+export const MIDTRANS_ENABLED_PAYMENTS = [
+  'bca_va',
+  'bri_va',
+  'bni_va',
+  'echannel',
+  'permata_va',
+  'qris',
+  'dana',
+  'gopay',
+  'shopeepay',
+] as const;
+
+export const MIDTRANS_ENABLED_VA_PAYMENTS = MIDTRANS_ENABLED_PAYMENTS;
+
 // In-memory cache & concurrency lock untuk mencegah request ganda pada invoice yang sama
 const activeSnapTransactionsCache = new Map<string, SnapTransactionResult>();
 const pendingSnapRequests = new Map<string, Promise<SnapTransactionResult>>();
@@ -85,7 +103,7 @@ export class MidtransGateway implements PaymentGateway {
   private isProduction: boolean;
 
   constructor() {
-    this.serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-dummy-key-kosomi';
+    this.serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-sample-key';
     this.isProduction = process.env.MIDTRANS_IS_PRODUCTION === 'true';
     this.snapBaseUrl =
       process.env.MIDTRANS_SNAP_BASE_URL ||
@@ -163,9 +181,10 @@ export class MidtransGateway implements PaymentGateway {
             name: `Pembayaran Sewa Kos Omi - ${cleanOrderId}`,
           },
         ],
-        credit_card: {
-          secure: true,
-        },
+        enabled_payments:
+          params.enabledPayments && params.enabledPayments.length > 0
+            ? params.enabledPayments
+            : [...MIDTRANS_ENABLED_VA_PAYMENTS],
         callbacks: params.callbacks || {
           finish: `${baseUrl}/pembayaran/selesai?order_id=${cleanOrderId}`,
         },
@@ -177,8 +196,10 @@ export class MidtransGateway implements PaymentGateway {
       const isDummyKey =
         !this.serverKey ||
         this.serverKey.includes('dummy') ||
+        this.serverKey.includes('sample') ||
         this.serverKey.includes('xxxx') ||
-        this.serverKey === 'SB-Mid-server-dummy-key-kosomi';
+        this.serverKey === 'SB-Mid-server-dummy-key-kosomi' ||
+        this.serverKey === 'SB-Mid-server-sample-key';
 
       if (!isDummyKey) {
         try {
@@ -276,6 +297,7 @@ export class MidtransGateway implements PaymentGateway {
           name: `Pembayaran Sewa Kos Omi - ${payment.invoiceCode}`,
         },
       ],
+      enabledPayments: [...MIDTRANS_ENABLED_VA_PAYMENTS],
     });
   }
 

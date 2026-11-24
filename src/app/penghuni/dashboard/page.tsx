@@ -9,6 +9,8 @@ import {
 } from '@/actions/billing';
 import { fetchRoomByCodeAction } from '@/actions/rooms';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Dasbor Penghuni Aktif | Kos Omi',
   description: 'Informasi tagihan sewa bulanan, kartu kamar aktif 1, dan riwayat pembayaran resmi Kos Omi.',

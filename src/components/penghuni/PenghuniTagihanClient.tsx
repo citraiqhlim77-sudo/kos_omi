@@ -30,7 +30,9 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
 
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<MonthlyBill | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<string>('QRIS');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bca_va');
+  const [isPaymentValid, setIsPaymentValid] = useState<boolean>(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -52,12 +54,15 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
 
   const openPayModal = (bill: MonthlyBill) => {
     setSelectedBill(bill);
+    setPayError(null);
+    setIsPaymentValid(false);
     setIsPayModalOpen(true);
   };
 
   const handlePaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBill) return;
+    setPayError(null);
 
     setIsPaying(true);
     const res = await payMonthlyBillAction(selectedBill.invoiceCode, selectedMethod);
@@ -101,7 +106,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
             Daftar Tagihan & Pembayaran Kos
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Mendukung pembayaran via QRIS, Transfer Bank (BRI, BCA, BSI, Bank Nagari, SeaBank), serta E-Wallet (DANA & ShopeePay).
+            Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
           </p>
         </div>
 
@@ -323,7 +328,14 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                 selectedMethod={selectedMethod}
                 onSelectMethod={setSelectedMethod}
                 amountFormatted={formatRupiah(selectedBill.totalAmount)}
+                onValidationChange={setIsPaymentValid}
               />
+
+              {payError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+                  {payError}
+                </div>
+              )}
 
               <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center gap-2 text-xs text-zinc-600">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />

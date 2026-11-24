@@ -5,6 +5,8 @@ import { fetchPaymentStatusFromServerAction } from '@/actions/payments';
 import { fetchRoomByCodeAction } from '@/actions/rooms';
 import { PaymentInvoiceClient } from '@/components/calon/PaymentInvoiceClient';
 
+export const dynamic = 'force-dynamic';
+
 interface CalonPaymentPageProps {
   params: Promise<{ invoiceId: string }>;
 }

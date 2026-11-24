@@ -4,6 +4,8 @@ import { fetchAllReservationsAction } from '@/actions/reservations';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { ReservasiManagerClient } from '@/components/pengelola/ReservasiManagerClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Daftar Reservasi Masuk - Pengelola | Kos Omi',
   description:
@@ -23,7 +25,7 @@ export default async function PengelolaReservasiListPage() {
             Verifikasi Pengajuan Reservasi
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Periksa kelengkapan identitas KTP calon penghuni, setujui untuk menerbitkan invoice booking 24 jam, atau tolak dengan alasan resmi.
+            Periksa kelengkapan identitas KTM / KRS mahasiswi calon penghuni, setujui untuk menerbitkan invoice booking 24 jam, atau tolak dengan alasan resmi.
           </p>
         </div>
 

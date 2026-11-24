@@ -7,6 +7,8 @@ import {
   fetchFinanceTransactionsAction,
 } from '@/actions/finance';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Dasbor Staf Keuangan | Kos Omi',
   description: 'Rekapitulasi transaksi pembayaran Midtrans Snap, rekonsiliasi tagihan, dan tren pemasukan Kos Omi.',

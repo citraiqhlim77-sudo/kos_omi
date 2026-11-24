@@ -6,7 +6,7 @@ export default function NotFound() {
   const quickLinks = [
     {
       title: 'Katalog 67 Kamar',
-      desc: 'Cari kamar kosong lantai 1-5 tipe AC & Non-AC',
+      desc: 'Cari kamar kosong Lantai 1 & Lantai 2 (Kamar No. 1–67)',
       href: '/kamar',
       icon: BedDouble,
     },

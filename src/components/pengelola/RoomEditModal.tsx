@@ -13,21 +13,9 @@ interface RoomEditModalProps {
 }
 
 const AVAILABLE_FACILITIES = [
-  'Kasur Springbed Berkualitas',
-  'Lemari Pakaian 2 Pintu',
-  'Meja Kerja & Belajar',
-  'Kursi Ergonomis',
-  'Wi-Fi Kecepatan Tinggi 100 Mbps',
-  'Sirkulasi Udara & Jendela Luar',
-  'Token Listrik Mandiri Tiap Kamar',
-  'AC Daikin 1/2 PK Hemat Energi',
-  'Kamar Mandi Dalam dengan Shower',
-  'Water Heater Otomatis',
-  'Kloset Duduk Toto & Bidet',
-  'Cermin Rias & Rak Dinding',
-  'Kipas Angin Dinding Cosmos',
-  'Exhaust Fan Sirkulasi Sejuk',
-  'Kamar Mandi Luar Bersih (Rasio 1:2)',
+  'Kamar Mandi Dalam',
+  'Kasur',
+  'Lemari',
 ];
 
 export const RoomEditModal: React.FC<RoomEditModalProps> = ({

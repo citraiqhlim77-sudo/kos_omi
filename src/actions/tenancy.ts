@@ -25,22 +25,88 @@ declare global {
   var __kosOmiCheckinCandidates: CheckinCandidate[] | undefined;
 }
 
-const initialTenancies: TenancyRecord[] = [];
+const initialTenancies: TenancyRecord[] = [
+  {
+    id: 'ten-studi-kasus-1',
+    userId: 'usr-calon-zahra',
+    userName: 'Zahra Aulia Putri',
+    userPhone: '081234567890',
+    userEmail: 'zahra.aulia@uinib.ac.id',
+    userNik: '2214010045',
+    idCardUrl: '/rooms/kamar-1.png',
+    roomId: 'room-1',
+    roomCode: '1',
+    roomFloor: 1,
+    roomType: 'STANDAR_NON_AC',
+    monthlyPrice: 5000000,
+    depositAmount: 0,
+    checkInDate: '2026-11-10',
+    contractEndDate: '2027-05-10',
+    checkOutDate: null,
+    dueDay: 5,
+    status: 'AKTIF',
+    depositRefunded: false,
+    unpaidBillsCount: 0,
+    totalUnpaidAmount: 0,
+    unpaidInvoices: [],
+    pastInvoices: [
+      {
+        id: 'inv-past-studi-kasus-1',
+        invoiceNumber: 'INV-202611-1',
+        periodMonth: 'Sewa Semester Ganjil 2026/2027 (6 Bulan)',
+        amount: 5000000,
+        paidAt: new Date().toISOString(),
+        paymentMethod: 'QRIS / Transfer Bank',
+        status: 'LUNAS',
+      },
+    ],
+    emergencyContact: {
+      name: 'Hj. Rahmawati (Ibu Kandung)',
+      relation: 'Orang Tua',
+      phone: '081363459988',
+    },
+  },
+];
 
-const initialCheckinCandidates: CheckinCandidate[] = [];
+const initialCheckinCandidates: CheckinCandidate[] = [
+  {
+    id: 'rsv-studi-kasus-1',
+    reservationCode: 'RSV-202611-1',
+    userId: 'usr-calon-zahra',
+    userName: 'Zahra Aulia Putri',
+    userPhone: '081234567890',
+    userEmail: 'zahra.aulia@uinib.ac.id',
+    userNik: '2214010045',
+    roomId: 'room-1',
+    roomCode: '1',
+    roomFloor: 1,
+    roomType: 'STANDAR_NON_AC',
+    startDate: '2026-11-10',
+    durationMonths: 6,
+    bookingAmount: 5000000,
+    depositAmount: 0,
+    totalPaid: 5000000,
+    invoiceCode: 'INV-202611-1',
+    paidAt: new Date().toISOString(),
+    paymentMethod: 'QRIS / Transfer Bank',
+    idCardUrl: '/rooms/kamar-1.png',
+    notes: 'Studi Kasus Kamar 1 — Mahasiswi FEBI UIN Imam Bonjol Padang',
+    status: 'LUNAS',
+  },
+];
 
 function getTenanciesStore(): TenancyRecord[] {
-  if (!global.__kosOmiTenancies || (global as any).__kosOmiTenanciesVer !== 8) {
+  if (!global.__kosOmiTenancies || (global as any).__kosOmiTenanciesVer !== 12) {
     global.__kosOmiTenancies = [...initialTenancies];
-    (global as any).__kosOmiTenanciesVer = 8;
+    (global as any).__kosOmiTenanciesVer = 12;
   }
   return global.__kosOmiTenancies;
 }
 
 function getCheckinCandidatesStore(): CheckinCandidate[] {
-  if (!global.__kosOmiCheckinCandidates || (global as any).__kosOmiCandidatesVer !== 8) {
+  if (!global.__kosOmiCheckinCandidates || (global as any).__kosOmiCandidatesVer !== 12) {
     global.__kosOmiCheckinCandidates = [...initialCheckinCandidates];
-    (global as any).__kosOmiCandidatesVer = 8;
+    (global as any).__kosOmiCandidatesVer = 12;
   }
   return global.__kosOmiCheckinCandidates;
 }
@@ -258,9 +324,8 @@ export async function checkInTenant(
   tenancies.unshift(newTenancy);
 
   // Sinkronkan ke Portal Penghuni (global.__kosOmiBillingState)
-  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 8) {
+  if (!global.__kosOmiBillingState) {
     global.__kosOmiBillingState = { bills: [], profiles: [] };
-    (global as any).__kosOmiBillingVer = 8;
   }
   global.__kosOmiBillingState.profiles.unshift({
     id: candidate.userId,
@@ -299,9 +364,8 @@ export async function checkInTenant(
   });
 
   // Catat Notifikasi Check-in ke Admin Monitoring Notifikasi
-  if (!(global as any).__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 8) {
+  if (!(global as any).__kosOmiNotifLogs) {
     (global as any).__kosOmiNotifLogs = [];
-    (global as any).__kosOmiNotifVer = 8;
   }
   const nowIso = new Date().toISOString();
   (global as any).__kosOmiNotifLogs.unshift({

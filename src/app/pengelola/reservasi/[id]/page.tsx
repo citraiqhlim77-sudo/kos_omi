@@ -5,6 +5,8 @@ import { fetchReservationByCodeAction } from '@/actions/reservations';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { ReservasiVerificationClient } from '@/components/pengelola/ReservasiVerificationClient';
 
+export const dynamic = 'force-dynamic';
+
 interface PengelolaReservationDetailPageProps {
   params: Promise<{ id: string }>;
 }

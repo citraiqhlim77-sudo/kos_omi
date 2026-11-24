@@ -9,7 +9,12 @@ import {
   MonthlyTrendData,
   GatewayReconciliationResult,
   GatewayReconciliationItem,
+  OperationalDecisionAnalytics,
 } from '@/types/finance';
+import {
+  defaultFallbackTransactions,
+  getOperationalDecisionAnalytics,
+} from '@/lib/reports/revenue';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { dispatchBillingOverdue } from '@/lib/notify/dispatch';
@@ -22,37 +27,46 @@ declare global {
   var __kosOmiOverdueBills: OverdueBill[] | undefined;
 }
 
-const initialTransactions: PaymentTransaction[] = [];
+const initialTransactions: PaymentTransaction[] = [
+  {
+    id: 'trx-studi-kasus-1',
+    orderId: 'INV-202611-1',
+    invoiceNumber: 'INV-202611-1',
+    midtransTransactionId: 'MID-202611-0001',
+    userName: 'Zahra Aulia Putri',
+    userEmail: 'zahra.aulia@uinib.ac.id',
+    userPhone: '081234567890',
+    roomCode: '1',
+    category: 'BOOKING',
+    paymentType: 'qris',
+    grossAmount: 5000000,
+    transactionStatus: 'pending',
+    fraudStatus: 'accept',
+    createdAt: '2026-11-08T09:15:00+07:00',
+  },
+  ...defaultFallbackTransactions.filter((tx) => tx.orderId !== 'INV-202611-1'),
+];
 
 const initialOverdueBills: OverdueBill[] = [];
 
 const monthlyTrendMock: MonthlyTrendData[] = [
-  { month: '2024-07', label: 'Jul 24', totalIncome: 58450000, rentIncome: 51850000, bookingIncome: 6600000, transactionCount: 48 },
-  { month: '2024-08', label: 'Agt 24', totalIncome: 62100000, rentIncome: 53300000, bookingIncome: 8800000, transactionCount: 52 },
-  { month: '2024-09', label: 'Sep 24', totalIncome: 65800000, rentIncome: 57000000, bookingIncome: 8800000, transactionCount: 54 },
-  { month: '2024-10', label: 'Okt 24', totalIncome: 63900000, rentIncome: 57300000, bookingIncome: 6600000, transactionCount: 53 },
-  { month: '2024-11', label: 'Nov 24', totalIncome: 67250000, rentIncome: 59450000, bookingIncome: 7800000, transactionCount: 56 },
-  { month: '2024-12', label: 'Des 24', totalIncome: 69800000, rentIncome: 61000000, bookingIncome: 8800000, transactionCount: 58 },
-  { month: '2025-01', label: 'Jan 25', totalIncome: 71450000, rentIncome: 62650000, bookingIncome: 8800000, transactionCount: 60 },
-  { month: '2025-02', label: 'Feb 25', totalIncome: 68900000, rentIncome: 62300000, bookingIncome: 6600000, transactionCount: 57 },
-  { month: '2025-03', label: 'Mar 25', totalIncome: 73200000, rentIncome: 64400000, bookingIncome: 8800000, transactionCount: 61 },
-  { month: '2025-04', label: 'Apr 25', totalIncome: 74650000, rentIncome: 65850000, bookingIncome: 8800000, transactionCount: 62 },
-  { month: '2025-05', label: 'Mei 25', totalIncome: 76800000, rentIncome: 66900000, bookingIncome: 9900000, transactionCount: 64 },
-  { month: '2025-06', label: 'Jun 25', totalIncome: 79250000, rentIncome: 68250000, bookingIncome: 11000000, transactionCount: 66 },
+  { month: '2026-09', label: 'Sep 2026', totalIncome: 10000000, rentIncome: 5000000, bookingIncome: 5000000, transactionCount: 2 },
+  { month: '2026-10', label: 'Okt 2026', totalIncome: 10000000, rentIncome: 5000000, bookingIncome: 5000000, transactionCount: 2 },
+  { month: '2026-11', label: 'Nov 2026', totalIncome: 10000000, rentIncome: 10000000, bookingIncome: 0, transactionCount: 2 },
 ];
 
 function getTransactionsStore(): PaymentTransaction[] {
-  if (!global.__kosOmiTransactions || (global as any).__kosOmiFinanceVer !== 8) {
+  if (!global.__kosOmiTransactions || (global as any).__kosOmiFinanceVer !== 15) {
     global.__kosOmiTransactions = [...initialTransactions];
-    (global as any).__kosOmiFinanceVer = 8;
+    (global as any).__kosOmiFinanceVer = 15;
   }
   return global.__kosOmiTransactions;
 }
 
 function getOverdueBillsStore(): OverdueBill[] {
-  if (!global.__kosOmiOverdueBills || (global as any).__kosOmiOverdueVer !== 8) {
+  if (!global.__kosOmiOverdueBills || (global as any).__kosOmiOverdueVer !== 10) {
     global.__kosOmiOverdueBills = [...initialOverdueBills];
-    (global as any).__kosOmiOverdueVer = 8;
+    (global as any).__kosOmiOverdueVer = 10;
   }
   return global.__kosOmiOverdueBills;
 }
@@ -91,7 +105,13 @@ export async function fetchFinanceDashboardStatsAction(): Promise<FinanceDashboa
         .reduce((s, t) => s + t.grossAmount, 0),
     },
     monthlyTrends: monthlyTrendMock,
+    analytics: getOperationalDecisionAnalytics(),
   };
+}
+
+export async function fetchOperationalAnalyticsAction(): Promise<OperationalDecisionAnalytics> {
+  getTransactionsStore();
+  return getOperationalDecisionAnalytics();
 }
 
 // 2. Fetch Finance Transactions with Filter & Search
@@ -139,11 +159,11 @@ export async function fetchTransactionByIdAction(
 
 // 4. Fetch Daily Report
 export async function fetchDailyReportAction(
-  month: string = '2025-06'
+  month: string = '2026-11'
 ): Promise<DailyReportRow[]> {
   const [yearStr, monthStr] = month.split('-');
-  const year = parseInt(yearStr || '2025', 10);
-  const monthNum = parseInt(monthStr || '6', 10);
+  const year = parseInt(yearStr || '2026', 10);
+  const monthNum = parseInt(monthStr || '11', 10);
 
   // Ambil data agregasi terverifikasi (Asia/Jakarta)
   const { getDailyRevenueReport } = await import('@/lib/reports/revenue');
@@ -219,7 +239,7 @@ export async function fetchDailyReportAction(
 
 // 5. Fetch Monthly Report
 export async function fetchMonthlyReportAction(
-  year: number = 2025
+  year: number = 2026
 ): Promise<MonthlyReportRow[]> {
   const { getMonthlyRevenueReport } = await import('@/lib/reports/revenue');
   const aggregatedMonthly = await getMonthlyRevenueReport(year);

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Generator Tagihan Bulanan & Cron Job (PRD Bab 5.E & Bab 11 Task 2.8)
  *
  * Logika Bisnis:
@@ -161,13 +161,28 @@ export function getActiveTenanciesStore(): BillingTenancy[] {
 export async function generateMonthlyBills(
   options?: GenerateBillingOptions
 ): Promise<GenerateBillingResult> {
-  const now = options?.targetDate || new Date();
+  let now = options?.targetDate;
+  if (!now && options?.forcePeriod) {
+    const [fy, fm] = options.forcePeriod.split('-').map((v) => parseInt(v, 10));
+    if (fy && fm) {
+      now = new Date(fy, fm - 1, 1);
+    }
+  }
+  if (!now) {
+    now = new Date();
+  }
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  // Akses global storage tagihan bulanan
+  // Akses global storage tagihan bulanan (inisialisasi otomatis jika belum ada)
+  if (!global.__kosOmiBillingState) {
+    global.__kosOmiBillingState = {
+      bills: [],
+      profiles: [],
+    };
+  }
   const globalState = global.__kosOmiBillingState;
-  const existingBills = globalState ? globalState.bills : [];
+  const existingBills = globalState.bills;
 
   // Akses database pembayaran server
   const serverDb = (global as any).__kosOmiServerDb;
@@ -336,7 +351,7 @@ export async function generateMonthlyBills(
       tenantName: tenancy.tenantName,
       tenantEmail: tenancy.tenantEmail,
       amount: tenancy.monthlyPrice,
-      dueDate: dueDateFormatted,
+      dueDate: dueDateIso,
       periodMonth: `${getMonthName(targetMonth)} ${targetYear}`,
       periodKey: targetPeriodKey,
     });

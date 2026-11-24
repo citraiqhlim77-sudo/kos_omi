@@ -116,7 +116,7 @@ export default async function HomePage() {
       name: 'Lantai 1 (Kamar No. 1 – 33)',
       price: 5000000,
       size: 'Isi 1 Kamar 2 Orang',
-      image: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1200&q=85',
+      image: '/rooms/kamar-1.png',
       highlights: [
         'Kasur & Lemari (Kapasitas 2 Orang)',
         'Kamar Mandi Dalam Pribadi',
@@ -131,7 +131,7 @@ export default async function HomePage() {
       name: 'Lantai 2 (Kamar No. 34 – 67)',
       price: 5000000,
       size: 'Isi 1 Kamar 2 Orang',
-      image: 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef4?auto=format&fit=crop&w=1200&q=85',
+      image: '/rooms/kamar-34.png',
       highlights: [
         'Kasur & Lemari (Kapasitas 2 Orang)',
         'Kamar Mandi Dalam Pribadi',
@@ -219,7 +219,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Lock size={16} className="text-sky-600" />
-                  <span>BRI, BCA, BSI, Nagari, SeaBank, DANA, ShopeePay, QRIS</span>
+                  <span>Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</span>
                 </div>
               </div>
             </div>
@@ -228,7 +228,7 @@ export default async function HomePage() {
               <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-white">
                 <div className="aspect-[4/3] relative">
                   <Image
-                    src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1200&q=85"
+                    src="/rooms/kamar-1.png"
                     alt="Kamar Kos Omi Sungai Bangek, Dekat Kampus III UIN Imam Bonjol Padang"
                     fill
                     priority
@@ -449,32 +449,32 @@ export default async function HomePage() {
               Alur Reservasi & Pembayaran Mudah
             </h2>
             <p className="text-zinc-400 text-sm sm:text-base">
-              Mendukung pembayaran via Transfer Bank (BRI, BCA, BSI, Bank Nagari, SeaBank), E-Wallet (DANA, ShopeePay), dan QRIS.
+              Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-zinc-800/80 p-6 rounded-xl border border-zinc-700 space-y-3">
               <span className="text-xs font-bold text-sky-400">Langkah 1</span>
-              <h3 className="font-heading font-bold text-lg text-white">Pilih Kamar</h3>
+              <h3 className="font-heading font-bold text-lg text-white">Lihat Kamar & Daftar Akun</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Pilih kamar berstatus Tersedia di Lantai 1 atau Lantai 2 sesuai keinginan Anda.
+                Cek katalog 67 kamar dari luar, lalu daftar akun Calon Penghuni terlebih dahulu untuk bisa memesan kamar.
               </p>
             </div>
 
             <div className="bg-zinc-800/80 p-6 rounded-xl border border-zinc-700 space-y-3">
               <span className="text-xs font-bold text-sky-400">Langkah 2</span>
-              <h3 className="font-heading font-bold text-lg text-white">Isi Data & KTP</h3>
+              <h3 className="font-heading font-bold text-lg text-white">Pilih Kamar & Unggah KTM/KRS</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Lengkapi formulir pemesanan kamar dan unggah foto identitas KTP untuk diverifikasi pengelola.
+                Setelah masuk akun, pilih nomor kamar, isi NIM, dan unggah foto KTM atau KRS untuk diverifikasi pengelola.
               </p>
             </div>
 
             <div className="bg-zinc-800/80 p-6 rounded-xl border border-zinc-700 space-y-3">
               <span className="text-xs font-bold text-sky-400">Langkah 3</span>
-              <h3 className="font-heading font-bold text-lg text-white">Bayar via Bank / E-Wallet / QRIS</h3>
+              <h3 className="font-heading font-bold text-lg text-white">Bayar via Midtrans</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Bayar tagihan Rp 5.000.000/semester melalui BRI, BCA, BSI, Bank Nagari, SeaBank, DANA, ShopeePay, atau QRIS.
+                Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
               </p>
             </div>
 

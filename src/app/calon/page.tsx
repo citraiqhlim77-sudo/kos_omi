@@ -21,11 +21,14 @@ export default async function CalonPage({ searchParams }: CalonPageProps) {
   const email = resolvedParams?.email;
   const user = await getCurrentUser();
 
-  // Email aktif berdasarkan sesi login atau query param atau fallback akun demo
-  const currentEmail = user?.email || email || 'calon@example.com';
+  // Email & nama aktif berdasarkan sesi login atau query param
+  const currentEmail = user?.email || email || '';
+  const currentUserName = user?.name || '';
 
-  // Ambil seluruh reservasi calon penghuni dari server database
-  const reservations = await fetchMyReservationsAction(currentEmail);
+  // Ambil seluruh reservasi milik calon penghuni yang sedang login
+  const reservations = currentEmail
+    ? await fetchMyReservationsAction(currentEmail)
+    : [];
 
   return (
     <div className="bg-zinc-50 min-h-screen py-8 md:py-14">
@@ -44,6 +47,7 @@ export default async function CalonPage({ searchParams }: CalonPageProps) {
         <CalonDashboardClient
           initialReservations={reservations}
           currentEmail={currentEmail}
+          currentUserName={currentUserName}
         />
       </div>
     </div>

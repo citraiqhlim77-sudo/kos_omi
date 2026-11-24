@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { MonthlyTrendData } from '@/types/finance';
@@ -39,7 +39,7 @@ export const FinancialTrendChart: React.FC<FinancialTrendChartProps> = ({ data }
             </h2>
           </div>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Grafik agregasi pendapatan sewa bulanan dan deposit booking resmi Kos Omi
+            Grafik agregasi pendapatan Sewa Semesteran (Rp 5.000.000/semester) dan booking resmi Kos Omi
           </p>
         </div>
 
@@ -47,11 +47,11 @@ export const FinancialTrendChart: React.FC<FinancialTrendChartProps> = ({ data }
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-[hsl(186,72%,24%)]" />
-            <span className="text-zinc-600 font-medium">Sewa Kamar</span>
+            <span className="text-zinc-600 font-medium">Sewa Semesteran (Rp 5.000.000/semester)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-sky-400" />
-            <span className="text-zinc-600 font-medium">Booking / Deposit</span>
+            <span className="text-zinc-600 font-medium">Booking Kamar Baru</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3.5 h-1 rounded-full bg-amber-500" />
@@ -74,7 +74,7 @@ export const FinancialTrendChart: React.FC<FinancialTrendChartProps> = ({ data }
             </span>
           </div>
           <div>
-            <span className="text-zinc-400 block text-[11px]">Sewa Bulanan:</span>
+            <span className="text-zinc-400 block text-[11px]">Sewa Semesteran (Rp 5.000.000/semester):</span>
             <span className="font-bold text-zinc-800 text-sm tabular-nums">
               {formatRupiah(activePoint.rentIncome)}
             </span>

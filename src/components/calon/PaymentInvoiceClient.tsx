@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
@@ -7,6 +7,14 @@ import { useRouter } from 'next/navigation';
 import { PaymentInvoice, Reservation } from '@/types/reservation';
 import { Room, ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
+import {
+  submitPaymentConfirmationAction,
+  resetPaymentToUnpaidAction,
+} from '@/actions/payments';
+import {
+  KosOmiPaymentSelector,
+  KOS_OMI_PAYMENT_METHODS,
+} from '@/components/payment/KosOmiPaymentMethods';
 import dynamic from 'next/dynamic';
 
 // Dynamic import untuk modal pembayaran Midtrans Snap (Task 3.6 Performa & Optimasi)
@@ -47,14 +55,47 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
   const router = useRouter();
   const [invoice, setInvoice] = useState<PaymentInvoice>(initialInvoice);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isPayingDirect, setIsPayingDirect] = useState(false);
+  const [payFeedback, setPayFeedback] = useState<string | null>(null);
+
+  const handleDirectPay = async () => {
+    setPaymentError(null);
+    setIsPayingDirect(true);
+    setPayFeedback(null);
+    const res = await submitPaymentConfirmationAction(
+      invoice.invoiceCode,
+      selectedMethod
+    );
+    setIsPayingDirect(false);
+    if (res.success && res.payment) {
+      setInvoice(res.payment);
+      setPayFeedback(res.message);
+      router.refresh();
+    } else {
+      setPaymentError(res.message || 'Gagal mengirim konfirmasi pembayaran.');
+    }
+  };
+
+  const handleResetToUnpaid = async () => {
+    setIsPayingDirect(true);
+    setPayFeedback(null);
+    setPaymentError(null);
+    const res = await resetPaymentToUnpaidAction(invoice.invoiceCode);
+    setIsPayingDirect(false);
+    if (res.success && res.payment) {
+      setInvoice(res.payment);
+      router.refresh();
+    }
+  };
 
   const status = invoice.status;
   const isUnpaid = status === 'UNPAID' || status === 'PENDING';
   const isPaid = status === 'SETTLEMENT';
   const isExpired = status === 'EXPIRED' || status === 'CANCELLED';
 
-  const monthlyPrice = room?.monthlyPrice || reservation?.monthlyPrice || Math.round(invoice.amount / 2);
-  const depositAmount = room?.depositAmount || reservation?.depositAmount || Math.round(invoice.amount / 2);
+  const monthlyPrice = room?.monthlyPrice || reservation?.monthlyPrice || invoice.amount;
 
   // Time remaining calculation
   const expiresAtDate = new Date(invoice.expiresAt);
@@ -144,7 +185,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                 <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-bold text-sm text-amber-950">
-                    Menunggu Pembayaran (Sisa Waktu: Â±{diffHours} Jam)
+                    Menunggu Pembayaran (Sisa Waktu: ±{diffHours} Jam)
                   </p>
                   <p className="text-amber-800 leading-relaxed">
                     Sesuai SOP Kos Omi, kamar berstatus <strong>DIPESAN</strong> selama 24 jam. Mohon selesaikan pembayaran sebelum batas waktu berakhir agar reservasi tidak dibatalkan otomatis oleh sistem.
@@ -154,16 +195,27 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
             )}
 
             {isPaid && (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold text-sm text-emerald-950">
-                    Pembayaran Berhasil Diverifikasi di Server!
-                  </p>
-                  <p className="text-emerald-800 leading-relaxed">
-                    Status transaksi telah resmi tercatat sebagai <strong>SETTLEMENT</strong>. Kamar telah terkunci dan Anda siap untuk melakukan proses check-in.
-                  </p>
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-sm text-emerald-950">
+                      Pembayaran Berhasil Diverifikasi di Server!
+                    </p>
+                    <p className="text-emerald-800 leading-relaxed">
+                      Status transaksi telah resmi tercatat sebagai <strong>SETTLEMENT</strong>. Kamar telah terkunci dan Anda siap untuk melakukan proses check-in.
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  disabled={isPayingDirect}
+                  onClick={handleResetToUnpaid}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs shrink-0 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Ubah ke Belum Dibayar (Uji Ulang)</span>
+                </button>
               </div>
             )}
 
@@ -191,7 +243,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                   {reservation?.userName || 'Calon Penghuni Kos Omi'}
                 </div>
                 <div className="text-zinc-600">
-                  {reservation?.userPhone || '0812-xxxx-xxxx'} â€¢ {reservation?.userEmail || 'email@domain.com'}
+                  {reservation?.userPhone || '0812-xxxx-xxxx'} • {reservation?.userEmail || 'email@domain.com'}
                 </div>
                 <div className="text-zinc-500 text-[11px]">
                   Rencana Masuk: <strong>{reservation?.checkInDate || '2026-11-01'}</strong> ({reservation?.durationMonths || 6} Bulan)
@@ -210,7 +262,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                   {room ? ROOM_TYPE_LABELS[room.type] : 'Tipe Standar AC Kos Omi'}
                 </div>
                 <div className="text-zinc-500 text-[11px]">
-                  Posisi: Lantai {room?.floor || 1} â€¢ Luas: {room?.areaSqm || 12} mÂ²
+                  Posisi: Lantai {room?.floor || 1} • Luas: {room?.areaSqm || 12} m²
                 </div>
               </div>
             </div>
@@ -234,30 +286,15 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                     <tr>
                       <td className="py-3 px-4">
                         <span className="font-bold text-zinc-900 block">
-                          Biaya Sewa Bulan Pertama
+                          Biaya Sewa Kamar (1 Semester)
                         </span>
                         <span className="text-[11px] text-zinc-500">
-                          Sewa Kamar {invoice.roomCode} periode bulan masuk
+                          Sewa Kamar {invoice.roomCode} periode 1 Semester (6 Bulan)
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right text-zinc-600">1 Bulan</td>
+                      <td className="py-3 px-4 text-right text-zinc-600">1 Semester (6 Bulan)</td>
                       <td className="py-3 px-4 text-right font-bold text-zinc-900 tabular-nums">
                         {formatRupiah(monthlyPrice)}
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-zinc-900 block">
-                          Deposit Sewa Jaminan (100%)
-                        </span>
-                        <span className="text-[11px] text-zinc-500">
-                          Jaminan inventaris kamar (dapat dikembalikan saat check-out)
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right text-zinc-600">1x Biaya</td>
-                      <td className="py-3 px-4 text-right font-bold text-zinc-900 tabular-nums">
-                        {formatRupiah(depositAmount)}
                       </td>
                     </tr>
 
@@ -289,6 +326,57 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                 </table>
               </div>
             </div>
+
+            {/* Pilihan Pembayaran Virtual Account Langsung di Halaman Invoice */}
+            {isUnpaid && (
+              <div className="pt-4 border-t border-zinc-200 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-heading font-extrabold text-zinc-900">
+                    Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans
+                  </h3>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                    Verifikasi Otomatis
+                  </span>
+                </div>
+
+                <KosOmiPaymentSelector
+                  selectedMethod={selectedMethod}
+                  onSelectMethod={setSelectedMethod}
+                  amountFormatted={formatRupiah(invoice.amount)}
+                />
+
+                {paymentError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <span>{paymentError}</span>
+                  </div>
+                )}
+
+                {payFeedback && (
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-bold">
+                    {payFeedback}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={isPayingDirect}
+                  onClick={handleDirectPay}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl font-bold text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {isPayingDirect
+                      ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
+                      : invoice.status === 'PENDING'
+                      ? 'Menunggu Validasi Pengelola — Kirim Ulang Konfirmasi Transfer'
+                      : `Saya Sudah Transfer via ${
+                          KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
+                        } — Kirim ke Pengelola untuk Divalidasi`}
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -312,18 +400,30 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all active:scale-[0.99] cursor-pointer"
+                  disabled={isPayingDirect}
+                  onClick={handleDirectPay}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Bayar Sekarang</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {isPayingDirect ? 'Memproses...' : 'Konfirmasi Lunas Sekarang'}
+                  </span>
                 </button>
 
-                {/* Badge Pembayaran Aman via Midtrans */}
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs text-[hsl(186,72%,24%)] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all cursor-pointer"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Buka Pop-up Pembayaran</span>
+                </button>
+
+                {/* Badge Pembayaran Aman */}
                 <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center gap-2.5 text-xs text-blue-900">
                   <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
                   <span className="font-semibold">
-                    Pembayaran Aman via Midtrans
+                    Mendukung QRIS, BRI, BCA, BSI, Bank Nagari, SeaBank, DANA &amp; ShopeePay
                   </span>
                 </div>
               </div>
@@ -378,33 +478,6 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
               <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BRI</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BCA</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BSI</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">Bank Nagari</span>
               <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">SeaBank</span>
               <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">DANA</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">ShopeePay</span>
-            </div>
-          </div>
-
-          {/* Sandbox Demo Quick Switcher Bar */}
-          <div className="bg-zinc-100/80 p-4 rounded-2xl border border-zinc-200 space-y-2 text-xs">
-            <span className="text-[10px] font-bold text-zinc-500 block">
-              Simulasi Status Tagihan (Demo Testing)
-            </span>
-            <div className="space-y-1.5">
-              <NextLink
-                href="/calon/pembayaran/INV-202506-00045"
-                className="w-full block p-2 rounded-lg bg-white border border-zinc-200 hover:border-amber-400 font-medium text-zinc-800 text-[11px]"
-              >
-                â€¢ Uji Status Menunggu Bayar (INV-202506-00045)
-              </NextLink>
-              <NextLink
-                href="/calon/pembayaran/INV-202506-00012"
-                className="w-full block p-2 rounded-lg bg-white border border-zinc-200 hover:border-emerald-400 font-medium text-zinc-800 text-[11px]"
-              >
-                â€¢ Uji Status Lunas (INV-202506-00012)
-              </NextLink>
-              <NextLink
-                href="/calon/pembayaran/INV-202506-00014"
-                className="w-full block p-2 rounded-lg bg-white border border-zinc-200 hover:border-rose-400 font-medium text-zinc-800 text-[11px]"
-              >
-                â€¢ Uji Status Kedaluwarsa (INV-202506-00014)
-              </NextLink>
             </div>
           </div>
         </div>

@@ -76,6 +76,59 @@ export interface OverdueBill {
   lastReminderSentAt?: string | null;
 }
 
+export interface FloorOccupancyBreakdown {
+  floor: number;
+  label: string;
+  totalRooms: number;
+  occupiedRooms: number;
+  bookedRooms: number;
+  availableRooms: number;
+  maintenanceRooms: number;
+  occupancyRate: number; // Persentase (Terisi + Dipesan) / Total
+}
+
+export interface OccupancyAnalytics {
+  totalRooms: number;
+  occupiedRooms: number;
+  bookedRooms: number;
+  availableRooms: number;
+  maintenanceRooms: number;
+  totalOccupancyRate: number;
+  floor1: FloorOccupancyBreakdown;
+  floor2: FloorOccupancyBreakdown;
+  recommendation: string;
+}
+
+export interface CollectionRateAnalytics {
+  totalBillsCount: number;
+  paidBillsCount: number;
+  unpaidBillsCount: number;
+  overdueBillsCount: number;
+  totalBilledAmount: number;
+  paidAmount: number;
+  unpaidAmount: number;
+  collectionRate: number; // Persentase LUNAS
+  delinquencyRate: number; // Persentase TERLAMBAT/BELUM_BAYAR
+  recommendation: string;
+}
+
+export interface ReservationConversionAnalytics {
+  totalReservations: number;
+  paidOrCheckinCount: number;
+  pendingOrApprovedCount: number;
+  rejectedCount: number;
+  expiredOrCancelledCount: number;
+  conversionRate: number; // Persentase LUNAS/CHECKIN
+  dropOffRate: number; // Persentase DITOLAK/KEDALUWARSA/DIBATALKAN
+  recommendation: string;
+}
+
+export interface OperationalDecisionAnalytics {
+  occupancy: OccupancyAnalytics;
+  collectionRate: CollectionRateAnalytics;
+  reservationConversion: ReservationConversionAnalytics;
+}
+
 export interface FinanceDashboardStats {
   currentMonthIncome: number;
   previousMonthIncome: number;
@@ -95,6 +148,7 @@ export interface FinanceDashboardStats {
     ewallet: number;
   };
   monthlyTrends: MonthlyTrendData[];
+  analytics?: OperationalDecisionAnalytics;
 }
 
 export interface GatewayReconciliationItem {

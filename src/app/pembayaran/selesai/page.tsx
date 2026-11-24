@@ -244,15 +244,9 @@ export default async function PembayaranSelesaiPage({
                 Rincian Biaya Booking Pertama
               </h3>
               <div className="flex justify-between items-center text-xs text-zinc-600">
-                <span>Sewa Bulan Pertama</span>
+                <span>Biaya Sewa 1 Semester (6 Bulan)</span>
                 <span className="font-bold text-zinc-800 tabular-nums">
                   {formatRupiah(reservation.monthlyPrice)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-xs text-zinc-600">
-                <span>Deposit Jaminan (Dapat Dikembalikan 100%)</span>
-                <span className="font-bold text-zinc-800 tabular-nums">
-                  {formatRupiah(reservation.depositAmount)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs text-zinc-600">

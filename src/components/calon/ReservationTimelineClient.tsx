@@ -132,7 +132,7 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
                   </span>
                 </div>
                 <p className="text-xs text-zinc-600">
-                  Data calon penghuni ({reservation.userName}) dan foto KTP berhasil dikirim ke server.
+                  Data calon penghuni ({reservation.userName}) dan berkas KTM/KRS berhasil dikirim ke server.
                 </p>
               </div>
             </div>
@@ -159,7 +159,7 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-zinc-900">
-                    2. Verifikasi Berkas & KTP (Pengelola)
+                    2. Verifikasi Berkas KTM/KRS (Pengelola)
                   </h3>
                   <span className="text-[11px] font-semibold text-zinc-500">
                     {isStep2Done ? 'Terverifikasi' : isStep2Rejected ? 'Ditolak' : 'Maks 2x24 Jam'}
@@ -167,10 +167,10 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
                 </div>
                 <p className="text-xs text-zinc-600">
                   {isStep2Done
-                    ? reservation.adminNotes || 'Dokumen KTP dan data diri lengkap terverifikasi resmi oleh pengelola.'
+                    ? reservation.adminNotes || 'Dokumen KTM/KRS dan data diri lengkap terverifikasi resmi oleh pengelola.'
                     : isStep2Rejected
                     ? 'Pengajuan tidak dapat disetujui.'
-                    : 'Pengelola sedang mencocokkan NIK, foto KTP, dan jadwal ketersediaan kamar.'}
+                    : 'Pengelola sedang mencocokkan NIM, foto KTM/KRS, dan jadwal ketersediaan kamar.'}
                 </p>
 
                 {/* Rejection box if rejected */}
@@ -241,7 +241,7 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
                   </span>
                 </div>
                 <p className="text-xs text-zinc-600">
-                  Mendukung QRIS instan, Virtual Account (BCA, Mandiri, BNI, BRI), dan E-Wallet (GoPay, ShopeePay).
+                  Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
                 </p>
 
                 {status === 'APPROVED' && (
@@ -302,15 +302,9 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
 
             <div className="text-xs space-y-2 pt-1">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Sewa Bulan Pertama:</span>
+                <span className="text-zinc-500">Biaya Sewa (1 Semester):</span>
                 <span className="font-bold text-zinc-900 tabular-nums">
                   {formatRupiah(reservation.monthlyPrice)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Deposit Jaminan (1x):</span>
-                <span className="font-bold text-zinc-900 tabular-nums">
-                  {formatRupiah(reservation.depositAmount)}
                 </span>
               </div>
               <div className="flex justify-between border-t border-zinc-200 pt-2 font-bold text-sm">

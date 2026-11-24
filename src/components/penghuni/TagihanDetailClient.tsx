@@ -26,7 +26,9 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
 }) => {
   const [bill, setBill] = useState<MonthlyBill>(initialBill);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<string>('QRIS');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bca_va');
+  const [isPaymentValid, setIsPaymentValid] = useState<boolean>(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -38,6 +40,7 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
 
   const handlePaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPayError(null);
     setIsPaying(true);
     const res = await payMonthlyBillAction(bill.invoiceCode, selectedMethod);
 
@@ -210,13 +213,9 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
         {/* Footer Info Rekening */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-zinc-200 text-xs text-zinc-500">
           <div className="space-y-1">
-            <h3 className="font-bold text-zinc-800">Saluran Pembayaran Resmi Kos Omi:</h3>
+            <h3 className="font-bold text-zinc-800">Saluran Pembayaran Resmi Kos Omi (Midtrans):</h3>
             <p className="leading-relaxed text-[11px]">
-              • Bank BRI: 5412-01-028491-53-8 | BCA: 8410-5928-14 | BSI: 7198-4520-18
-              <br />
-              • Bank Nagari: 2100-0210-48291-5 | SeaBank: 9018-4729-1052
-              <br />
-              • DANA & ShopeePay: 0813-7432-9562 (a.n. Ibu Kos Omi) & QRIS
+              • Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (DANA: 082246424353, GoPay, ShopeePay) melalui Midtrans.
             </p>
           </div>
           <div className="sm:text-right space-y-1">
@@ -271,7 +270,14 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
                 selectedMethod={selectedMethod}
                 onSelectMethod={setSelectedMethod}
                 amountFormatted={formatRupiah(bill.totalAmount)}
+                onValidationChange={setIsPaymentValid}
               />
+
+              {payError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
+                  {payError}
+                </div>
+              )}
 
               <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center gap-2 text-xs text-zinc-600">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />

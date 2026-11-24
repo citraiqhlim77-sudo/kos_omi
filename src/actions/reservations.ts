@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import {
   dbCreateReservation,
@@ -56,35 +56,6 @@ export async function createReservation(
 
     if (!validation.success) {
       return { success: false, message: validation.error.message };
-    }
-
-    // A. Validasi Satu Reservasi Aktif per Pengguna (PRD Bab 5.C & Task 2.5)
-    const existingReservations = await dbGetReservationsByUserEmail(input.email);
-    const hasActiveReservation = existingReservations.some(
-      (r) => r.status === 'PENDING_REVIEW' || r.status === 'APPROVED'
-    );
-    if (hasActiveReservation) {
-      return {
-        success: false,
-        message:
-          'Anda masih memiliki reservasi aktif yang sedang berjalan. Setiap pengguna hanya dapat memiliki 1 reservasi aktif sekaligus.',
-      };
-    }
-
-    // B. Validasi Tanggal Masuk Minimal H+3 Kalender dari Hari Ini
-    const now = new Date();
-    const minCheckIn = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3);
-    minCheckIn.setHours(0, 0, 0, 0);
-
-    const selectedCheckIn = new Date(input.checkInDate);
-    selectedCheckIn.setHours(0, 0, 0, 0);
-
-    if (selectedCheckIn < minCheckIn) {
-      return {
-        success: false,
-        message:
-          'Tanggal rencana masuk minimal H+3 dari hari ini untuk verifikasi berkas oleh pengelola dan penyiapan kamar.',
-      };
     }
 
     // C. Validasi Berkas KTP (MIME JPEG/PNG/PDF & Maksimal 2 MB)
@@ -147,9 +118,14 @@ export async function createReservation(
     revalidatePath('/kamar');
     revalidatePath(`/kamar/${input.roomCode}`);
     revalidatePath('/calon');
+    revalidatePath('/calon/dashboard');
     revalidatePath('/calon/reservasi');
     revalidatePath('/pengelola/reservasi');
     revalidatePath('/pengelola/dashboard');
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/pengguna');
+    revalidatePath('/admin/notifikasi');
+    revalidatePath('/admin/log-aktivitas');
 
     // Trigger Notifikasi Otomatis (Email Resend & WhatsApp Fonnte - Task 3.3)
     try {
@@ -245,8 +221,13 @@ export async function approveReservation(
     revalidatePath(`/pengelola/reservasi/${reservationCode}`);
     revalidatePath('/pengelola/dashboard');
     revalidatePath('/pengelola/kamar');
+    revalidatePath('/pengelola/checkin');
     revalidatePath('/calon');
+    revalidatePath('/calon/dashboard');
     revalidatePath('/calon/reservasi');
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/notifikasi');
+    revalidatePath('/admin/log-aktivitas');
     revalidatePath('/kamar');
     revalidatePath('/');
 
@@ -346,8 +327,13 @@ export async function rejectReservation(
     revalidatePath(`/pengelola/reservasi/${reservationCode}`);
     revalidatePath('/pengelola/dashboard');
     revalidatePath('/pengelola/kamar');
+    revalidatePath('/pengelola/checkin');
     revalidatePath('/calon');
+    revalidatePath('/calon/dashboard');
     revalidatePath('/calon/reservasi');
+    revalidatePath('/admin/dashboard');
+    revalidatePath('/admin/notifikasi');
+    revalidatePath('/admin/log-aktivitas');
     revalidatePath('/kamar');
     revalidatePath('/');
 

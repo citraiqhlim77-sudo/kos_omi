@@ -4,6 +4,7 @@ import { MonthlyBill, TenantProfile } from '@/types/billing';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser, requireRole } from '@/lib/auth-server';
 import { dispatchPaymentSuccess } from '@/lib/notify/dispatch';
+import { dbGetReservationsByUserEmail } from '@/server/db';
 
 // In-Memory Global Storage untuk Tagihan & Profil Penghuni
 interface BillingState {
@@ -17,30 +18,162 @@ declare global {
 }
 
 function initBillingState(): BillingState {
-  return { bills: [], profiles: [] };
+  return {
+    bills: [
+      {
+        id: 'bill-studi-kasus-1',
+        invoiceCode: 'INV-202611-1',
+        periodMonth: 'Semester Ganjil 2026/2027 (6 Bulan)',
+        periodKey: '2026-11',
+        year: 2026,
+        roomCode: '1',
+        tenantName: 'Zahra Aulia Putri',
+        tenantEmail: 'zahra.aulia@uinib.ac.id',
+        tenantPhone: '081234567890',
+        dueDate: '2026-11-10',
+        rentAmount: 5000000,
+        amount: 5000000,
+        penaltyAmount: 0,
+        totalAmount: 5000000,
+        status: 'BELUM_BAYAR',
+        createdAt: new Date().toISOString(),
+        notes: 'Tagihan sewa 1 Semester (6 Bulan) Kamar No. 1 Kos Omi.',
+      },
+    ],
+    profiles: [
+      {
+        id: 'usr-calon-zahra',
+        name: 'Zahra Aulia Putri',
+        nik: '2214010045',
+        email: 'zahra.aulia@uinib.ac.id',
+        phone: '081234567890',
+        occupation: 'Mahasiswi FEBI - UIN Imam Bonjol Padang',
+        roomCode: '1',
+        checkInDate: '2026-11-10',
+        tenancyEnd: '2027-05-10',
+        emergencyContactName: 'Hj. Rahmawati (Ibu Kandung)',
+        emergencyContactRelation: 'Orang Tua',
+        emergencyContactPhone: '081363459988',
+        monthlyRent: 5000000,
+        avatarUrl: '/rooms/kamar-1.png',
+      },
+    ],
+  };
 }
 
 function getBillingDb(): BillingState {
-  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 8) {
+  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 12) {
     global.__kosOmiBillingState = initBillingState();
-    (global as any).__kosOmiBillingVer = 8;
+    (global as any).__kosOmiBillingVer = 12;
   }
   return global.__kosOmiBillingState;
 }
 
 /**
  * Helper internal untuk mengidentifikasi email penghuni aktif
+ * dan menyinkronkan reservasi LUNAS milik penghuni tersebut ke Portal Penghuni.
  */
 async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
   const db = getBillingDb();
+  let resolvedEmail = '';
+
   if (paramEmail && paramEmail.trim() !== '') {
-    return paramEmail.toLowerCase().trim();
+    resolvedEmail = paramEmail.toLowerCase().trim();
+  } else {
+    const currentUser = await getCurrentUser();
+    if (currentUser?.email) {
+      resolvedEmail = currentUser.email.toLowerCase().trim();
+    }
   }
-  if (db.profiles.length > 0) {
-    return db.profiles[0].email.toLowerCase().trim();
+
+  if (!resolvedEmail) {
+    resolvedEmail = db.profiles[0]?.email?.toLowerCase().trim() || 'penghuni@example.com';
   }
-  const currentUser = await getCurrentUser();
-  return currentUser?.email?.toLowerCase().trim() || 'penghuni@example.com';
+
+  // Sinkronkan data reservasi milik resolvedEmail ke db.profiles & db.bills jika belum ada
+  const userReservations = await dbGetReservationsByUserEmail(resolvedEmail);
+  const activeRes =
+    userReservations.find((r) => r.status === 'PAID') ||
+    userReservations.find((r) => r.status === 'APPROVED') ||
+    userReservations[0];
+
+  if (activeRes && activeRes.userEmail.toLowerCase().trim() === resolvedEmail) {
+    const existingProfileIdx = db.profiles.findIndex(
+      (p) => p.email.toLowerCase().trim() === resolvedEmail
+    );
+    const checkInDateObj = new Date(activeRes.checkInDate || new Date().toISOString());
+    const endDateObj = new Date(checkInDateObj);
+    endDateObj.setMonth(endDateObj.getMonth() + (activeRes.durationMonths || 6));
+    const tenancyEnd = isNaN(endDateObj.getTime())
+      ? '2027-05-10'
+      : endDateObj.toISOString().split('T')[0];
+
+    const syncedProfile: TenantProfile = {
+      id: activeRes.userId || `usr-${Date.now()}`,
+      name: activeRes.userName,
+      nik: activeRes.userNik || '1371000000000001',
+      email: activeRes.userEmail,
+      phone: activeRes.userPhone,
+      occupation: activeRes.userOccupation || 'Mahasiswi UIN Imam Bonjol Padang',
+      roomCode: activeRes.roomCode,
+      checkInDate: activeRes.checkInDate,
+      tenancyEnd,
+      emergencyContactName: activeRes.emergencyContactName || 'Orang Tua / Wali',
+      emergencyContactRelation: activeRes.emergencyContactRelation || 'Orang Tua',
+      emergencyContactPhone: activeRes.emergencyContactPhone || activeRes.userPhone,
+      monthlyRent: activeRes.monthlyPrice || 5000000,
+      avatarUrl: `/rooms/kamar-${activeRes.roomCode}.png`,
+    };
+
+    if (existingProfileIdx === -1) {
+      db.profiles.unshift(syncedProfile);
+    } else {
+      db.profiles[existingProfileIdx] = {
+        ...db.profiles[existingProfileIdx],
+        ...syncedProfile,
+      };
+    }
+
+    const invCode = activeRes.payment?.invoiceCode || `INV-${activeRes.code.replace('RSV-', '')}`;
+    const existingBillIdx = db.bills.findIndex(
+      (b) => b.invoiceCode === invCode || b.tenantEmail.toLowerCase().trim() === resolvedEmail
+    );
+    const isPaid =
+      activeRes.status === 'PAID' || activeRes.payment?.status === 'SETTLEMENT';
+
+    const syncedBill: MonthlyBill = {
+      id: activeRes.payment?.id || `bill-${activeRes.code}`,
+      invoiceCode: invCode,
+      periodMonth: `Sewa Semesteran (${activeRes.durationMonths || 6} Bulan)`,
+      periodKey: (activeRes.checkInDate || '2026-11').substring(0, 7),
+      year: 2026,
+      roomCode: activeRes.roomCode,
+      tenantName: activeRes.userName,
+      tenantEmail: activeRes.userEmail,
+      tenantPhone: activeRes.userPhone,
+      dueDate: activeRes.checkInDate,
+      rentAmount: activeRes.totalInitialPayment || 5000000,
+      amount: activeRes.totalInitialPayment || 5000000,
+      penaltyAmount: 0,
+      totalAmount: activeRes.totalInitialPayment || 5000000,
+      status: isPaid ? 'LUNAS' : 'BELUM_BAYAR',
+      paymentMethod: activeRes.payment?.paymentMethod || 'DANA',
+      paidAt: activeRes.payment?.paidAt,
+      createdAt: activeRes.createdAt,
+      notes: `Tagihan Sewa Semesteran Kamar No. ${activeRes.roomCode} Kos Omi.`,
+    };
+
+    if (existingBillIdx === -1) {
+      db.bills.unshift(syncedBill);
+    } else {
+      db.bills[existingBillIdx] = {
+        ...db.bills[existingBillIdx],
+        ...syncedBill,
+      };
+    }
+  }
+
+  return resolvedEmail;
 }
 
 /**

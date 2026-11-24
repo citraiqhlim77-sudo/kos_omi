@@ -16,149 +16,44 @@ export interface SeedUser {
   whatsappNotifEnabled?: boolean;
 }
 
-// 1. Akun Pengguna Utama (Sesuai Bab 5 & Bab 10 PRD)
+// 1. Akun Pengguna Utama (Hanya 3 Akun Staf Manajemen Resmi Kos Omi, Tanpa Akun Dummy)
 export const SEED_USERS: SeedUser[] = [
   {
     id: 'usr-admin-01',
-    name: 'Ibu Omi (Owner & Super Admin)',
+    name: 'Ibu Omi (Pemilik & Administrator Kos Omi)',
     email: 'admin@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281234567890',
+    phone: '+62 813-7432-9562',
     role: 'ADMIN',
     isActive: true,
   },
   {
     id: 'usr-pengelola-01',
-    name: 'Yanti Susanti (Pengelola Lapangan)',
+    name: 'Yanti Susanti (Pengelola Kos Omi)',
     email: 'pengelola@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281234567891',
+    phone: '081288990011',
     role: 'PENGELOLA',
     isActive: true,
   },
   {
     id: 'usr-keuangan-01',
-    name: 'Aisyah Fitriani (Staf Keuangan)',
+    name: 'Aisyah Fitriani (Staf Keuangan Kos Omi)',
     email: 'keuangan@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281234567892',
+    phone: '081399001122',
     role: 'KEUANGAN',
     isActive: true,
   },
-  {
-    id: 'usr-penghuni-01',
-    name: 'Rina Kusuma (Penghuni Kamar No. 1)',
-    email: 'penghuni@example.com',
-    passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281211112222',
-    role: 'PENGHUNI',
-    isActive: true,
-  },
-  {
-    id: 'usr-calon-01',
-    name: 'Anisa Permata (Calon Penghuni)',
-    email: 'calon@example.com',
-    passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281298765432',
-    role: 'CALON_PENGHUNI',
-    isActive: true,
-  },
-  {
-    id: 'usr-penghuni-02',
-    name: 'Annisa Rahmawati (Penghuni Kamar No. 18)',
-    email: 'annisa@example.com',
-    passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281299998888',
-    role: 'PENGHUNI',
-    isActive: true,
-  },
-  {
-    id: 'usr-penghuni-03',
-    name: 'Siti Nurhaliza (Penghuni Kamar No. 45)',
-    email: 'siti@example.com',
-    passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '6281377776666',
-    role: 'PENGHUNI',
-    isActive: true,
-  },
 ];
 
-// 2. Data Dummy Hunian Aktif (Tenancies)
-export const SEED_TENANCIES = [
-  {
-    id: 'ten-rina-101',
-    userId: 'usr-penghuni-01',
-    roomCode: '1',
-    checkInDate: '2025-01-03',
-    contractEndDate: '2026-01-03',
-    monthlyPrice: 5000000,
-    dueDay: 5,
-    status: 'AKTIF' as const,
-  },
-  {
-    id: 'ten-dimas-204',
-    userId: 'usr-penghuni-02',
-    roomCode: '18',
-    checkInDate: '2025-02-10',
-    contractEndDate: '2025-08-10',
-    monthlyPrice: 5000000,
-    dueDay: 5,
-    status: 'AKTIF' as const,
-  },
-  {
-    id: 'ten-siti-302',
-    userId: 'usr-penghuni-03',
-    roomCode: '45',
-    checkInDate: '2025-03-01',
-    contractEndDate: '2026-03-01',
-    monthlyPrice: 5000000,
-    dueDay: 5,
-    status: 'AKTIF' as const,
-  },
-];
+// 2. Data Hunian Aktif Awal (Kosong / Bersih)
+export const SEED_TENANCIES: any[] = [];
 
-// 3. Data Dummy Invoice & Transaksi Gateway Midtrans
-export const SEED_INVOICES = [
-  {
-    id: 'inv-dummy-00045',
-    invoiceNumber: 'INV-202506-00045',
-    userId: 'usr-penghuni-01',
-    roomCode: '1',
-    type: 'SEWA_BULANAN' as const,
-    periodMonth: '2025-06',
-    amount: 5000000,
-    dueDate: '2025-06-05',
-    status: 'LUNAS' as const,
-    midtransOrderId: 'KOS-202506-00012',
-    paidAt: '2025-06-03T10:15:22+07:00',
-  },
-  {
-    id: 'inv-dummy-00046',
-    invoiceNumber: 'INV-202506-00046',
-    userId: 'usr-penghuni-03',
-    roomCode: '45',
-    type: 'SEWA_BULANAN' as const,
-    periodMonth: '2025-06',
-    amount: 5000000,
-    dueDate: '2025-06-05',
-    status: 'BELUM_BAYAR' as const,
-    midtransOrderId: 'KOS-202506-00013',
-  },
-];
+// 3. Data Invoice & Transaksi Awal (Kosong / Bersih)
+export const SEED_INVOICES: any[] = [];
 
-export const SEED_PAYMENTS = [
-  {
-    id: 'pay-001',
-    invoiceId: 'inv-dummy-00045',
-    midtransOrderId: 'KOS-202506-00012',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670001',
-    paymentType: 'qris',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2025-06-03T10:15:22+07:00',
-  },
-];
+export const SEED_PAYMENTS: any[] = [];
 
 // 4. Parameter Bisnis Default (PRD Bab 10 Table Settings)
 export const SEED_SETTINGS = [

@@ -226,13 +226,13 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
 
                       <div className="flex flex-wrap gap-1.5 text-[11px] text-zinc-600">
                         <span className="inline-flex items-center gap-1 bg-zinc-50 border border-zinc-200/80 px-2 py-0.5 rounded">
-                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> KM Dalam
+                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> Kamar Mandi
                         </span>
                         <span className="inline-flex items-center gap-1 bg-zinc-50 border border-zinc-200/80 px-2 py-0.5 rounded">
-                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> Kasur & Lemari
+                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> Kasur
                         </span>
                         <span className="inline-flex items-center gap-1 bg-zinc-50 border border-zinc-200/80 px-2 py-0.5 rounded">
-                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> Wi-Fi
+                          <Check size={11} className="text-[hsl(186,72%,24%)]" /> Lemari
                         </span>
                       </div>
                     </div>
@@ -247,14 +247,14 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
                     </div>
 
                     <NextLink
-                      href={isAvailable ? `/reservasi/${room.code}` : `/kamar/${room.code}`}
+                      href={`/kamar/${room.code}`}
                       className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
                         isAvailable
                           ? 'bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white'
                           : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100'
                       }`}
                     >
-                      {isAvailable ? 'Pesan' : 'Detail'}
+                      Lihat Detail
                       <ArrowRight size={12} />
                     </NextLink>
                   </div>

@@ -1,9 +1,11 @@
-﻿'use server';
+'use server';
 
 import {
   dbGetPaymentByInvoice,
   dbGetPaymentByReservationCode,
   dbSettlePayment,
+  dbSubmitPaymentConfirmation,
+  dbResetPaymentToUnpaid,
   dbGetReservationByCode,
   dbGetRoomByCode,
 } from '@/server/db';
@@ -169,6 +171,58 @@ export async function settlePaymentAction(
     return {
       success: false,
       message: error?.message || 'Gagal memproses konfirmasi pembayaran pada server',
+    };
+  }
+}
+
+/**
+ * Server Action untuk Calon Penghuni mengirim klaim sudah transfer/QRIS/DANA.
+ * Mengubah status invoice menjadi PENDING (Menunggu Validasi Pengelola) — TIDAK langsung Lunas.
+ */
+export async function submitPaymentConfirmationAction(
+  invoiceCode: string,
+  paymentMethod: string = 'qris'
+): Promise<{ success: boolean; message: string; payment?: PaymentInvoice; reservation?: Reservation }> {
+  try {
+    const result = await dbSubmitPaymentConfirmation(invoiceCode, paymentMethod);
+    if (result.success) {
+      revalidatePath('/calon');
+      revalidatePath('/calon/dashboard');
+      revalidatePath(`/calon/pembayaran/${invoiceCode}`);
+      revalidatePath('/pembayaran/selesai');
+      revalidatePath('/pengelola/dashboard');
+      revalidatePath('/pengelola/reservasi');
+      if (result.reservation) {
+        revalidatePath(`/pengelola/reservasi/${result.reservation.code}`);
+      }
+    }
+    return result;
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || 'Gagal mengirim konfirmasi pembayaran ke pengelola',
+    };
+  }
+}
+
+export async function resetPaymentToUnpaidAction(
+  invoiceCode: string
+): Promise<{ success: boolean; message: string; payment?: PaymentInvoice; reservation?: Reservation }> {
+  try {
+    const result = await dbResetPaymentToUnpaid(invoiceCode);
+    if (result.success) {
+      revalidatePath('/calon');
+      revalidatePath('/calon/dashboard');
+      revalidatePath(`/calon/pembayaran/${invoiceCode}`);
+      revalidatePath('/pembayaran/selesai');
+      revalidatePath('/keuangan/dashboard');
+      revalidatePath('/keuangan/transaksi');
+    }
+    return result;
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || 'Gagal mereset status pembayaran',
     };
   }
 }

@@ -1,4 +1,4 @@
-﻿import type { NextAuthConfig } from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
 import type { UserRole } from '@/types/auth';
 
 /**
@@ -17,19 +17,23 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    // Simpan id, role & status aktif ke dalam JWT saat login berhasil.
+    // Simpan id, name, email, role & status aktif ke dalam JWT saat login berhasil.
     jwt({ token, user }) {
       if (user) {
         token.id = user.id as string;
+        token.name = user.name;
+        token.email = user.email;
         token.role = user.role;
         token.isActive = user.isActive ?? true;
       }
       return token;
     },
-    // Teruskan id, role & status aktif dari JWT ke objek session.
+    // Teruskan id, name, email, role & status aktif dari JWT ke objek session.
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        if (token.name) session.user.name = token.name as string;
+        if (token.email) session.user.email = token.email as string;
         session.user.role = token.role as UserRole;
         session.user.isActive = (token.isActive as boolean | undefined) ?? true;
       }

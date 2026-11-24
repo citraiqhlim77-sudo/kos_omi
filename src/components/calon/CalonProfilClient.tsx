@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { Card } from '@/components/ui/Card';
+import { getClientSession } from '@/lib/auth-client';
 import { User, Phone, Mail, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface CalonProfilClientProps {
@@ -19,6 +20,17 @@ export const CalonProfilClient: React.FC<CalonProfilClientProps> = ({ initialUse
     email: initialUser.email,
     phone: initialUser.phone,
   });
+
+  useEffect(() => {
+    const clientUser = getClientSession();
+    if (clientUser && clientUser.email) {
+      setProfileData((prev) => ({
+        name: prev.name || clientUser.name || '',
+        email: prev.email || clientUser.email || '',
+        phone: prev.phone || '',
+      }));
+    }
+  }, []);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',

@@ -3,6 +3,7 @@
 import React from 'react';
 import NextLink from 'next/link';
 import { PaymentTransaction } from '@/types/finance';
+import { formatPaymentCategoryLabel } from '@/lib/reports/revenue';
 import { formatRupiah } from '@/data/rooms';
 import {
   ArrowLeft,
@@ -82,7 +83,7 @@ export const TransaksiDetailClient: React.FC<TransaksiDetailClientProps> = ({
 
           <p className="text-xs text-zinc-500">
             Invoice Terkait: <strong className="tabular-nums text-zinc-800">{tx.invoiceNumber}</strong> · Kategori:{' '}
-            <strong className="text-zinc-800">{tx.category.replace('_', ' ')}</strong>
+            <strong className="text-zinc-800">{formatPaymentCategoryLabel(tx.category)}</strong>
           </p>
         </div>
 

@@ -200,10 +200,10 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between lg:justify-end gap-4 pt-4 lg:pt-0 border-t lg:border-t-0 border-zinc-100">
                   <div className="text-left lg:text-right">
                     <span className="text-[11px] text-zinc-500 font-medium block">
-                      Total Booking & Deposit (Lunas)
+                      Total Sewa Semester (Lunas)
                     </span>
                     <span className="text-lg font-heading font-extrabold text-zinc-900 tabular-nums">
-                      {formatRupiah(cand.totalPaid)}
+                      {formatRupiah(cand.bookingAmount || cand.totalPaid)}
                     </span>
                     <div className="text-[11px] text-emerald-700 flex items-center lg:justify-end gap-1">
                       <CreditCard className="w-3 h-3 text-emerald-600" />
@@ -289,8 +289,8 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
                   <span className="font-bold text-zinc-900">Hari ini ({new Date().toLocaleDateString('id-ID')})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Uang Jaminan / Deposit:</span>
-                  <span className="font-bold text-zinc-900">{formatRupiah(selectedCandidate.depositAmount)} (Lunas)</span>
+                  <span className="text-zinc-500">Tarif Sewa Semester:</span>
+                  <span className="font-bold text-zinc-900">{formatRupiah(selectedCandidate.bookingAmount || selectedCandidate.totalPaid)} (Lunas)</span>
                 </div>
               </div>
 

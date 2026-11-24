@@ -4,7 +4,10 @@ import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { PaymentInvoice, Reservation } from '@/types/reservation';
 import { formatRupiah } from '@/data/rooms';
-import { settlePaymentAction, getOrCreateSnapTokenAction } from '@/actions/payments';
+import {
+  submitPaymentConfirmationAction,
+  getOrCreateSnapTokenAction,
+} from '@/actions/payments';
 import { loadSnapScript } from '@/lib/payment/snap-client';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
@@ -30,10 +33,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onSuccess,
 }) => {
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<string>('QRIS');
+  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
   const [snapToken, setSnapToken] = useState<string | null>(invoice.snapToken || null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [pendingNotice, setPendingNotice] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -52,6 +56,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handlePay = () => {
     setError(null);
+    setPendingNotice(null);
     startTransition(async () => {
       if (!snapToken) {
         const snapRes = await getOrCreateSnapTokenAction(invoice.invoiceCode);
@@ -60,15 +65,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         }
       }
 
-      const result = await settlePaymentAction(invoice.invoiceCode, selectedMethod);
+      const result = await submitPaymentConfirmationAction(invoice.invoiceCode, selectedMethod);
 
       if (result.success) {
-        if (result.payment) {
-          onSuccess?.(result.payment);
-        }
-        router.push(`/pembayaran/selesai?order_id=${invoice.invoiceCode}`);
+        setPendingNotice(result.message);
+        router.refresh();
       } else {
-        setError(result.message || 'Pembayaran gagal diproses.');
+        setError(result.message || 'Gagal mengirim konfirmasi pembayaran.');
       }
     });
   };
@@ -124,6 +127,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           )}
 
           {/* Pilihan Metode Pembayaran Lengkap: QRIS, BRI, BCA, BSI, Nagari, SeaBank, DANA, ShopeePay + Upload Bukti */}
+          {pendingNotice && (
+            <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs rounded-xl font-semibold">
+              {pendingNotice}
+            </div>
+          )}
+
           <KosOmiPaymentSelector
             selectedMethod={selectedMethod}
             onSelectMethod={setSelectedMethod}
@@ -146,7 +155,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               disabled={isPending}
               className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
-              {isPending ? 'Memproses Konfirmasi Pembayaran...' : `Konfirmasi & Bayar ${formatRupiah(invoice.amount)} (${selectedMethod})`}
+              {isPending
+                ? 'Mengirim Konfirmasi ke Pengelola...'
+                : `Saya Sudah Transfer (${selectedMethod.toUpperCase()}) — Kirim ke Pengelola`}
               <ArrowRight size={16} />
             </button>
           </div>

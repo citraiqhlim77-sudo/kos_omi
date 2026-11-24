@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { Reservation, PaymentInvoice } from '@/types/reservation';
@@ -15,7 +15,20 @@ const PaymentModal = dynamic(
   () => import('@/components/calon/PaymentModal').then((mod) => mod.PaymentModal),
   { ssr: false }
 );
-import { approveReservationForDemoAction } from '@/actions/reservations';
+import {
+  approveReservationForDemoAction,
+  fetchMyReservationsAction,
+} from '@/actions/reservations';
+import {
+  submitPaymentConfirmationAction,
+  resetPaymentToUnpaidAction,
+} from '@/actions/payments';
+import { getClientSession, setClientSession } from '@/lib/auth-client';
+import {
+  KosOmiPaymentSelector,
+  KOS_OMI_PAYMENT_METHODS,
+} from '@/components/payment/KosOmiPaymentMethods';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Clock,
@@ -37,22 +50,98 @@ import {
 interface CalonDashboardClientProps {
   initialReservations: Reservation[];
   currentEmail: string;
+  currentUserName?: string;
 }
 
 export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
   initialReservations,
   currentEmail,
+  currentUserName = '',
 }) => {
+  const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [activeReservation, setActiveReservation] = useState<Reservation | null>(
     initialReservations[0] || null
   );
+  const [displayUserName, setDisplayUserName] = useState<string>(currentUserName);
+  const [displayUserEmail, setDisplayUserEmail] = useState<string>(currentEmail);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<PaymentInvoice | null>(
     initialReservations[0]?.payment || null
   );
+  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const clientUser = getClientSession();
+    if (clientUser && clientUser.email) {
+      const clientEmail = clientUser.email.toLowerCase().trim();
+      setDisplayUserEmail(clientUser.email);
+      if (clientUser.name && clientUser.name !== 'Pengguna Terdaftar') {
+        setDisplayUserName(clientUser.name);
+      } else if (currentUserName) {
+        setDisplayUserName(currentUserName);
+      }
+
+      // Sinkronkan daftar reservasi milik email akun yang sedang login di browser
+      if (clientEmail !== currentEmail.toLowerCase().trim() || initialReservations.length === 0) {
+        fetchMyReservationsAction(clientEmail).then((myRes) => {
+          setReservations(myRes);
+          setActiveReservation(myRes[0] || null);
+          setSelectedInvoice(myRes[0]?.payment || null);
+          if (myRes[0]?.userName) {
+            setDisplayUserName(myRes[0].userName);
+          }
+        });
+      }
+    }
+  }, [currentEmail, currentUserName, initialReservations.length]);
+
+  const handleDirectPay = async (invoiceCode: string) => {
+    setPaymentError(null);
+    setIsPayingDirect(true);
+    setFeedbackMessage(null);
+    const result = await submitPaymentConfirmationAction(invoiceCode, selectedMethod);
+    setIsPayingDirect(false);
+    if (result.success) {
+      setFeedbackMessage(result.message);
+      if (result.reservation) {
+        setReservations((prev) =>
+          prev.map((r) => (r.code === result.reservation!.code ? result.reservation! : r))
+        );
+        setActiveReservation(result.reservation);
+      }
+      if (result.payment) {
+        setSelectedInvoice(result.payment);
+      }
+      router.refresh();
+    } else {
+      setPaymentError(result.message || 'Gagal mengirim konfirmasi pembayaran.');
+    }
+  };
+
+  const handleResetToUnpaid = (invoiceCode: string) => {
+    setFeedbackMessage(null);
+    setPaymentError(null);
+    startTransition(async () => {
+      const res = await resetPaymentToUnpaidAction(invoiceCode);
+      if (res.success && res.reservation) {
+        setFeedbackMessage(
+          `Tagihan ${invoiceCode} berhasil dikembalikan ke status BELUM DIBAYAR.`
+        );
+        setReservations((prev) =>
+          prev.map((r) => (r.code === res.reservation!.code ? res.reservation! : r))
+        );
+        setActiveReservation(res.reservation);
+        if (res.payment) {
+          setSelectedInvoice(res.payment);
+        }
+      }
+    });
+  };
 
   // Fungsi demo untuk menyetujui reservasi secara instan (memudahkan pengujian)
   const handleApproveDemo = (resCode: string) => {
@@ -90,9 +179,11 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
           <div>
             <p className="text-xs text-zinc-500 font-medium">Akun Calon Penghuni Aktif</p>
             <p className="font-heading font-extrabold text-base text-zinc-900">
-              {current?.userName || 'Calon Penghuni Kos Omi'}
+              {displayUserName || current?.userName || 'Calon Penghuni Kos Omi'}
             </p>
-            <p className="text-xs text-zinc-500">{current?.userEmail || currentEmail}</p>
+            <p className="text-xs text-zinc-500">
+              {displayUserEmail || current?.userEmail || currentEmail}
+            </p>
           </div>
         </div>
 
@@ -265,31 +356,93 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
               </div>
             </div>
 
-            {/* ACTION BANNER BERDASARKAN STATUS */}
+            {/* ACTION BANNER BERDASARKAN STATUS (LANGSUNG TAMPILKAN PAYMENT GATEWAY QRIS & TRANSFER BANK) */}
             {current.status === 'APPROVED' && current.payment && (
-              <div className="p-5 rounded-xl bg-sky-50 border border-sky-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sky-900 font-bold text-sm">
-                    <Clock size={18} className="text-sky-700" />
-                    <span>Reservasi Anda Telah Disetujui! Selesaikan Pembayaran Dalam 24 Jam</span>
+              <div className="p-5 sm:p-6 rounded-2xl bg-sky-50/70 border-2 border-sky-200 space-y-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-sky-200/70">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sky-950 font-extrabold text-sm sm:text-base">
+                      <Clock size={18} className="text-sky-700" />
+                      <span>
+                        Payment Gateway Siap! Selesaikan Pembayaran Kamar {current.roomCode} ({formatRupiah(current.totalInitialPayment)})
+                      </span>
+                    </div>
+                    <p className="text-xs text-sky-800 max-w-2xl">
+                      Pembayaran otomatis via <strong>Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</strong>. Pilih kanal pembayaran di bawah ini, lalu klik tombol hijau untuk menyelesaikan pembayaran:
+                    </p>
                   </div>
-                  <p className="text-xs text-sky-800 max-w-xl">
-                    Kamar <strong>{current.roomCode}</strong> telah dikunci dengan status &quot;Sedang Dipesan&quot;. Silakan selesaikan invoice booking pertama sejumlah{' '}
-                    <strong>{formatRupiah(current.totalInitialPayment)}</strong> via Midtrans Snap.
-                  </p>
+                  <span className="px-3 py-1 rounded-lg bg-white border border-sky-200 text-xs font-extrabold text-sky-900 shrink-0 tabular-nums">
+                    Invoice: {current.payment.invoiceCode}
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedInvoice(current.payment!);
-                    setIsPaymentModalOpen(true);
-                  }}
-                  className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-sm px-5 py-3 rounded-xl transition-all shrink-0 active:scale-95"
-                >
-                  <CreditCard size={18} />
-                  Bayar Sekarang via Midtrans Snap
-                </button>
+                {/* Status apabila sudah kirim konfirmasi transfer namun menunggu validasi Pengelola */}
+                {current.payment.status === 'PENDING' && (
+                  <div className="p-4 rounded-xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs sm:text-sm font-extrabold flex items-center gap-2 text-amber-900">
+                        <Clock size={16} className="text-amber-600 animate-pulse" />
+                        <span>Status Pembayaran: MENUNGGU VALIDASI PENGELOLA KOS</span>
+                      </span>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-200/80 text-amber-900">
+                        Metode: {current.payment.paymentMethod}
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-900 leading-relaxed">
+                      Konfirmasi pembayaran Anda sebesar <strong>{formatRupiah(current.totalInitialPayment)}</strong> telah masuk ke antrean Pengelola Kos Omi. Tagihan Anda akan berubah menjadi <strong>LUNAS</strong> segera setelah <strong>Pengelola memeriksa dana masuk di rekening/DANA (082246424353) dan menekan tombol Validasi Pembayaran</strong> di Portal Pengelola (<code>/pengelola/reservasi</code>).
+                    </p>
+                  </div>
+                )}
+
+                {/* Pilihan Langsung QRIS, DANA & Transfer Bank */}
+                <div className="bg-white p-4 sm:p-5 rounded-xl border border-zinc-200">
+                  <KosOmiPaymentSelector
+                    selectedMethod={selectedMethod}
+                    onSelectMethod={setSelectedMethod}
+                    amountFormatted={formatRupiah(current.totalInitialPayment)}
+                  />
+                </div>
+
+                {paymentError && (
+                  <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2.5">
+                    <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                    <span>{paymentError}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={isPayingDirect}
+                    onClick={() => handleDirectPay(current.payment!.invoiceCode)}
+                    className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 size={18} />
+                    <span>
+                      {isPayingDirect
+                        ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
+                        : current.payment.status === 'PENDING'
+                        ? `Sudah Dikirim ke Pengelola — Kirim Ulang Konfirmasi (${
+                            KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
+                          })`
+                        : `Saya Sudah Transfer via ${
+                            KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
+                          } — Kirim ke Pengelola untuk Divalidasi`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedInvoice(current.payment!);
+                      setIsPaymentModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-xs px-4 py-3.5 rounded-xl transition-all shrink-0 cursor-pointer"
+                  >
+                    <CreditCard size={16} />
+                    <span>Buka Pop-up Snap</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -326,17 +479,50 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     <span>Pembayaran Terverifikasi Lunas di Server Kos Omi</span>
                   </div>
                   <p className="text-xs text-emerald-800 max-w-xl">
-                    Kamar <strong>{current.roomCode}</strong> telah resmi berstatus TERISI atas nama Anda. Tanggal rencana masuk Anda adalah <strong>{current.checkInDate}</strong>.
+                    Kamar <strong>{current.roomCode}</strong> telah resmi berstatus DIPESAN/TERISI atas nama Anda. Tanggal rencana masuk Anda adalah <strong>{current.checkInDate}</strong>.
                   </p>
                 </div>
 
-                <NextLink
-                  href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
-                  className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shrink-0"
-                >
-                  <FileText size={14} />
-                  Lihat Kuitansi Resmi Server
-                </NextLink>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const clientUser = getClientSession();
+                      setClientSession({
+                        id: clientUser?.id || current.userId || `usr-penghuni-${Date.now()}`,
+                        name: displayUserName || current.userName,
+                        email: displayUserEmail || current.userEmail,
+                        role: 'PENGHUNI',
+                        roleLabel: 'Penghuni Aktif',
+                        dashboardPath: '/penghuni/dashboard',
+                        roomCode: current.roomCode,
+                        token: clientUser?.token || `jwt-penghuni-${Date.now()}`,
+                      });
+                      router.push('/penghuni/dashboard');
+                    }}
+                    className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer"
+                  >
+                    <Building size={14} />
+                    <span>Masuk ke Portal Penghuni Aktif</span>
+                    <ArrowRight size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => handleResetToUnpaid(current.payment!.invoiceCode)}
+                    className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs px-3.5 py-2.5 rounded-lg transition-all cursor-pointer"
+                  >
+                    <RefreshCw size={13} className={isPending ? 'animate-spin' : ''} />
+                    <span>Kembalikan ke Belum Dibayar (Uji Ulang Bayar)</span>
+                  </button>
+                  <NextLink
+                    href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all"
+                  >
+                    <FileText size={14} />
+                    Lihat Kuitansi Resmi Server
+                  </NextLink>
+                </div>
               </div>
             )}
           </Card>
@@ -435,15 +621,9 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
 
                 <div className="space-y-3 text-xs text-zinc-600">
                   <div className="flex justify-between items-center">
-                    <span>Sewa Bulan Pertama ({current.roomCode})</span>
+                    <span>Biaya Sewa 1 Semester (Kamar {current.roomCode})</span>
                     <span className="font-bold text-zinc-800 tabular-nums">
                       {formatRupiah(current.monthlyPrice)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Deposit Jaminan (1 Bulan)</span>
-                    <span className="font-bold text-zinc-800 tabular-nums">
-                      {formatRupiah(current.depositAmount)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -453,7 +633,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   <div className="flex justify-between items-center pt-3 border-t border-zinc-100 text-base font-extrabold text-[hsl(186,72%,24%)]">
                     <span>Total Pembayaran Awal</span>
                     <span className="tabular-nums">
-                      {formatRupiah(current.totalInitialPayment)}
+                      {formatRupiah(current.monthlyPrice)}
                     </span>
                   </div>
                 </div>

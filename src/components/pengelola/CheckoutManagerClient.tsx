@@ -117,7 +117,7 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
             Proses Check-out Penghuni
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Pemeriksaan tagihan sewa bulanan dan pengembalian uang jaminan (deposit). Kamar akan otomatis kembali tersedia.
+            Pemeriksaan penyelesaian masa sewa semester dan serah terima kunci kamar. Kamar akan otomatis kembali tersedia.
           </p>
         </div>
 
@@ -191,13 +191,11 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
                       <span>•</span>
                       <span>Batas Kontrak: <strong>{tenant.contractEndDate}</strong></span>
                       <span>•</span>
-                      <span>Sewa: <strong className="tabular-nums">{formatRupiah(tenant.monthlyPrice)}/bln</strong></span>
+                      <span>Sewa: <strong className="tabular-nums">{formatRupiah(tenant.monthlyPrice)} / semester</strong></span>
                     </div>
 
                     <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
                       <span>WhatsApp: <strong className="text-zinc-700">{tenant.userPhone}</strong></span>
-                      <span>•</span>
-                      <span>Deposit Awal: <strong className="text-zinc-800">{formatRupiah(tenant.depositAmount)}</strong></span>
                       <span>•</span>
                       <NextLink
                         href={`/pengelola/penghuni/${tenant.id}`}
@@ -385,7 +383,7 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
                     Seluruh Tagihan Lunas Terverifikasi
                   </strong>
                   <p className="leading-relaxed">
-                    Semua tagihan sewa bulanan <strong>{selectedTenant.userName}</strong> telah lunas. Pengembalian deposit penuh sebesar <strong>{formatRupiah(selectedTenant.depositAmount)}</strong> akan diteruskan ke bagian Keuangan.
+                    Semua tagihan sewa semester <strong>{selectedTenant.userName}</strong> telah lunas. Kamar siap dikembalikan ke status Tersedia setelah serah terima kunci.
                   </p>
                 </div>
               </div>
@@ -404,8 +402,8 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
                   <span className="font-bold text-zinc-900">Hari ini ({new Date().toLocaleDateString('id-ID')})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Pengembalian Uang Jaminan:</span>
-                  <span className="font-bold text-emerald-700">{formatRupiah(selectedTenant.depositAmount)} (Penuh)</span>
+                  <span className="text-zinc-500">Status Kewajiban Sewa:</span>
+                  <span className="font-bold text-emerald-700">Lunas 100%</span>
                 </div>
               </div>
 

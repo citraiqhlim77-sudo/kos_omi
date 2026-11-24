@@ -105,7 +105,7 @@ export default async function PenghuniKamarPage() {
             <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
               <div className="relative h-64 sm:h-80 w-full bg-zinc-900">
                 <Image
-                  src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80"
+                  src={`/rooms/kamar-${profile.roomCode || '1'}.png`}
                   alt={`Kamar ${profile.roomCode} Kos Omi`}
                   fill
                   className="object-cover"
@@ -114,13 +114,13 @@ export default async function PenghuniKamarPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent flex items-end p-6">
                   <div className="text-white space-y-1">
                     <span className="text-xs font-bold text-sky-300 block">
-                      Kamar Kos Putri (Isi 2 Orang) · Lantai 1
+                      Kamar Kos Putri (Isi 2 Orang) · Lantai {room?.floor || 1}
                     </span>
                     <h2 className="text-2xl font-heading font-extrabold text-white">
                       Kamar No. {profile.roomCode}
                     </h2>
                     <p className="text-xs text-zinc-200">
-                      Ukuran 3.5 x 4 meter · Kamar Mandi Dalam · Jendela Menghadap Taman Dalam
+                      Fasilitas Kamar: Kamar Mandi Dalam · Kasur · Lemari
                     </p>
                   </div>
                 </div>
@@ -166,55 +166,31 @@ export default async function PenghuniKamarPage() {
             <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-blue-600" />
-                <span>Inventaris & Fasilitas Kamar No. {profile.roomCode}</span>
+                <span>Fasilitas di Dalam Kamar No. {profile.roomCode}</span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-zinc-900 block">Kasur Springbed & Bantal</strong>
-                    <span className="text-zinc-500 text-[11px]">Ukuran Single 120 x 200 cm dengan sprei bersih</span>
+                    <strong className="text-zinc-900 block">Kamar Mandi Dalam</strong>
+                    <span className="text-zinc-500 text-[11px]">Kamar mandi pribadi bersih di dalam kamar</span>
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-zinc-900 block">Pendingin Udara (AC 1/2 PK)</strong>
-                    <span className="text-zinc-500 text-[11px]">Daikin Inverter hemat daya dan senyap</span>
+                    <strong className="text-zinc-900 block">Kasur</strong>
+                    <span className="text-zinc-500 text-[11px]">Kasur tidur nyaman untuk penghuni kamar</span>
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-zinc-900 block">Kamar Mandi Dalam Pribadi</strong>
-                    <span className="text-zinc-500 text-[11px]">Shower air hangat (Water Heater) & kloset duduk</span>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-zinc-900 block">Lemari Pakaian & Cermin Rias</strong>
-                    <span className="text-zinc-500 text-[11px]">Lemari kayu 2 pintu lengkap dengan gantungan</span>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-zinc-900 block">Meja & Kursi Kerja / Belajar</strong>
-                    <span className="text-zinc-500 text-[11px]">Dilengkapi stop kontak dinding di dekat meja</span>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/70 flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-zinc-900 block">Layanan Sampah Kamar Rutin</strong>
-                    <span className="text-zinc-500 text-[11px]">Pengambilan harian oleh petugas kebersihan kos</span>
+                    <strong className="text-zinc-900 block">Lemari</strong>
+                    <span className="text-zinc-500 text-[11px]">Lemari pakaian di dalam kamar</span>
                   </div>
                 </div>
               </div>

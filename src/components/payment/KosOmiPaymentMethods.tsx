@@ -7,92 +7,113 @@ import {
   Wallet,
   Copy,
   Check,
-  Upload,
-  CheckCircle2,
+  ShieldCheck,
+  Clock,
 } from 'lucide-react';
 
 export interface PaymentMethodItem {
-  id: string;
+  id:
+    | 'qris'
+    | 'dana'
+    | 'bca_va'
+    | 'bri_va'
+    | 'bni_va'
+    | 'echannel'
+    | 'permata_va'
+    | 'gopay'
+    | 'shopeepay';
   label: string;
   shortDesc: string;
-  category: 'QRIS' | 'BANK' | 'EWALLET';
+  category: 'BANK' | 'QRIS' | 'EWALLET';
   accountNumber?: string;
   accountHolder: string;
   badgeColor: string;
 }
 
+/**
+ * Kanal resmi Payment Gateway Kos Omi (Midtrans Snap):
+ * QRIS ('qris'), DANA ('dana' - 082246424353), Transfer Bank / Virtual Account ('bca_va', 'bri_va', 'bni_va', 'echannel', 'permata_va'),
+ * serta E-Wallet ('gopay', 'shopeepay').
+ */
 export const KOS_OMI_PAYMENT_METHODS: PaymentMethodItem[] = [
   {
-    id: 'QRIS',
-    label: 'QRIS Kos Omi',
-    shortDesc: 'Scan dari semua m-Banking & E-Wallet',
+    id: 'qris',
+    label: 'QRIS Midtrans',
+    shortDesc: 'Scan QRIS dari semua m-Banking, DANA, GoPay, ShopeePay',
     category: 'QRIS',
     accountHolder: 'KOS OMI SUNGAI BANGEK PADANG',
     badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
   },
-  // TRANSFER BANK: BRI, BCA, BSI, Bank Nagari, SeaBank
   {
-    id: 'BRI',
-    label: 'Bank BRI',
-    shortDesc: 'Transfer / BRImo',
-    category: 'BANK',
-    accountNumber: '5412-01-028491-53-8',
-    accountHolder: 'Ibu Kos Omi',
+    id: 'dana',
+    label: 'DANA (E-Wallet)',
+    shortDesc: 'Pembayaran via DANA (082246424353)',
+    category: 'EWALLET',
+    accountNumber: '082246424353',
+    accountHolder: 'Kos Omi Sungai Bangek (DANA)',
     badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
   },
   {
-    id: 'BCA',
-    label: 'Bank BCA',
-    shortDesc: 'Transfer / BCA Mobile / myBCA',
+    id: 'bca_va',
+    label: 'BCA Virtual Account',
+    shortDesc: 'BCA Mobile / myBCA / KlikBCA (bca_va)',
     category: 'BANK',
-    accountNumber: '8410-5928-14',
-    accountHolder: 'Ibu Kos Omi',
+    accountNumber: '88012-0812-3456-789',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans VA)',
     badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   {
-    id: 'BSI',
-    label: 'Bank Syariah Indonesia (BSI)',
-    shortDesc: 'Transfer / BYOND / BSI Mobile',
+    id: 'bri_va',
+    label: 'BRI Virtual Account (BRIVA)',
+    shortDesc: 'BRImo / ATM BRI (bri_va)',
     category: 'BANK',
-    accountNumber: '7198-4520-18',
-    accountHolder: 'Ibu Kos Omi',
+    accountNumber: '77812-0812-3456-789',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans VA)',
+    badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+  },
+  {
+    id: 'bni_va',
+    label: 'BNI Virtual Account',
+    shortDesc: 'Wondr by BNI / BNI Mobile (bni_va)',
+    category: 'BANK',
+    accountNumber: '98812-0812-3456-789',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans VA)',
     badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
   },
   {
-    id: 'BANK_NAGARI',
-    label: 'Bank Nagari',
-    shortDesc: 'Transfer / Ollin by Nagari',
+    id: 'echannel',
+    label: 'Mandiri Bill Payment',
+    shortDesc: 'Livin by Mandiri (echannel - Kode: 70012)',
     category: 'BANK',
-    accountNumber: '2100-0210-48291-5',
-    accountHolder: 'Ibu Kos Omi',
+    accountNumber: '70012-0812-3456-789',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans VA)',
     badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   {
-    id: 'SEABANK',
-    label: 'SeaBank',
-    shortDesc: 'Transfer Instan Bebas Admin',
+    id: 'permata_va',
+    label: 'Permata Virtual Account',
+    shortDesc: 'PermataME / ATM Bersama (permata_va)',
     category: 'BANK',
-    accountNumber: '9018-4729-1052',
-    accountHolder: 'Ibu Kos Omi',
-    badgeColor: 'bg-orange-50 text-orange-700 border-orange-200',
+    accountNumber: '8528-0812-3456-789',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans VA)',
+    badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
-  // E-WALLET: DANA, ShopeePay
   {
-    id: 'DANA',
-    label: 'DANA (E-Wallet)',
-    shortDesc: 'Kirim ke Nomor DANA Ibu Kos',
+    id: 'gopay',
+    label: 'GoPay (E-Wallet)',
+    shortDesc: 'Pembayaran instan via Gojek / GoPay (gopay)',
     category: 'EWALLET',
     accountNumber: '0813-7432-9562',
-    accountHolder: 'Ibu Kos Omi (+62 813-7432-9562)',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans GoPay)',
     badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
   },
   {
-    id: 'SHOPEEPAY',
+    id: 'shopeepay',
     label: 'ShopeePay (E-Wallet)',
-    shortDesc: 'Transfer ke ShopeePay Ibu Kos',
+    shortDesc: 'Pembayaran instan via ShopeePay (shopeepay)',
     category: 'EWALLET',
     accountNumber: '0813-7432-9562',
-    accountHolder: 'Ibu Kos Omi (+62 813-7432-9562)',
+    accountHolder: 'Kos Omi Sungai Bangek (Midtrans ShopeePay)',
     badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 ];
@@ -101,19 +122,20 @@ interface KosOmiPaymentSelectorProps {
   selectedMethod: string;
   onSelectMethod: (methodId: string) => void;
   amountFormatted?: string;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
   selectedMethod,
   onSelectMethod,
-  amountFormatted,
+  amountFormatted = 'Rp 5.000.000',
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [proofFileName, setProofFileName] = useState<string | null>(null);
 
   const activeMethod =
-    KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod) ||
-    KOS_OMI_PAYMENT_METHODS[0];
+    KOS_OMI_PAYMENT_METHODS.find(
+      (m) => m.id.toLowerCase() === selectedMethod.toLowerCase()
+    ) || KOS_OMI_PAYMENT_METHODS[0];
 
   const handleCopy = (text: string, id: string) => {
     const clean = text.replace(/[^0-9]/g, '');
@@ -122,24 +144,17 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProofFileName(file.name);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="space-y-2.5">
         <span className="text-xs font-bold text-zinc-700 block">
-          Pilih Metode Pembayaran (QRIS, Transfer Bank, atau E-Wallet):
+          Pilih Metode Pembayaran (QRIS, DANA 082246424353, Transfer Bank VA, GoPay, ShopeePay):
         </span>
 
-        {/* Pilihan Metode dalam Grid Rapi */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* Pilihan 9 Kanal Resmi (QRIS, DANA, BCA, BRI, BNI, Mandiri, Permata, GoPay, ShopeePay) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {KOS_OMI_PAYMENT_METHODS.map((m) => {
-            const isSelected = selectedMethod === m.id;
+            const isSelected = activeMethod.id === m.id;
             const Icon =
               m.category === 'QRIS'
                 ? QrCode
@@ -165,16 +180,16 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
                       isSelected ? 'text-[hsl(186,72%,24%)]' : 'text-zinc-500'
                     }
                   />
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
-                    {m.category}
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 tabular-nums">
+                    {m.category === 'BANK' ? 'TRANSFER VA' : m.category}
                   </span>
                 </div>
                 <div>
                   <span className="font-bold text-xs text-zinc-900 block leading-tight">
                     {m.label}
                   </span>
-                  <span className="text-[10px] text-zinc-500 line-clamp-1 mt-0.5">
-                    {m.accountNumber || 'Scan Barcode'}
+                  <span className="text-[10px] text-zinc-500 line-clamp-1 mt-0.5 tabular-nums">
+                    {m.accountNumber || 'Scan Barcode QRIS'}
                   </span>
                 </div>
               </button>
@@ -183,26 +198,45 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
         </div>
       </div>
 
-      {/* Kotak Detail Nomor Rekening / E-Wallet / QRIS */}
+      {/* KOTAK DETAIL TUJUAN TRANSFER / QRIS / DANA */}
       <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 space-y-3">
         {activeMethod.category === 'QRIS' ? (
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            {/* Simulasi Visual QR Code */}
-            <div className="w-28 h-28 bg-white p-2 rounded-xl border border-zinc-200 flex flex-col items-center justify-center shrink-0">
-              <QrCode className="w-20 h-20 text-zinc-900" />
-              <span className="text-[9px] font-extrabold text-zinc-600 mt-0.5">
-                QRIS GPN
+            <div className="w-32 bg-white p-2.5 rounded-xl border-2 border-zinc-200 shadow-xs flex flex-col items-center justify-center shrink-0">
+              <div className="w-full flex items-center justify-between px-1 pb-1 border-b border-zinc-100 mb-1.5">
+                <span className="text-[9px] font-black tracking-tight text-zinc-900">QRIS</span>
+                <span className="text-[8px] font-bold text-rose-600">GPN</span>
+              </div>
+              <svg
+                viewBox="0 0 120 120"
+                className="w-20 h-20 text-zinc-900"
+                aria-label="Kode QRIS Midtrans Kos Omi"
+              >
+                <rect width="120" height="120" fill="#ffffff" />
+                <rect x="6" y="6" width="32" height="32" fill="none" stroke="#18181b" strokeWidth="5" />
+                <rect x="14" y="14" width="16" height="16" fill="#18181b" />
+                <rect x="82" y="6" width="32" height="32" fill="none" stroke="#18181b" strokeWidth="5" />
+                <rect x="90" y="14" width="16" height="16" fill="#18181b" />
+                <rect x="6" y="82" width="32" height="32" fill="none" stroke="#18181b" strokeWidth="5" />
+                <rect x="14" y="90" width="16" height="16" fill="#18181b" />
+                <rect x="44" y="44" width="32" height="32" rx="6" fill="#0f766e" />
+                <text x="60" y="64" textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="bold">
+                  OMI
+                </text>
+              </svg>
+              <span className="text-[8px] font-bold text-zinc-500 mt-1">
+                NMID: ID1026048291538
               </span>
             </div>
-            <div className="space-y-1 text-center sm:text-left">
+            <div className="space-y-1.5 text-center sm:text-left flex-1">
               <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">
-                QRIS Resmi Kos Omi
+                QRIS Resmi Kos Omi (Mendukung DANA, m-Banking, GoPay, ShopeePay)
               </span>
               <p className="text-xs font-extrabold text-zinc-900">
-                {activeMethod.accountHolder}
+                {activeMethod.accountHolder} • Tagihan: {amountFormatted}
               </p>
               <p className="text-[11px] text-zinc-600 leading-relaxed">
-                Buka aplikasi <strong>BRI, BCA, BSI, Bank Nagari, SeaBank, DANA, atau ShopeePay</strong> Anda, lalu scan kode QRIS di samping{amountFormatted ? ` sebesar ${amountFormatted}` : ''}.
+                Lakukan scan &amp; transfer sebesar <strong>{amountFormatted}</strong>. Setelah Anda benar-benar melakukan transfer, klik tombol konfirmasi di bawah agar <strong>Pengelola Kos memeriksa dana masuk &amp; memvalidasi pembayaran Anda</strong>.
               </p>
             </div>
           </div>
@@ -215,7 +249,9 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded border ${activeMethod.badgeColor}`}
               >
-                {activeMethod.category === 'BANK' ? 'Transfer Bank' : 'E-Wallet Resmi'}
+                {activeMethod.category === 'BANK'
+                  ? `Virtual Account (${activeMethod.id})`
+                  : `E-Wallet (${activeMethod.label})`}
               </span>
             </div>
 
@@ -223,14 +259,14 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
               <div>
                 <span className="text-[10px] text-zinc-400 font-bold block">
                   {activeMethod.category === 'BANK'
-                    ? 'Nomor Rekening Tujuan'
-                    : 'Nomor E-Wallet Tujuan'}
+                    ? 'Nomor Virtual Account Tujuan'
+                    : `Nomor ${activeMethod.label} Kos Omi`}
                 </span>
                 <span className="tabular-nums font-extrabold text-base sm:text-lg text-zinc-900 tracking-wide">
                   {activeMethod.accountNumber}
                 </span>
                 <span className="text-xs text-zinc-600 block font-medium">
-                  a.n. <strong>{activeMethod.accountHolder}</strong>
+                  Penerima: <strong>{activeMethod.accountHolder}</strong> • Nominal: <strong>{amountFormatted}</strong>
                 </span>
               </div>
 
@@ -259,31 +295,11 @@ export const KosOmiPaymentSelector: React.FC<KosOmiPaymentSelectorProps> = ({
           </div>
         )}
 
-        {/* Unggah Bukti Pembayaran (Sesuai Laporan Activity Diagram 2.2.2.8) */}
-        <div className="pt-2 border-t border-zinc-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="text-[11px] text-zinc-600">
-            <span className="font-bold text-zinc-800 block">
-              Unggah Bukti Pembayaran / Struk Transfer:
-            </span>
-            {proofFileName ? (
-              <span className="text-emerald-700 font-semibold inline-flex items-center gap-1 mt-0.5">
-                <CheckCircle2 size={12} /> Berkas siap: {proofFileName}
-              </span>
-            ) : (
-              <span>Format JPG, PNG, atau PDF (Opsional saat simulasi)</span>
-            )}
-          </div>
-
-          <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold text-xs cursor-pointer shrink-0 transition-colors">
-            <Upload size={13} className="text-[hsl(186,72%,24%)]" />
-            <span>{proofFileName ? 'Ganti Bukti' : 'Pilih File Bukti'}</span>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </label>
+        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-[11px] text-amber-900">
+          <Clock size={15} className="text-amber-600 shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong>Ketentuan Validasi Pembayaran:</strong> Pembayaran <strong>tidak langsung berstatus Lunas</strong> sebelum dana benar-benar masuk. Setelah Anda mengirim konfirmasi pembayaran di bawah, <strong>Pengelola Kos akan memeriksa mutasi rekening/DANA (082246424353) dan memvalidasi pelunasan Anda</strong>.
+          </p>
         </div>
       </div>
     </div>

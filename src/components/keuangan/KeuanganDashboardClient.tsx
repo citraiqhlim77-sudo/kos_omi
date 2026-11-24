@@ -3,7 +3,9 @@
 import React from 'react';
 import NextLink from 'next/link';
 import { FinanceDashboardStats, PaymentTransaction } from '@/types/finance';
+import { formatPaymentCategoryLabel } from '@/lib/reports/revenue';
 import { formatRupiah } from '@/data/rooms';
+import { OperationalDecisionAnalyticsPanel } from '@/components/keuangan/OperationalDecisionAnalyticsPanel';
 import dynamic from 'next/dynamic';
 
 // Dynamic import untuk komponen grafik finansial (Recharts / SVG Visualization)
@@ -90,13 +92,16 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
+      {/* KPI Cards Grid (Semua Bisa Diklik Langsung ke Halamannya) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Pemasukan Bulan Ini */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-2">
+        {/* Total Pemasukan */}
+        <NextLink
+          href="/keuangan/transaksi"
+          className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-emerald-400 transition-all space-y-2 block group"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-500">
-              Pemasukan Bulan Ini
+            <span className="text-xs font-bold text-zinc-500 group-hover:text-emerald-700">
+              Total Pemasukan Terverifikasi
             </span>
             <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
               <DollarSign className="w-4 h-4" />
@@ -105,16 +110,19 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
           <div className="text-2xl font-heading font-extrabold text-zinc-900 tabular-nums">
             {formatRupiah(stats.currentMonthIncome)}
           </div>
-          <div className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>+{stats.growthPercentage}% dibanding bulan lalu</span>
+          <div className="text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
+            <span>Klik lihat daftar transaksi</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
-        </div>
+        </NextLink>
 
         {/* Transaksi Sukses */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-2">
+        <NextLink
+          href="/keuangan/transaksi"
+          className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-blue-400 transition-all space-y-2 block group"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-500">
+            <span className="text-xs font-bold text-zinc-500 group-hover:text-blue-700">
               Transaksi Lunas (Settlement)
             </span>
             <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
@@ -125,15 +133,19 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
             {stats.currentMonthTransactions}
             <span className="text-xs text-zinc-500 font-normal ml-1.5">transaksi</span>
           </div>
-          <div className="text-[11px] text-zinc-500 font-medium">
-            Tingkat keberhasilan: <strong className="text-emerald-700">{stats.settlementRate}%</strong>
+          <div className="text-[11px] text-blue-700 font-semibold flex items-center justify-between">
+            <span>Tingkat keberhasilan: {stats.settlementRate}%</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
-        </div>
+        </NextLink>
 
         {/* Menunggu Pembayaran (Pending) */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-2">
+        <NextLink
+          href="/keuangan/tagihan"
+          className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-amber-400 transition-all space-y-2 block group"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-500">
+            <span className="text-xs font-bold text-zinc-500 group-hover:text-amber-700">
               Menunggu Pembayaran
             </span>
             <div className="p-2 rounded-xl bg-amber-50 text-amber-700">
@@ -143,29 +155,37 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
           <div className="text-2xl font-heading font-extrabold text-zinc-900 tabular-nums">
             {formatRupiah(stats.pendingAmount)}
           </div>
-          <div className="text-[11px] text-amber-700 font-semibold">
-            {stats.pendingTransactionsCount} transaksi belum dibayar (Snap active)
+          <div className="text-[11px] text-amber-700 font-semibold flex items-center justify-between">
+            <span>{stats.pendingTransactionsCount} invoice belum dibayar</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
-        </div>
+        </NextLink>
 
         {/* Sumber Pendapatan Terbesar */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-2">
+        <NextLink
+          href="/keuangan/laporan"
+          className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-sky-400 transition-all space-y-2 block group"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-500">
-              Kontribusi Sewa Kamar
+            <span className="text-xs font-bold text-zinc-500 group-hover:text-sky-700">
+              Pemasukan Sewa Kamar
             </span>
             <div className="p-2 rounded-xl bg-sky-50 text-sky-700">
               <Building2 className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-heading font-extrabold text-zinc-900 tabular-nums">
-            86.1%
+            {formatRupiah(stats.incomeByCategory.rent)}
           </div>
-          <div className="text-[11px] text-zinc-500 font-medium">
-            Sewa Rutin: <strong className="text-zinc-800">{formatRupiah(stats.incomeByCategory.rent)}</strong>
+          <div className="text-[11px] text-sky-700 font-semibold flex items-center justify-between">
+            <span>Klik buka rekap laporan</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
-        </div>
+        </NextLink>
       </div>
+
+      {/* ANALITIK PENDUKUNG KEPUTUSAN OPERASIONAL (OKUPANSI, COLLECTION RATE, KONVERSI RESERVASI) */}
+      <OperationalDecisionAnalyticsPanel analytics={stats.analytics} />
 
       {/* GRAFIK TREN 12 BULAN (RECHARTS TREND VISUALIZATION) */}
       <FinancialTrendChart data={stats.monthlyTrends} />
@@ -183,7 +203,7 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
             {/* Sewa Kamar */}
             <div className="space-y-1">
               <div className="flex justify-between font-semibold">
-                <span className="text-zinc-700">Sewa Bulanan Penghuni</span>
+                <span className="text-zinc-700">Sewa Semesteran (Rp 5.000.000/semester)</span>
                 <span className="tabular-nums text-zinc-900">{formatRupiah(stats.incomeByCategory.rent)}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
@@ -194,22 +214,11 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
             {/* Booking Awal */}
             <div className="space-y-1">
               <div className="flex justify-between font-semibold">
-                <span className="text-zinc-700">Booking Kamar Baru</span>
+                <span className="text-zinc-700">Booking Kamar Baru (1 Semester)</span>
                 <span className="tabular-nums text-zinc-900">{formatRupiah(stats.incomeByCategory.booking)}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
-                <div className="h-full bg-sky-500 rounded-full" style={{ width: '8.5%' }} />
-              </div>
-            </div>
-
-            {/* Deposit Jaminan */}
-            <div className="space-y-1">
-              <div className="flex justify-between font-semibold">
-                <span className="text-zinc-700">Uang Jaminan (Deposit)</span>
-                <span className="tabular-nums text-zinc-900">{formatRupiah(stats.incomeByCategory.deposit)}</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '5.5%' }} />
+                <div className="h-full bg-sky-500 rounded-full" style={{ width: '100%' }} />
               </div>
             </div>
           </div>
@@ -305,7 +314,7 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
                     <span className="text-[11px] text-zinc-500">Kamar {tx.roomCode}</span>
                   </td>
                   <td className="p-3.5 whitespace-nowrap text-zinc-600">
-                    {tx.category === 'SEWA_BULANAN' ? 'Sewa Bulanan' : 'Booking & Deposit'}
+                    {formatPaymentCategoryLabel(tx.category)}
                   </td>
                   <td className="p-3.5 whitespace-nowrap font-medium text-zinc-800">
                     {tx.paymentType.toUpperCase()} {tx.bank ? `(${tx.bank.toUpperCase()})` : ''}

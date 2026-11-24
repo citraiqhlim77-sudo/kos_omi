@@ -26,7 +26,7 @@ declare global {
 const initialUsers: AdminUserRecord[] = [
   {
     id: 'usr-admin-1',
-    name: 'Ibu Omi (Pemilik Kos Omi)',
+    name: 'Ibu Omi (Pemilik & Administrator Kos Omi)',
     email: 'admin@kosomi.id',
     phone: '+62 813-7432-9562',
     role: 'ADMIN',
@@ -36,7 +36,7 @@ const initialUsers: AdminUserRecord[] = [
   },
   {
     id: 'usr-pengelola-1',
-    name: 'Yanti Susanti (Pengelola)',
+    name: 'Yanti Susanti (Pengelola Kos Omi)',
     email: 'pengelola@kosomi.id',
     phone: '081288990011',
     role: 'PENGELOLA',
@@ -46,7 +46,7 @@ const initialUsers: AdminUserRecord[] = [
   },
   {
     id: 'usr-keuangan-1',
-    name: 'Aisyah Fitriani (Keuangan)',
+    name: 'Aisyah Fitriani (Staf Keuangan Kos Omi)',
     email: 'keuangan@kosomi.id',
     phone: '081399001122',
     role: 'KEUANGAN',
@@ -55,24 +55,15 @@ const initialUsers: AdminUserRecord[] = [
     lastLoginAt: '2026-11-02T09:45:00Z',
   },
   {
-    id: 'usr-penghuni-1',
-    name: 'Akun Demo Penghuni',
-    email: 'penghuni@example.com',
+    id: 'usr-calon-zahra',
+    name: 'Zahra Aulia Putri (Studi Kasus Kamar 1)',
+    email: 'zahra.aulia@uinib.ac.id',
     phone: '081234567890',
-    role: 'PENGHUNI',
-    isActive: true,
-    createdAt: '2026-01-03T11:00:00Z',
-    lastLoginAt: undefined,
-  },
-  {
-    id: 'usr-calon-1',
-    name: 'Akun Demo Calon Penghuni',
-    email: 'calon@example.com',
-    phone: '085712349988',
     role: 'CALON_PENGHUNI',
+    roomCode: '1',
     isActive: true,
-    createdAt: '2026-01-03T10:00:00Z',
-    lastLoginAt: undefined,
+    createdAt: new Date().toISOString(),
+    lastLoginAt: new Date().toISOString(),
   },
 ];
 
@@ -89,16 +80,121 @@ const initialSettings: AdminSettings = {
   lateFeeDailyAmount: 25000,
 };
 
-const initialAuditLogs: AuditLogRecord[] = [];
+const initialAuditLogs: AuditLogRecord[] = [
+  {
+    id: 'aud-studi-kasus-1',
+    actorId: 'usr-pengelola-1',
+    actorName: 'Yanti Susanti (Pengelola)',
+    actorRole: 'PENGELOLA',
+    action: 'APPROVE_RESERVATION',
+    entity: 'reservations',
+    entityId: 'RSV-202611-1',
+    meta: {
+      roomCode: '1',
+      tenantName: 'Zahra Aulia Putri',
+      nim: '2214010045',
+      invoiceCode: 'INV-202611-1',
+      amount: 5000000,
+    },
+    createdAt: new Date().toISOString(),
+  },
+];
 
-const initialNotificationLogs: NotificationLogRecord[] = [];
+const initialNotificationLogs: NotificationLogRecord[] = [
+  {
+    id: 'ntf-studi-kasus-1',
+    recipient: '081234567890',
+    recipientName: 'Zahra Aulia Putri (Kamar 1)',
+    channel: 'WHATSAPP',
+    template: 'reservasi_disetujui_invoice_INV-202611-1_kamar_1',
+    status: 'SENT',
+    attempts: 1,
+    sentAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+];
 
 function getUsersStore(): AdminUserRecord[] {
-  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 8) {
+  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 10) {
     global.__kosOmiAdminUsers = [...initialUsers];
-    (global as any).__kosOmiUsersVer = 8;
+    (global as any).__kosOmiUsersVer = 10;
   }
-  return global.__kosOmiAdminUsers;
+
+  const store = global.__kosOmiAdminUsers;
+
+  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers)
+  const authUsers = (global as any).__kosOmiAuthUsers as any[] | undefined;
+  if (Array.isArray(authUsers)) {
+    for (const au of authUsers) {
+      if (!au?.email) continue;
+      const existing = store.find((u) => u.email.toLowerCase() === au.email.toLowerCase());
+      if (!existing) {
+        store.unshift({
+          id: au.id || `usr-${Date.now()}`,
+          name: au.name || au.email.split('@')[0],
+          email: au.email,
+          phone: au.phone || '-',
+          role: au.role || 'CALON_PENGHUNI',
+          isActive: au.isActive !== false,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  // 2. Sinkronkan otomatis calon penghuni yang mengajukan reservasi (__kosOmiDbState.reservations)
+  const dbReservations = (global as any).__kosOmiDbState?.reservations as any[] | undefined;
+  if (Array.isArray(dbReservations)) {
+    for (const rsv of dbReservations) {
+      if (!rsv?.userEmail) continue;
+      const existing = store.find((u) => u.email.toLowerCase() === rsv.userEmail.toLowerCase());
+      if (!existing) {
+        store.unshift({
+          id: rsv.userId || `usr-rsv-${Date.now()}`,
+          name: rsv.userName || rsv.userEmail,
+          email: rsv.userEmail,
+          phone: rsv.userPhone || '-',
+          role: 'CALON_PENGHUNI',
+          roomCode: rsv.roomCode,
+          isActive: true,
+          createdAt: rsv.createdAt || new Date().toISOString(),
+        });
+      } else {
+        if (!existing.roomCode && rsv.roomCode) {
+          existing.roomCode = rsv.roomCode;
+        }
+        if (rsv.userName && existing.name.startsWith('Akun Demo')) {
+          existing.name = rsv.userName;
+        }
+      }
+    }
+  }
+
+  // 3. Sinkronkan otomatis penghuni aktif yang sudah check-in (__kosOmiTenancies)
+  const activeTenants = (global as any).__kosOmiTenancies as any[] | undefined;
+  if (Array.isArray(activeTenants)) {
+    for (const ten of activeTenants) {
+      const tEmail = ten?.userEmail || ten?.tenantEmail;
+      if (!tEmail) continue;
+      const existing = store.find((u) => u.email.toLowerCase() === tEmail.toLowerCase());
+      if (!existing) {
+        store.unshift({
+          id: ten.id || `usr-ten-${Date.now()}`,
+          name: ten.userName || ten.tenantName || tEmail,
+          email: tEmail,
+          phone: ten.userPhone || ten.tenantPhone || '-',
+          role: 'PENGHUNI',
+          roomCode: ten.roomCode,
+          isActive: true,
+          createdAt: ten.checkInDate || ten.createdAt || new Date().toISOString(),
+        });
+      } else if (ten.status === 'AKTIF' && existing.role !== 'CALON_PENGHUNI') {
+        existing.roomCode = ten.roomCode;
+      }
+    }
+  }
+
+  return store;
 }
 
 function getSettingsStore(): AdminSettings {
@@ -109,17 +205,17 @@ function getSettingsStore(): AdminSettings {
 }
 
 function getAuditLogsStore(): AuditLogRecord[] {
-  if (!global.__kosOmiAuditLogs || (global as any).__kosOmiAuditVer !== 8) {
+  if (!global.__kosOmiAuditLogs || (global as any).__kosOmiAuditVer !== 12) {
     global.__kosOmiAuditLogs = [...initialAuditLogs];
-    (global as any).__kosOmiAuditVer = 8;
+    (global as any).__kosOmiAuditVer = 12;
   }
   return global.__kosOmiAuditLogs;
 }
 
 function getNotifLogsStore(): NotificationLogRecord[] {
-  if (!global.__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 8) {
+  if (!global.__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 12) {
     global.__kosOmiNotifLogs = [...initialNotificationLogs];
-    (global as any).__kosOmiNotifVer = 8;
+    (global as any).__kosOmiNotifVer = 12;
   }
   return global.__kosOmiNotifLogs;
 }

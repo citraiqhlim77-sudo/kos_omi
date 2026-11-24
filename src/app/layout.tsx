@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: '%s | Kos Omi Sungai Bangek, Padang',
   },
   description:
-    'Sistem manajemen dan reservasi kamar kos online Kos Omi Sungai Bangek, Kota Padang. Hunian 5 lantai dengan 67 kamar di sekitar Kampus III UIN Imam Bonjol Padang. Cek ketersediaan kamar real-time dan pembayaran aman via Midtrans Snap.',
+    'Sistem manajemen dan reservasi kamar kos online Kos Omi Sungai Bangek, Kota Padang. Hunian 2 lantai dengan 67 kamar di sekitar Kampus III UIN Imam Bonjol Padang. Cek ketersediaan kamar real-time dan pembayaran aman via Midtrans Snap.',
   keywords: [
     'Kos Omi',
     'Kos Omi Sungai Bangek',
@@ -26,11 +26,16 @@ export const metadata: Metadata = {
     'Kos Sungai Bangek Padang',
     'Kos Koto Tangah Padang',
     'Kos Mahasiswa UIN Padang',
-    'Sewa Kos Bulanan Padang',
+    'Sewa Kos Semesteran Padang',
     'Reservasi Kamar Kos Online Padang',
   ],
   authors: [{ name: 'Pengelola Kos Omi Sungai Bangek, Padang' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://kosomi.id'),
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
   openGraph: {
     title: 'Kos Omi Sungai Bangek - Hunian Nyaman & Modern 67 Kamar Dekat UIN Imam Bonjol Padang',
     description:
@@ -41,7 +46,7 @@ export const metadata: Metadata = {
     locale: 'id_ID',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
+        url: '/rooms/kamar-1.png',
         width: 1200,
         height: 630,
         alt: 'Kos Omi Sungai Bangek Padang - Dekat Kampus III UIN Imam Bonjol',
@@ -53,7 +58,7 @@ export const metadata: Metadata = {
     title: 'Kos Omi Sungai Bangek - Hunian Modern Dekat UIN Imam Bonjol Padang',
     description:
       'Cek kamar kosong di Sungai Bangek Padang, ajukan reservasi online, dan bayar aman via Midtrans Snap.',
-    images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop'],
+    images: ['/rooms/kamar-1.png'],
   },
   robots: {
     index: true,

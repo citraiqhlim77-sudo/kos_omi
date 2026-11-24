@@ -245,10 +245,6 @@ export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
                 <span className="font-bold text-zinc-900">{tenant.contractEndDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Uang Jaminan (Deposit):</span>
-                <span className="font-bold text-zinc-900">{formatRupiah(tenant.depositAmount)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-zinc-500">Tipe Kamar:</span>
                 <span className="font-bold text-zinc-900">{tenant.roomType.replace('_', ' ')}</span>
               </div>

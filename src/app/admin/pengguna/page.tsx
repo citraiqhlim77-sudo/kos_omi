@@ -4,6 +4,8 @@ import { AdminNav } from '@/components/admin/AdminNav';
 import { AdminPenggunaClient } from '@/components/admin/AdminPenggunaClient';
 import { fetchAdminUsersAction } from '@/actions/admin';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Kelola Pengguna & Peran | Admin Kos Omi',
   description: 'Manajemen akun staf Pengelola, Keuangan, dan status akses akun pengguna sistem Kos Omi.',

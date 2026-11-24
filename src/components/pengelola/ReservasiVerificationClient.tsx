@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Reservation, ReservationStatus } from '@/types/reservation';
 import { approveReservationAction, rejectReservationAction } from '@/actions/reservations';
+import { settlePaymentAction, resetPaymentToUnpaidAction } from '@/actions/payments';
 import { formatRupiah } from '@/data/rooms';
 import {
   ArrowLeft,
@@ -67,6 +68,47 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
       setErrorMessage(res.message);
     }
     setIsLoading(false);
+  };
+
+  const handleValidatePaymentByPengelola = async () => {
+    const invCode = reservation.payment?.invoiceCode || `INV-${reservation.code.replace('RSV-', '')}`;
+    const method = reservation.payment?.paymentMethod || 'DANA';
+    setIsLoading(true);
+    setErrorMessage(null);
+    const res = await settlePaymentAction(invCode, method);
+    setIsLoading(false);
+    if (res.success) {
+      setReservation((prev) => ({
+        ...prev,
+        status: 'PAID',
+        payment: res.payment || prev.payment,
+      }));
+      showToast(
+        `Pembayaran ${invCode} berhasil divalidasi LUNAS oleh Pengelola! Dana ${formatRupiah(reservation.totalInitialPayment)} telah ditambahkan ke Kas Keuangan.`
+      );
+      router.refresh();
+    } else {
+      setErrorMessage(res.message || 'Gagal memvalidasi pembayaran.');
+    }
+  };
+
+  const handleRejectPaymentByPengelola = async () => {
+    const invCode = reservation.payment?.invoiceCode || `INV-${reservation.code.replace('RSV-', '')}`;
+    setIsLoading(true);
+    setErrorMessage(null);
+    const res = await resetPaymentToUnpaidAction(invCode);
+    setIsLoading(false);
+    if (res.success) {
+      setReservation((prev) => ({
+        ...prev,
+        status: 'APPROVED',
+        payment: res.payment || prev.payment,
+      }));
+      showToast(
+        `Validasi pembayaran ditolak karena dana belum masuk. Status tagihan ${invCode} dikembalikan menjadi BELUM DIBAYAR.`
+      );
+      router.refresh();
+    }
   };
 
   const handleReject = async () => {
@@ -178,6 +220,37 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
             </button>
           </div>
         )}
+
+        {/* Tombol Validasi Pembayaran di Tangan Pengelola (Saat Status APPROVED) */}
+        {status === 'APPROVED' && (
+          <div className="flex flex-wrap items-center gap-2.5">
+            {reservation.payment?.status === 'PENDING' && (
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={handleRejectPaymentByPengelola}
+                className="px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Tolak (Dana Belum Masuk)</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={handleValidatePaymentByPengelola}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>
+                {isLoading
+                  ? 'Memvalidasi...'
+                  : 'Validasi Pembayaran Lunas (Dana Sudah Masuk)'}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -189,10 +262,10 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
               <div>
                 <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Dokumen KTP Calon Penghuni</span>
+                  <span>Dokumen KTM / KRS Calon Penghuni</span>
                 </h2>
                 <p className="text-xs text-zinc-500">
-                  Periksa kecocokan nama, foto wajah, dan nomor identitas kependudukan 16 digit
+                  Periksa kecocokan nama, foto Kartu Tanda Mahasiswa (KTM) / KRS, dan NIM mahasiswi
                 </p>
               </div>
 
@@ -213,7 +286,7 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
             >
               <Image
                 src={reservation.ktpUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80'}
-                alt={`KTP ${reservation.userName}`}
+                alt={`KTM / KRS ${reservation.userName}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover group-hover:scale-[1.02] transition-transform duration-200"
@@ -225,16 +298,16 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
               </div>
             </div>
 
-            {/* NIK and identity match strip */}
+            {/* NIM and identity match strip */}
             <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-zinc-500 block text-[11px]">Nomor NIK KTP Terdaftar:</span>
+                <span className="text-zinc-500 block text-[11px]">NIM / No. Pendaftaran Terdaftar:</span>
                 <span className="tabular-nums font-bold text-zinc-900 text-sm">
                   {reservation.userNik}
                 </span>
               </div>
               <div>
-                <span className="text-zinc-500 block text-[11px]">Nama Sesuai KTP:</span>
+                <span className="text-zinc-500 block text-[11px]">Nama Lengkap Mahasiswi:</span>
                 <span className="font-bold text-zinc-900 text-sm">
                   {reservation.userName}
                 </span>
@@ -334,24 +407,18 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Durasi Sewa:</span>
-                <span className="font-bold text-zinc-900">{reservation.durationMonths} Bulan</span>
+                <span className="font-bold text-zinc-900">1 Semester ({reservation.durationMonths} Bulan)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Tarif Sewa Bulanan:</span>
+                <span className="text-zinc-500">Tarif Sewa Semester:</span>
                 <span className="font-bold text-zinc-900 tabular-nums">
                   {formatRupiah(reservation.monthlyPrice)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Deposit Jaminan:</span>
-                <span className="font-bold text-zinc-900 tabular-nums">
-                  {formatRupiah(reservation.depositAmount)}
                 </span>
               </div>
               <div className="flex justify-between border-t border-zinc-200 pt-2 font-bold text-sm">
                 <span className="text-zinc-900">Total Invoice Booking:</span>
                 <span className="text-[hsl(186,72%,24%)] tabular-nums">
-                  {formatRupiah(reservation.totalInitialPayment)}
+                  {formatRupiah(reservation.monthlyPrice)}
                 </span>
               </div>
             </div>

@@ -2,7 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Reservation, ReservationStatus } from '@/types/reservation';
+import { approveReservationAction } from '@/actions/reservations';
+import { settlePaymentAction, resetPaymentToUnpaidAction } from '@/actions/payments';
 import { formatRupiah } from '@/data/rooms';
 import {
   Search,
@@ -16,6 +19,7 @@ import {
   BedDouble,
   Eye,
   SlidersHorizontal,
+  Bell,
 } from 'lucide-react';
 
 interface ReservasiManagerClientProps {
@@ -25,9 +29,85 @@ interface ReservasiManagerClientProps {
 export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
   initialReservations,
 }) => {
+  const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [approvingCode, setApprovingCode] = useState<string | null>(null);
+  const [validatingInvoice, setValidatingInvoice] = useState<string | null>(null);
+  const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
+
+  const handleValidatePayment = async (resItem: Reservation) => {
+    const invCode = resItem.payment?.invoiceCode || `INV-${resItem.code.replace('RSV-', '')}`;
+    const method = resItem.payment?.paymentMethod || 'DANA';
+    setValidatingInvoice(invCode);
+    setFeedbackBanner(null);
+    const res = await settlePaymentAction(invCode, method);
+    setValidatingInvoice(null);
+    if (res.success) {
+      setReservations((prev) =>
+        prev.map((item) =>
+          item.code === resItem.code
+            ? {
+                ...item,
+                status: 'PAID',
+                payment: res.payment || item.payment,
+              }
+            : item
+        )
+      );
+      setFeedbackBanner(
+        `Pembayaran ${invCode} (${resItem.userName} - Kamar ${resItem.roomCode}) berhasil divalidasi LUNAS oleh Pengelola! Dana ${formatRupiah(resItem.totalInitialPayment)} telah tercatat di Kas Keuangan.`
+      );
+      router.refresh();
+    } else {
+      setFeedbackBanner(res.message || 'Gagal memvalidasi pembayaran');
+    }
+  };
+
+  const handleRejectPaymentNotReceived = async (resItem: Reservation) => {
+    const invCode = resItem.payment?.invoiceCode || `INV-${resItem.code.replace('RSV-', '')}`;
+    setValidatingInvoice(invCode);
+    setFeedbackBanner(null);
+    const res = await resetPaymentToUnpaidAction(invCode);
+    setValidatingInvoice(null);
+    if (res.success) {
+      setReservations((prev) =>
+        prev.map((item) =>
+          item.code === resItem.code
+            ? {
+                ...item,
+                status: 'APPROVED',
+                payment: res.payment || item.payment,
+              }
+            : item
+        )
+      );
+      setFeedbackBanner(
+        `Validasi ditolak: Status pembayaran ${invCode} (${resItem.userName}) dikembalikan ke BELUM DIBAYAR karena dana belum masuk di mutasi rekening/DANA.`
+      );
+      router.refresh();
+    }
+  };
+
+  const handleQuickApprove = async (code: string) => {
+    setApprovingCode(code);
+    setFeedbackBanner(null);
+    const res = await approveReservationAction(
+      code,
+      'Berkas KTP & identitas mahasiswi lengkap. Reservasi disetujui oleh Pengelola Kos Omi.'
+    );
+    setApprovingCode(null);
+    if (res.success && res.data) {
+      setReservations((prev) =>
+        prev.map((item) => (item.code === code ? res.data! : item))
+      );
+      setFeedbackBanner(res.message);
+      router.refresh();
+    } else {
+      setFeedbackBanner(res.message || 'Gagal menyetujui reservasi');
+    }
+  };
 
   const filtered = useMemo(() => {
     return reservations.filter((item) => {
@@ -50,25 +130,36 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
       total: reservations.length,
       pending: reservations.filter((r) => r.status === 'PENDING_REVIEW').length,
       approved: reservations.filter((r) => r.status === 'APPROVED').length,
+      waitingPaymentValidation: reservations.filter(
+        (r) => r.status === 'APPROVED' && r.payment?.status === 'PENDING'
+      ).length,
       paid: reservations.filter((r) => r.status === 'PAID').length,
       rejected: reservations.filter((r) => r.status === 'REJECTED').length,
     };
   }, [reservations]);
 
-  const getStatusBadge = (status: ReservationStatus) => {
+  const getStatusBadge = (status: ReservationStatus, paymentStatus?: string) => {
     switch (status) {
       case 'PENDING_REVIEW':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            Menunggu Verifikasi
+            Menunggu Verifikasi KTM/KRS
           </span>
         );
       case 'APPROVED':
+        if (paymentStatus === 'PENDING') {
+          return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></span>
+              Menunggu Validasi Transfer Pengelola
+            </span>
+          );
+        }
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            Disetujui · Siap Bayar
+            Disetujui · Belum Transfer
           </span>
         );
       case 'PAID':
@@ -99,6 +190,61 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Feedback Banner */}
+      {feedbackBanner && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{feedbackBanner}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedbackBanner(null)}
+            className="text-emerald-700 hover:underline text-[11px]"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
+
+      {/* Notifikasi Validasi Pembayaran Transfer / DANA / QRIS Masuk */}
+      {stats.waitingPaymentValidation > 0 && (
+        <div className="p-4 rounded-2xl bg-sky-50 border-2 border-sky-300 text-sky-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0">
+              <Bell className="w-4 h-4 animate-bounce" />
+            </div>
+            <div>
+              <span className="text-xs font-extrabold block">
+                Notifikasi Pembayaran Masuk: {stats.waitingPaymentValidation} Calon Penghuni Mengirim Konfirmasi Transfer (Menunggu Validasi Pengelola)!
+              </span>
+              <span className="text-[11px] text-sky-800">
+                Silakan cek mutasi rekening bank atau DANA (<strong>082246424353</strong>) Anda. Jika dana benar-benar sudah masuk, klik tombol hijau <strong>&quot;Validasi Lunas (Dana Masuk)&quot;</strong> di bawah. Jika belum masuk, klik <strong>&quot;Belum Masuk&quot;</strong>.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifikasi Reservasi Baru Masuk */}
+      {stats.pending > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-extrabold block">
+                Notifikasi Masuk: {stats.pending} Pengajuan Reservasi Baru Menunggu Persetujuan!
+              </span>
+              <span className="text-[11px] text-amber-800">
+                Klik tombol hijau <strong>&quot;Setujui &amp; Kirim Invoice&quot;</strong> pada tabel di bawah untuk langsung menyetujui reservasi dan mengaktifkan pembayaran QRIS / Transfer Bank bagi calon penghuni.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Metric Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <button
@@ -267,16 +413,59 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
                     {formatRupiah(item.totalInitialPayment)}
                   </td>
 
-                  <td className="py-3.5 px-4">{getStatusBadge(item.status)}</td>
+                  <td className="py-3.5 px-4">{getStatusBadge(item.status, item.payment?.status)}</td>
 
                   <td className="py-3.5 px-4 text-right">
-                    <NextLink
-                      href={`/pengelola/reservasi/${item.code}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-[hsl(186,72%,24%)] text-white hover:bg-[hsl(186,74%,18%)] transition-colors"
-                    >
-                      <span>Verifikasi</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </NextLink>
+                    <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                      {item.status === 'PENDING_REVIEW' && (
+                        <button
+                          type="button"
+                          disabled={approvingCode === item.code}
+                          onClick={() => handleQuickApprove(item.code)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>
+                            {approvingCode === item.code
+                              ? 'Menyetujui...'
+                              : '1. Setujui KTM/KRS'}
+                          </span>
+                        </button>
+                      )}
+                      {item.status === 'APPROVED' && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={validatingInvoice === item.payment?.invoiceCode}
+                            onClick={() => handleValidatePayment(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+                            title="Klik jika dana transfer / DANA benar-benar sudah masuk"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Validasi Lunas (Dana Masuk)</span>
+                          </button>
+                          {item.payment?.status === 'PENDING' && (
+                            <button
+                              type="button"
+                              disabled={validatingInvoice === item.payment?.invoiceCode}
+                              onClick={() => handleRejectPaymentNotReceived(item)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold text-xs bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-50 transition-colors cursor-pointer"
+                              title="Tolak jika dana belum masuk di mutasi rekening/DANA"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Belum Masuk</span>
+                            </button>
+                          )}
+                        </>
+                      )}
+                      <NextLink
+                        href={`/pengelola/reservasi/${item.code}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs bg-[hsl(186,72%,24%)] text-white hover:bg-[hsl(186,74%,18%)] transition-colors"
+                      >
+                        <span>Detail</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </NextLink>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -306,7 +495,7 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
                     Kamar {item.roomCode} · {item.userName}
                   </span>
                 </div>
-                {getStatusBadge(item.status)}
+                {getStatusBadge(item.status, item.payment?.status)}
               </div>
 
               <div className="p-2.5 rounded-xl bg-zinc-50 text-xs space-y-1">
@@ -330,13 +519,54 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
                 </div>
               </div>
 
-              <NextLink
-                href={`/pengelola/reservasi/${item.code}`}
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[hsl(186,72%,24%)] text-white hover:bg-[hsl(186,74%,18%)] transition-colors"
-              >
-                <span>Tinjau KTP & Verifikasi</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </NextLink>
+              <div className="flex flex-col gap-2">
+                {item.status === 'PENDING_REVIEW' && (
+                  <button
+                    type="button"
+                    disabled={approvingCode === item.code}
+                    onClick={() => handleQuickApprove(item.code)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>
+                      {approvingCode === item.code
+                        ? 'Menyetujui...'
+                        : 'Setujui & Kirim Invoice Sekarang'}
+                    </span>
+                  </button>
+                )}
+                {item.status === 'APPROVED' && (
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      disabled={validatingInvoice === item.payment?.invoiceCode}
+                      onClick={() => handleValidatePayment(item)}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Validasi Pembayaran Lunas (Dana Masuk)</span>
+                    </button>
+                    {item.payment?.status === 'PENDING' && (
+                      <button
+                        type="button"
+                        disabled={validatingInvoice === item.payment?.invoiceCode}
+                        onClick={() => handleRejectPaymentNotReceived(item)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 disabled:opacity-50 transition-colors cursor-pointer"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Tolak (Dana Belum Masuk ke Rekening/DANA)</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <NextLink
+                  href={`/pengelola/reservasi/${item.code}`}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs bg-[hsl(186,72%,24%)] text-white hover:bg-[hsl(186,74%,18%)] transition-colors"
+                >
+                  <span>Tinjau KTM/KRS & Detail</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </NextLink>
+              </div>
             </div>
           ))
         )}

@@ -18,8 +18,9 @@ import {
   Home,
   UserCheck,
 } from 'lucide-react';
-import { DEMO_ACCOUNTS } from '@/data/auth-demo';
+import { DEMO_ACCOUNTS, getRoleDashboardPath } from '@/data/auth-demo';
 import { loginAction } from '@/actions/auth';
+import { loginWithCredentials, loginWithDemoAccount, setClientSession } from '@/lib/auth-client';
 import { validateEmail, validatePassword } from '@/lib/validations/auth';
 import { UserRole } from '@/types/auth';
 
@@ -79,7 +80,41 @@ export default function LoginPage() {
         return;
       }
 
-      const target = res.redirectUrl || '/calon/dashboard';
+      const matchedDemo = selectedRole
+        ? DEMO_ACCOUNTS.find(
+            (a) => a.role === selectedRole && a.email.toLowerCase() === email.trim().toLowerCase()
+          )
+        : undefined;
+
+      if (res.user) {
+        const roleLabels: Record<UserRole, string> = {
+          ADMIN: 'Admin Utama',
+          PENGELOLA: 'Pengelola Kos',
+          KEUANGAN: 'Staf Keuangan',
+          CALON_PENGHUNI: 'Calon Penghuni',
+          PENGHUNI: 'Penghuni Aktif',
+        };
+        setClientSession({
+          id: res.user.id,
+          name: res.user.name,
+          email: res.user.email,
+          role: res.user.role,
+          roleLabel: roleLabels[res.user.role] || 'Calon Penghuni',
+          dashboardPath: getRoleDashboardPath(res.user.role),
+          token: `jwt-${res.user.role.toLowerCase()}-${Date.now()}`,
+        });
+      } else if (matchedDemo && selectedRole) {
+        loginWithDemoAccount(selectedRole);
+      } else {
+        loginWithCredentials(email);
+      }
+
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const customRedirect = searchParams?.get('redirect');
+      const target =
+        customRedirect && customRedirect.startsWith('/')
+          ? customRedirect
+          : res.redirectUrl || '/calon/dashboard';
       setSuccessRedirect(target);
 
       // Redirect ke dashboard role yang bersangkutan
@@ -216,7 +251,14 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const nextVal = e.target.value;
+                    setEmail(nextVal);
+                    const matched = DEMO_ACCOUNTS.find(
+                      (a) => a.email.toLowerCase() === nextVal.trim().toLowerCase()
+                    );
+                    setSelectedRole(matched ? matched.role : null);
+                  }}
                   onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
                   placeholder="nama@domain.com"
                   className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm text-zinc-900 transition-colors focus:outline-none ${

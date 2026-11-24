@@ -8,6 +8,8 @@ import { ROOM_TYPE_LABELS } from '@/types/room';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { RoomPhotoGallery } from '@/components/kamar/RoomPhotoGallery';
+import { RoomBookingCta } from '@/components/kamar/RoomBookingCta';
+import { getCurrentUser } from '@/lib/auth-server';
 import {
   Maximize2,
   Bed,
@@ -51,7 +53,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DetailKamarPage({ params }: PageProps) {
   const { kode } = await params;
-  const room = await fetchRoomByCodeAction(kode);
+  const [room, currentUser] = await Promise.all([
+    fetchRoomByCodeAction(kode),
+    getCurrentUser(),
+  ]);
 
   if (!room) {
     return (
@@ -171,14 +176,14 @@ export default async function DetailKamarPage({ params }: PageProps) {
               <p className="text-sm text-zinc-600 leading-relaxed">{room.description}</p>
             </div>
 
-            {/* 9 Daftar Fasilitas Kamar & Kos */}
+            {/* Daftar Fasilitas di Dalam Kamar */}
             <Card className="p-6">
               <h2 className="font-heading font-bold text-lg text-zinc-900 mb-4 pb-2 border-b border-zinc-100">
-                9 Fasilitas Lengkap Kamar & Gedung Kos Omi
+                Fasilitas di Dalam Kamar
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-zinc-700">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-zinc-700">
                 {room.facilities.map((fac, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5">
+                  <div key={idx} className="flex items-center gap-2.5 p-3 rounded-lg bg-zinc-50 border border-zinc-100 font-semibold">
                     <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                     <span>{fac}</span>
                   </div>
@@ -242,18 +247,10 @@ export default async function DetailKamarPage({ params }: PageProps) {
 
               <div className="space-y-3">
                 {isAvailable ? (
-                  <>
-                    <NextLink
-                      href={`/reservasi/${room.code}`}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-sm px-4 py-3.5 rounded-lg transition-all active:scale-[0.99]"
-                    >
-                      Reservasi Kamar Ini
-                      <ArrowRight size={16} />
-                    </NextLink>
-                    <p className="text-[11px] text-center text-zinc-500">
-                      Mendukung BRI, BCA, BSI, Nagari, SeaBank, DANA, ShopeePay & QRIS
-                    </p>
-                  </>
+                  <RoomBookingCta
+                    roomCode={room.code}
+                    isLoggedInServer={Boolean(currentUser)}
+                  />
                 ) : (
                   <div className="space-y-2">
                     <button
@@ -280,9 +277,9 @@ export default async function DetailKamarPage({ params }: PageProps) {
                 </a>
               </div>
 
-              <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
-                <Lock size={13} className="text-sky-600" />
-                <span>Pembayaran Transfer Bank, E-Wallet & QRIS</span>
+              <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500 text-center">
+                <Lock size={13} className="text-sky-600 shrink-0" />
+                <span>Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</span>
               </div>
             </Card>
 
@@ -350,10 +347,10 @@ export default async function DetailKamarPage({ params }: PageProps) {
                   </div>
                   <div className="p-4 pt-0">
                     <NextLink
-                      href={`/reservasi/${alt.code}`}
+                      href={`/kamar/${alt.code}`}
                       className="w-full inline-flex items-center justify-center gap-1.5 bg-[hsl(186,72%,24%)] text-white text-xs font-semibold py-2 rounded-lg hover:bg-[hsl(186,74%,18%)] transition-colors"
                     >
-                      Reservasi Kamar Ini
+                      Lihat Detail Kamar
                       <ArrowRight size={13} />
                     </NextLink>
                   </div>

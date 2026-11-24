@@ -100,7 +100,7 @@ export default function TentangPage() {
   ];
 
   const googleMapsUrl =
-    'https://www.google.com/maps/search/?api=1&query=59F5%2B25+Balai+Gadang,+Jalan+Ekora,+Sungai+Bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586';
+    'https://www.google.com/maps/search/?api=1&query=Kostan+Omi,+Jalan+ekora,+sungai+bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586';
 
   return (
     <div className="bg-zinc-50 min-h-screen py-10 md:py-16 space-y-16">
@@ -156,7 +156,7 @@ export default function TentangPage() {
           <div className="lg:col-span-6">
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-zinc-200 bg-white">
               <Image
-                src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1200&q=80"
+                src="/rooms/kamar-1.png"
                 alt="Gedung Hunian Kos Omi Sungai Bangek, Padang"
                 fill
                 sizes="(max-width: 1024px) 100vw, 600px"
@@ -208,7 +208,7 @@ export default function TentangPage() {
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-zinc-500 max-w-md">
-              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> (1 kamar diisi 2 orang).
+              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> (1 kamar diisi 2 orang). Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
             </p>
           </div>
 
@@ -271,8 +271,8 @@ export default function TentangPage() {
             {/* Embedded Interactive Google Maps */}
             <div className="lg:col-span-8 relative min-h-[360px] sm:min-h-[420px] bg-zinc-100">
               <iframe
-                title="Peta Lokasi Kos Omi Sungai Bangek Padang"
-                src="https://maps.google.com/maps?q=59F5%2B25+Balai+Gadang,+Jalan+Ekora,+Sungai+Bangek,+Kota+Padang,+Sumatera+Barat+25586&ll=-0.827438,100.357938&z=18&ie=UTF8&iwloc=&output=embed"
+                title="Peta Lokasi Kostan Omi Sungai Bangek Padang"
+                src="https://maps.google.com/maps?q=Kostan+Omi,+Jalan+ekora,+sungai+bangek,+Kec.+Koto+Tangah,+Kota+Padang,+Sumatera+Barat+25586&hl=id&z=18&output=embed"
                 className="w-full h-full min-h-[360px] sm:min-h-[420px] border-0"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

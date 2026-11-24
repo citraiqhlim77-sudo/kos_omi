@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { getCurrentUser } from '@/lib/auth-server';
-import { fetchAllReservationsAction } from '@/actions/reservations';
+import { fetchMyReservationsAction } from '@/actions/reservations';
 import { CalonProfilClient } from '@/components/calon/CalonProfilClient';
 import NextLink from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -15,13 +15,13 @@ export const metadata: Metadata = {
 
 export default async function CalonProfilPage() {
   const user = await getCurrentUser();
-  const reservations = await fetchAllReservationsAction();
-  const latestRes = reservations[0];
+  const myReservations = user?.email ? await fetchMyReservationsAction(user.email) : [];
+  const latestRes = myReservations[0];
 
   const initialProfile = {
-    name: latestRes?.userName || user?.name || '',
-    email: latestRes?.userEmail || user?.email || '',
-    phone: latestRes?.userPhone || user?.phone || '',
+    name: user?.name || latestRes?.userName || '',
+    email: user?.email || latestRes?.userEmail || '',
+    phone: user?.phone || latestRes?.userPhone || '',
     role: user?.role || 'CALON_PENGHUNI',
   };
 

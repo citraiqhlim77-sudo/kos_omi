@@ -3,6 +3,8 @@ import { fetchNotificationLogsAction } from '@/actions/admin';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { AdminNotifikasiClient } from '@/components/admin/AdminNotifikasiClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Monitoring Notifikasi - Administrator Kos Omi',
   description: 'Log pengiriman notifikasi WhatsApp Fonnte dan Email Resend.',

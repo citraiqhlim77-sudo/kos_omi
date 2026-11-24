@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { UserRole } from '@/types/auth';
 import { auth } from '@/auth';
-import { findUserById } from '@/lib/auth-store';
+import { findUserById, findUserByEmail } from '@/lib/auth-store';
 
 export interface CurrentServerUser {
   id: string;
@@ -20,23 +20,36 @@ export interface CurrentServerUser {
 export async function getCurrentUser(): Promise<CurrentServerUser | null> {
   const session = await auth();
   const sessionUser = session?.user;
-  if (!sessionUser?.id) {
+  if (!sessionUser?.id && !sessionUser?.email) {
     return null;
   }
 
-  const user = findUserById(sessionUser.id);
-  if (!user) {
-    return null;
+  const user =
+    (sessionUser.id ? findUserById(sessionUser.id) : undefined) ||
+    (sessionUser.email ? findUserByEmail(sessionUser.email) : undefined);
+
+  if (user) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      phone: user.phone,
+    };
   }
 
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    isActive: user.isActive,
-    phone: user.phone,
-  };
+  if (sessionUser.email) {
+    return {
+      id: (sessionUser.id as string) || `usr-${Date.now()}`,
+      name: sessionUser.name || sessionUser.email.split('@')[0],
+      email: sessionUser.email,
+      role: (sessionUser.role as UserRole) || 'CALON_PENGHUNI',
+      isActive: sessionUser.isActive ?? true,
+    };
+  }
+
+  return null;
 }
 
 /**

@@ -5,6 +5,7 @@ import { KeuanganLaporanClient } from '@/components/keuangan/KeuanganLaporanClie
 import {
   fetchDailyReportAction,
   fetchMonthlyReportAction,
+  fetchOperationalAnalyticsAction,
 } from '@/actions/finance';
 
 export const metadata: Metadata = {
@@ -13,9 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default async function KeuanganLaporanPage() {
-  const [dailyRows, monthlyRows] = await Promise.all([
-    fetchDailyReportAction('2025-06'),
-    fetchMonthlyReportAction(2025),
+  const [dailyRows, monthlyRows, analytics] = await Promise.all([
+    fetchDailyReportAction('2026-11'),
+    fetchMonthlyReportAction(2026),
+    fetchOperationalAnalyticsAction(),
   ]);
 
   return (
@@ -26,6 +28,7 @@ export default async function KeuanganLaporanPage() {
         <KeuanganLaporanClient
           initialDailyRows={dailyRows}
           initialMonthlyRows={monthlyRows}
+          analytics={analytics}
         />
       </main>
     </div>

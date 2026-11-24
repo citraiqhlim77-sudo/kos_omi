@@ -38,6 +38,7 @@ export default async function AdminDashboardPage() {
           occupiedCount={roomStats.occupied}
           bookedCount={roomStats.booked}
           monthlyIncome={financeStats.currentMonthIncome}
+          users={users}
         />
       </main>
     </div>

@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { Room, ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import { submitReservationAction } from '@/actions/reservations';
+import { getClientSession } from '@/lib/auth-client';
+import { CurrentServerUser } from '@/lib/auth-server';
 import { Card } from '@/components/ui/Card';
 import {
   Calendar,
@@ -23,28 +25,43 @@ import {
   Briefcase,
   FileText,
   Lock,
+  UserPlus,
+  LogIn,
 } from 'lucide-react';
 
 interface ReservationFormClientProps {
   room: Room;
+  currentUser?: CurrentServerUser | null;
 }
 
-export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ room }) => {
+export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ room, currentUser }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [activeUser, setActiveUser] = useState<{
+    name: string;
+    email: string;
+    phone?: string;
+  } | null>(
+    currentUser
+      ? { name: currentUser.name, email: currentUser.email, phone: currentUser.phone }
+      : null
+  );
 
   // Hitung tanggal minimal hari ini agar bisa langsung dites Check-in
   const minDate = new Date();
   const minDateString = minDate.toISOString().split('T')[0];
 
-  // Form State (Kosong di awal agar dapat diisi manual satu per satu saat demo)
+  // Form State
+  const [occupancyMode, setOccupancyMode] = useState<'SENDIRI_PENUH' | 'PER_ORANG_1_SLOT' | 'BERDUA_GABUNG'>('SENDIRI_PENUH');
+  const [roommateName, setRoommateName] = useState('');
   const [formData, setFormData] = useState({
     checkInDate: '',
     durationMonths: 6,
-    fullName: '',
+    fullName: currentUser?.name || '',
     nik: '',
-    phone: '',
-    email: '',
+    phone: currentUser?.phone ? currentUser.phone.replace(/^62/, '0') : '',
+    email: currentUser?.email || '',
     occupation: '',
     emergencyName: '',
     emergencyPhone: '',
@@ -53,13 +70,40 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
     agreedToRules: false,
   });
 
+  useEffect(() => {
+    const clientUser = getClientSession();
+    if (clientUser && clientUser.email) {
+      const resolvedName =
+        clientUser.name && clientUser.name !== 'Pengguna Terdaftar'
+          ? clientUser.name
+          : currentUser?.name || '';
+      setActiveUser({
+        name: resolvedName || clientUser.email.split('@')[0],
+        email: clientUser.email,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        fullName: resolvedName || prev.fullName || '',
+        email: clientUser.email || prev.email || '',
+      }));
+    } else if (currentUser) {
+      setActiveUser({
+        name: currentUser.name,
+        email: currentUser.email,
+        phone: currentUser.phone,
+      });
+    }
+    setAuthChecked(true);
+  }, [currentUser]);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdCode, setCreatedCode] = useState<string>('');
 
-  const monthlyPrice = room.monthlyPrice;
-  const depositAmount = room.depositAmount;
-  const totalInitial = monthlyPrice + depositAmount;
+  const isSingleSlot = occupancyMode === 'PER_ORANG_1_SLOT';
+  const monthlyPrice = isSingleSlot ? Math.round(room.monthlyPrice / 2) : room.monthlyPrice;
+  const depositAmount = 0;
+  const totalInitial = monthlyPrice;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -87,15 +131,26 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
     setErrorMessage(null);
 
     startTransition(async () => {
+      const modeLabel =
+        occupancyMode === 'PER_ORANG_1_SLOT'
+          ? '[1 Slot Sendiri - Rp 2.500.000]'
+          : occupancyMode === 'BERDUA_GABUNG'
+            ? `[Berdua Sekamar bersama ${roommateName || 'Rekan'} - Rp 5.000.000]`
+            : '[Sewa Sendiri 1 Kamar Penuh - Rp 5.000.000]';
+      const combinedName =
+        occupancyMode === 'BERDUA_GABUNG' && roommateName.trim()
+          ? `${formData.fullName} & ${roommateName.trim()}`
+          : formData.fullName;
+
       const result = await submitReservationAction({
         roomCode: room.code,
         checkInDate: formData.checkInDate,
         durationMonths: formData.durationMonths,
-        fullName: formData.fullName,
+        fullName: combinedName,
         nik: formData.nik,
         phone: formData.phone,
         email: formData.email,
-        occupation: formData.occupation,
+        occupation: `${formData.occupation || 'Mahasiswi UIN'} ${modeLabel}`.trim(),
         emergencyName: formData.emergencyName,
         emergencyPhone: formData.emergencyPhone,
         emergencyRelation: formData.emergencyRelation,
@@ -110,11 +165,70 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         setCreatedCode(result.data.code);
         // Arahkan ke dashboard calon penghuni setelah delay singkat
         setTimeout(() => {
-          router.push(`/calon?registered=${result.data?.code}`);
+          router.push(
+            `/calon?registered=${result.data?.code}&email=${encodeURIComponent(formData.email)}`
+          );
         }, 1500);
       }
     });
   };
+
+  if (authChecked && !activeUser) {
+    const redirectTarget = encodeURIComponent(`/reservasi/${room.code}`);
+    return (
+      <div className="max-w-2xl mx-auto bg-white p-8 md:p-10 rounded-2xl border border-zinc-200 text-center space-y-6 shadow-xs">
+        <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-200">
+          <Lock size={32} />
+        </div>
+
+        <div className="space-y-2">
+          <span className="inline-block text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+            Wajib Memiliki Akun Calon Penghuni
+          </span>
+          <h2 className="text-2xl font-extrabold text-zinc-900">
+            Daftar atau Masuk Akun Terlebih Dahulu
+          </h2>
+          <p className="text-sm text-zinc-600 max-w-lg mx-auto leading-relaxed">
+            Untuk memesan <strong>Kamar No. {room.code} (Lantai {room.floor})</strong>, Anda wajib terdaftar sebagai <strong>Calon Penghuni Kos Omi</strong> terlebih dahulu agar status verifikasi KTM/KRS dan tagihan pembayaran Anda tercatat aman di akun Anda.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-left text-xs text-zinc-600 space-y-1.5 max-w-lg mx-auto">
+          <div className="font-bold text-zinc-900">Alur Pemesanan Kamar Baru:</div>
+          <div>1. Buat akun baru (Nama Lengkap, Email, No. WhatsApp, & Kata Sandi).</div>
+          <div>2. Otomatis kembali ke halaman ini untuk mengisi NIM & unggah KTM/KRS.</div>
+          <div>3. Pantau persetujuan pengelola & selesaikan pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.</div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <NextLink
+            href={`/daftar?redirect=${redirectTarget}`}
+            className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors"
+          >
+            <UserPlus size={16} />
+            Daftar Akun Baru Sekarang
+          </NextLink>
+          <NextLink
+            href={`/login?redirect=${redirectTarget}`}
+            className="inline-flex items-center justify-center gap-2 border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 text-sm font-bold px-6 py-3 rounded-xl transition-colors"
+          >
+            <LogIn size={16} />
+            Sudah Punya Akun? Masuk
+          </NextLink>
+        </div>
+
+        <div className="pt-2">
+          <NextLink
+            href={`/kamar/${room.code}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-zinc-800"
+          >
+            <ArrowLeft size={14} />
+            Kembali ke Detail Kamar No. {room.code}
+          </NextLink>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -133,7 +247,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         </div>
         <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
           <NextLink
-            href={`/calon?registered=${createdCode}`}
+            href={`/calon?registered=${createdCode}&email=${encodeURIComponent(formData.email)}`}
             className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[hsl(186,74%,18%)]"
           >
             Buka Portal Calon Penghuni
@@ -166,9 +280,88 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
+                Pilihan Tipe Hunian & Cara Bayar Kamar {room.code}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setOccupancyMode('SENDIRI_PENUH')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${occupancyMode === 'SENDIRI_PENUH'
+                      ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20'
+                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                    }`}
+                >
+                  <span className="text-xs font-extrabold text-zinc-900 block">
+                    1. Ngekos Sendiri (1 Kamar Penuh)
+                  </span>
+                  <span className="text-[11px] font-bold text-[hsl(186,72%,24%)] block mt-0.5">
+                    {formatRupiah(room.monthlyPrice)} / Semester
+                  </span>
+                  <span className="text-[10px] text-zinc-500 block mt-1">
+                    Menempati 1 kamar penuh sendirian & bayar sendiri.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOccupancyMode('PER_ORANG_1_SLOT')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${occupancyMode === 'PER_ORANG_1_SLOT'
+                      ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20'
+                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                    }`}
+                >
+                  <span className="text-xs font-extrabold text-zinc-900 block">
+                    2. Masuk Sendiri (1 Slot / Per Orang)
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-700 block mt-0.5">
+                    {formatRupiah(Math.round(room.monthlyPrice / 2))} / Orang
+                  </span>
+                  <span className="text-[10px] text-zinc-500 block mt-1">
+                    Belum ada teman / bayar sendiri-sendiri (sisa 1 slot kamar).
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOccupancyMode('BERDUA_GABUNG')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${occupancyMode === 'BERDUA_GABUNG'
+                      ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20'
+                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
+                    }`}
+                >
+                  <span className="text-xs font-extrabold text-zinc-900 block">
+                    3. Ngekos Berdua (Gabung 2 Orang)
+                  </span>
+                  <span className="text-[11px] font-bold text-[hsl(186,72%,24%)] block mt-0.5">
+                    {formatRupiah(room.monthlyPrice)} / Kamar (2 Putri)
+                  </span>
+                  <span className="text-[10px] text-zinc-500 block mt-1">
+                    Datang langsung berdua dengan teman sekamar.
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {occupancyMode === 'BERDUA_GABUNG' && (
+              <div className="sm:col-span-2 p-3.5 rounded-xl bg-blue-50/60 border border-blue-200">
+                <label className="block text-xs font-bold text-zinc-800 mb-1">
+                  Nama Lengkap Penghuni ke-2 (Teman Sekamar)
+                </label>
+                <input
+                  type="text"
+                  value={roommateName}
+                  onChange={(e) => setRoommateName(e.target.value)}
+                  placeholder="Contoh: Nabila Khairunnisa (Teman Sekamar Kamar ini)"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 bg-white focus:outline-none focus:border-[hsl(186,72%,24%)]"
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                Tanggal Rencana Masuk (Minimal H+3)
+                Tanggal Rencana Masuk
               </label>
               <input
                 type="date"
@@ -186,21 +379,16 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
             <div>
               <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                Pilihan Durasi Sewa
+                Durasi Sewa (Ketentuan Kos Omi)
               </label>
-              <select
-                name="durationMonths"
-                value={formData.durationMonths}
-                onChange={handleChange}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 bg-white focus:outline-none focus:border-[hsl(186,72%,24%)]"
-              >
-                <option value={1}>1 Bulan (Uji Coba)</option>
-                <option value={3}>3 Bulan (Satu Triwulan)</option>
-                <option value={6}>6 Bulan (Satu Semester)</option>
-                <option value={12}>12 Bulan (Satu Tahun Penuh)</option>
-              </select>
+              <div className="w-full px-3 py-2 text-sm font-bold text-zinc-900 rounded-lg border border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <span>1 Semester (6 Bulan)</span>
+                <span className="text-[11px] font-semibold text-[hsl(186,72%,24%)] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  Tetap
+                </span>
+              </div>
               <span className="text-[11px] text-zinc-500 mt-1 block">
-                Jatuh tempo sewa perpanjangan tanggal 5 tiap bulan.
+                Sesuai ketentuan Kos Omi, sewa kamar berlaku per 1 Semester (6 Bulan).
               </span>
             </div>
           </div>
@@ -210,12 +398,12 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         <Card className="p-6 space-y-4">
           <h2 className="font-heading font-bold text-base text-zinc-900 pb-2 border-b border-zinc-100 flex items-center gap-2">
             <User size={18} className="text-[hsl(186,72%,24%)]" />
-            Identitas Calon Penghuni (Sesuai KTP)
+            Identitas Calon Penghuni (Data Mahasiswi / KTM)
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="sm:col-span-2">
-              <label className="block font-semibold text-zinc-700 mb-1">Nama Lengkap</label>
+              <label className="block font-semibold text-zinc-700 mb-1">Nama Lengkap Mahasiswi</label>
               <input
                 type="text"
                 name="fullName"
@@ -228,28 +416,28 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
             </div>
 
             <div>
-              <label className="block font-semibold text-zinc-700 mb-1">Nomor NIK KTP (16 Digit)</label>
+              <label className="block font-semibold text-zinc-700 mb-1">NIM (Nomor Induk Mahasiswa) / No. Pendaftaran</label>
               <input
                 type="text"
                 name="nik"
-                maxLength={16}
+                maxLength={20}
                 value={formData.nik}
                 onChange={handleChange}
                 required
-                placeholder="327302xxxxxxxxxx"
+                placeholder="Contoh: 2214010045"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 focus:outline-none focus:border-[hsl(186,72%,24%)]"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-zinc-700 mb-1">Pekerjaan / Instansi / Kampus</label>
+              <label className="block font-semibold text-zinc-700 mb-1">Fakultas / Jurusan / Kampus</label>
               <input
                 type="text"
                 name="occupation"
                 value={formData.occupation}
                 onChange={handleChange}
                 required
-                placeholder="Contoh: Mahasiswa UIN Imam Bonjol / Karyawan / Dosen"
+                placeholder="Contoh: FEBI - UIN Imam Bonjol Padang"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 focus:outline-none focus:border-[hsl(186,72%,24%)]"
               />
             </div>
@@ -329,11 +517,11 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
           </div>
         </Card>
 
-        {/* 4. UNGGAH FOTO KTP */}
+        {/* 4. UNGGAH FOTO KTM ATAU KRS */}
         <Card className="p-6 space-y-4">
           <h2 className="font-heading font-bold text-base text-zinc-900 pb-2 border-b border-zinc-100 flex items-center gap-2">
             <ShieldCheck size={18} className="text-emerald-600" />
-            Unggah Foto KTP Asli untuk Verifikasi
+            Unggah Foto KTM (Kartu Tanda Mahasiswa) atau KRS
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
@@ -341,38 +529,38 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
               <Upload size={24} className="mx-auto text-zinc-400" />
               <div className="text-xs text-zinc-600">
                 <label className="font-bold text-[hsl(186,72%,24%)] cursor-pointer hover:underline">
-                  Klik untuk pilih file
+                  Klik untuk pilih file KTM / KRS
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.pdf"
                     onChange={handleSimulateKtpUpload}
                     className="hidden"
                   />
                 </label>
-                <p className="text-[11px] text-zinc-400 mt-1">Format JPG atau PNG (Maks 5 MB)</p>
+                <p className="text-[11px] text-zinc-400 mt-1">Format JPG, PNG, atau PDF (Maks 5 MB)</p>
               </div>
             </div>
 
-            {/* Pratinjau KTP */}
+            {/* Pratinjau KTM / KRS */}
             <div className="relative aspect-[16/10] rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 flex items-center justify-center">
               {formData.ktpUrl ? (
                 <>
                   <Image
                     src={formData.ktpUrl}
-                    alt="Pratinjau KTP"
+                    alt="Pratinjau KTM / KRS"
                     fill
                     sizes="200px"
                     className="object-cover"
                     unoptimized
                   />
                   <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Pratinjau KTP Siap Kirim
+                    Pratinjau KTM / KRS Siap Kirim
                   </div>
                 </>
               ) : (
                 <div className="text-center p-4 text-xs text-zinc-400">
                   <FileText size={22} className="mx-auto mb-1 text-zinc-300" />
-                  <span>Belum ada foto KTP dipilih</span>
+                  <span>Belum ada foto KTM / KRS dipilih</span>
                 </div>
               )}
             </div>
@@ -391,7 +579,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
               className="mt-0.5 rounded text-[hsl(186,72%,24%)] focus:ring-[hsl(186,72%,24%)]"
             />
             <span>
-              Saya menyatakan bahwa data yang diisikan adalah benar dan valid. Saya menyetujui seluruh tata tertib Kos Omi, termasuk batas tamu hingga pukul 22.00 WIB, larangan merokok di dalam kamar ber-AC, dan kewajiban pembayaran sewa bulanan setiap tanggal 5.
+              Saya menyatakan bahwa data yang diisikan adalah benar dan valid. Saya menyetujui seluruh tata tertib Kos Omi, termasuk batas tamu hingga pukul 22.00 WIB, menjaga kebersihan kamar, dan ketentuan pembayaran sewa per 1 Semester (6 Bulan).
             </span>
           </label>
         </div>
@@ -423,12 +611,8 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="space-y-3 text-xs text-zinc-600">
             <div className="flex justify-between items-center">
-              <span>Sewa Bulan Pertama (1 bln)</span>
+              <span>Biaya Sewa (1 Semester / 6 Bulan)</span>
               <span className="font-bold text-zinc-800 tabular-nums">{formatRupiah(monthlyPrice)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Deposit Jaminan (Dikembalikan 100%)</span>
-              <span className="font-bold text-zinc-800 tabular-nums">{formatRupiah(depositAmount)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Biaya Verifikasi & Administrasi</span>
@@ -442,8 +626,8 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-500 space-y-1">
             <p className="font-semibold text-zinc-700">Alur Setelah Pengajuan:</p>
-            <p>1. Tim Kos Omi memeriksa kelengkapan data & KTP (maks. 2x24 jam).</p>
-            <p>2. Setelah disetujui, invoice booking diterbitkan via Midtrans Snap (batas bayar 24 jam).</p>
+            <p>1. Tim Kos Omi memeriksa kelengkapan data & KTM / KRS (maks. 2x24 jam).</p>
+            <p>2. Setelah disetujui, Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans (batas 24 jam).</p>
             <p>3. Kamar resmi menjadi milik Anda dan siap huni.</p>
           </div>
 
@@ -466,7 +650,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
             <Lock size={13} className="text-sky-600" />
-            <span>Kerahasiaan data KTP terlindungi enkripsi Kos Omi</span>
+            <span>Privasi data KTM / KRS mahasiswi terlindungi di Kos Omi</span>
           </div>
         </Card>
       </div>

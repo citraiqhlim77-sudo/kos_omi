@@ -1,8 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DailyReportRow, MonthlyReportRow } from '@/types/finance';
+import {
+  DailyReportRow,
+  MonthlyReportRow,
+  OperationalDecisionAnalytics,
+} from '@/types/finance';
+import {
+  fetchDailyReportAction,
+  fetchMonthlyReportAction,
+} from '@/actions/finance';
 import { formatRupiah } from '@/data/rooms';
+import { OperationalDecisionAnalyticsPanel } from '@/components/keuangan/OperationalDecisionAnalyticsPanel';
 import {
   FileSpreadsheet,
   Download,
@@ -19,20 +28,33 @@ import {
 interface KeuanganLaporanClientProps {
   initialDailyRows: DailyReportRow[];
   initialMonthlyRows: MonthlyReportRow[];
+  analytics?: OperationalDecisionAnalytics;
 }
 
 export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
   initialDailyRows,
   initialMonthlyRows,
+  analytics,
 }) => {
   const [activeTab, setActiveTab] = useState<'HARIAN' | 'BULANAN'>('HARIAN');
-  const [selectedMonth, setSelectedMonth] = useState('2025-06');
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [selectedMonth, setSelectedMonth] = useState('2026-11');
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const [dailyRows, setDailyRows] = useState<DailyReportRow[]>(initialDailyRows);
+  const [monthlyRows, setMonthlyRows] = useState<MonthlyReportRow[]>(initialMonthlyRows);
   const [isReconciling, setIsReconciling] = useState(false);
   const [reconcileSuccess, setReconcileSuccess] = useState(false);
 
-  const dailyRows = initialDailyRows;
-  const monthlyRows = initialMonthlyRows;
+  const handleMonthChange = async (newMonth: string) => {
+    setSelectedMonth(newMonth);
+    const updated = await fetchDailyReportAction(newMonth);
+    setDailyRows(updated);
+  };
+
+  const handleYearChange = async (newYear: string) => {
+    setSelectedYear(newYear);
+    const updated = await fetchMonthlyReportAction(parseInt(newYear, 10));
+    setMonthlyRows(updated);
+  };
 
   // Hitung agregasi total untuk kartu ringkasan
   const totalIncomeHarian = dailyRows.reduce((sum, r) => sum + r.totalAmount, 0);
@@ -75,13 +97,13 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
     let csvContent = '\uFEFF'; // UTF-8 BOM untuk Microsoft Excel
 
     if (activeTab === 'HARIAN') {
-      csvContent += 'Tanggal,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Kamar,Booking & Deposit,Total Pemasukan (IDR)\r\n';
+      csvContent += 'Tanggal,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Semesteran (Rp 5.000.000/semester),Booking Kamar Baru,Total Pemasukan (IDR)\r\n';
       dailyRows.forEach((r) => {
         csvContent += `"${r.date}",${r.transactionCount},${r.qrisAmount},${r.vaAmount},${r.ewalletAmount},${r.rentAmount},${r.bookingAmount},${r.totalAmount}\r\n`;
       });
       csvContent += `Total Keseluruhan,${totalTxHarian},,,,,"${totalIncomeHarian}"\r\n`;
     } else {
-      csvContent += 'Bulan,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Kamar,Booking & Deposit,Total Pemasukan (IDR)\r\n';
+      csvContent += 'Bulan,Jumlah Transaksi,QRIS,Virtual Account,E-Wallet,Sewa Semesteran (Rp 5.000.000/semester),Booking Kamar Baru,Total Pemasukan (IDR)\r\n';
       monthlyRows.forEach((r) => {
         csvContent += `"${r.monthName}",${r.transactionCount},${r.qrisAmount},${r.vaAmount},${r.ewalletAmount},${r.rentAmount},${r.bookingAmount},${r.totalAmount}\r\n`;
       });
@@ -165,6 +187,9 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
         </div>
       </div>
 
+      {/* ANALITIK PENDUKUNG KEPUTUSAN OPERASIONAL PENGELOLA KOS */}
+      <OperationalDecisionAnalyticsPanel analytics={analytics} />
+
       {/* Filter and Tab Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         {/* Tab Switcher */}
@@ -199,22 +224,21 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
           {activeTab === 'HARIAN' ? (
             <select
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              onChange={(e) => handleMonthChange(e.target.value)}
               className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-800 bg-white cursor-pointer focus:outline-hidden"
             >
-              <option value="2025-06">Juni 2025 (Bulan Berjalan)</option>
-              <option value="2025-05">Mei 2025</option>
-              <option value="2025-04">April 2025</option>
-              <option value="2025-03">Maret 2025</option>
+              <option value="2026-11">November 2026 (Bulan Berjalan)</option>
+              <option value="2026-10">Oktober 2026</option>
+              <option value="2026-09">September 2026</option>
             </select>
           ) : (
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => handleYearChange(e.target.value)}
               className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-800 bg-white cursor-pointer focus:outline-hidden"
             >
+              <option value="2026">Tahun Buku 2026</option>
               <option value="2025">Tahun Buku 2025</option>
-              <option value="2024">Tahun Buku 2024</option>
             </select>
           )}
         </div>
@@ -268,8 +292,8 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
                 <th className="p-3.5 text-right">QRIS</th>
                 <th className="p-3.5 text-right">Virtual Account</th>
                 <th className="p-3.5 text-right">E-Wallet</th>
-                <th className="p-3.5 text-right">Sewa Bulanan</th>
-                <th className="p-3.5 text-right">Booking & Deposit</th>
+                <th className="p-3.5 text-right">Sewa Semesteran (Rp 5.000.000/semester)</th>
+                <th className="p-3.5 text-right">Booking Kamar Baru</th>
                 <th className="p-3.5 text-right font-extrabold text-zinc-900">Total Pemasukan</th>
               </tr>
             </thead>
@@ -344,7 +368,7 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
                       <span className="tabular-nums font-medium">{formatRupiah(row.vaAmount)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Sewa Bulanan:</span>
+                      <span>Sewa Semesteran (Rp 5.000.000/semester):</span>
                       <span className="tabular-nums font-medium">{formatRupiah(row.rentAmount)}</span>
                     </div>
                   </div>

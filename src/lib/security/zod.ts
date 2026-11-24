@@ -221,17 +221,17 @@ export const z = {
  */
 export const loginSchema = z.object({
   email: z.string().email('Format email tidak valid'),
-  password: z.string().min(8, 'Kata sandi minimal 8 karakter'),
+  password: z.string().min(4, 'Kata sandi minimal 4 karakter'),
 });
 
 /**
  * 2. Skema Registrasi Calon Penghuni
  */
 export const registerSchema = z.object({
-  name: z.string().min(3, 'Nama lengkap minimal 3 karakter sesuai KTP'),
+  name: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
   email: z.string().email('Format email tidak valid'),
-  phone: z.string().regex(/^(\+?62|0)8\d{7,12}$/, 'Nomor HP harus format Indonesia (contoh: 081234567890)'),
-  password: z.string().min(8, 'Kata sandi minimal 8 karakter'),
+  phone: z.string().min(6, 'Nomor WhatsApp/HP wajib diisi'),
+  password: z.string().min(4, 'Kata sandi minimal 4 karakter'),
 });
 
 /**
@@ -245,20 +245,20 @@ export const forgotPasswordSchema = z.object({
  * 4. Skema Reset Password
  */
 export const resetPasswordSchema = z.object({
-  token: z.string().min(10, 'Token reset kata sandi tidak valid'),
-  password: z.string().min(8, 'Kata sandi baru minimal 8 karakter'),
+  token: z.string().min(4, 'Token reset kata sandi tidak valid'),
+  password: z.string().min(4, 'Kata sandi baru minimal 4 karakter'),
 });
 
 /**
  * 5. Skema Reservasi Kamar
  */
 export const reservationInputSchema = z.object({
-  roomCode: z.string().min(2, 'Kode kamar wajib dipilih'),
-  fullName: z.string().min(3, 'Nama lengkap minimal 3 karakter sesuai KTP'),
-  nik: z.string().regex(/^\d{16}$/, 'Nomor NIK KTP wajib 16 digit angka'),
-  phone: z.string().regex(/^(\+?62|0)8\d{7,12}$/, 'Nomor telepon harus nomor Indonesia valid'),
+  roomCode: z.string().min(1, 'Kode kamar wajib dipilih'),
+  fullName: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
+  nik: z.string().min(3, 'Nomor NIM / Identitas Mahasiswa wajib diisi'),
+  phone: z.string().min(6, 'Nomor telepon/WhatsApp wajib diisi'),
   email: z.string().email('Format email tidak valid'),
-  checkInDate: z.string().min(10, 'Tanggal masuk wajib diisi'),
+  checkInDate: z.string().min(8, 'Tanggal masuk wajib diisi'),
   durationMonths: z.number().int().min(1, 'Durasi sewa minimal 1 bulan').max(12, 'Durasi sewa maksimal 12 bulan'),
 });
 
@@ -266,8 +266,8 @@ export const reservationInputSchema = z.object({
  * 6. Skema Penolakan Reservasi
  */
 export const rejectReservationSchema = z.object({
-  reservationCode: z.string().min(5, 'Kode reservasi tidak valid'),
-  rejectionReason: z.string().min(10, 'Alasan penolakan minimal 10 karakter sesuai SOP'),
+  reservationCode: z.string().min(3, 'Kode reservasi tidak valid'),
+  rejectionReason: z.string().min(3, 'Alasan penolakan wajib diisi'),
 });
 
 /**

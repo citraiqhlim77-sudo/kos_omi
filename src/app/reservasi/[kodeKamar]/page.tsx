@@ -5,6 +5,7 @@ import { fetchRoomByCodeAction, fetchRoomsAction } from '@/actions/rooms';
 import { ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import { ReservationFormClient } from '@/components/reservasi/ReservationFormClient';
+import { getCurrentUser } from '@/lib/auth-server';
 import { ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface ReservationPageProps {
@@ -64,7 +65,10 @@ export async function generateMetadata({ params }: ReservationPageProps): Promis
 
 export default async function ReservasiKamarPage({ params }: ReservationPageProps) {
   const { kodeKamar } = await params;
-  const room = await fetchRoomByCodeAction(kodeKamar);
+  const [room, currentUser] = await Promise.all([
+    fetchRoomByCodeAction(kodeKamar),
+    getCurrentUser(),
+  ]);
 
   if (!room) {
     return (
@@ -148,7 +152,7 @@ export default async function ReservasiKamarPage({ params }: ReservationPageProp
         </div>
 
         {/* CLIENT FORM COMPONENT */}
-        <ReservationFormClient room={room} />
+        <ReservationFormClient room={room} currentUser={currentUser} />
       </div>
     </div>
   );

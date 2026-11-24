@@ -33,12 +33,14 @@ declare global {
 }
 
 export function getAuthUsersStore(): UserAuthState[] {
-  if (!global.__kosOmiAuthUsers) {
+  if (!global.__kosOmiAuthUsers || (global as any).__kosOmiAuthVer !== 9) {
     global.__kosOmiAuthUsers = SEED_USERS.map((u) => ({
       ...u,
       failedLoginCount: 0,
       lockedUntil: null,
     }));
+    (global as any).__kosOmiAuthVer = 9;
+    global.__kosOmiSeedHashReady = undefined;
   }
   return global.__kosOmiAuthUsers;
 }

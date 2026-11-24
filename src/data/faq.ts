@@ -1,4 +1,4 @@
-﻿export interface FAQItem {
+export interface FAQItem {
   id: string;
   category: 'reservasi' | 'pembayaran' | 'deposit' | 'aturan';
   question: string;
@@ -22,7 +22,7 @@ export const FAQ_DATA: FAQItem[] = [
     id: 'faq-3',
     category: 'pembayaran',
     question: 'Metode pembayaran apa saja yang diterima di Kos Omi?',
-    answer: 'Kos Omi melayani pembayaran melalui QRIS, Transfer Bank (BRI, BCA, BSI, Bank Nagari, dan SeaBank), serta E-Wallet (DANA dan ShopeePay ke nomor +62 813-7432-9562). Penghuni juga dapat mengunggah bukti pembayaran langsung di halaman pembayaran untuk diverifikasi.',
+    answer: 'Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (DANA: 082246424353, GoPay, ShopeePay) melalui Midtrans. Seluruh transaksi diverifikasi otomatis secara real-time oleh sistem.',
   },
   {
     id: 'faq-4',
