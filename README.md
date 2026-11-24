@@ -121,17 +121,17 @@ npm run build
 
 ---
 
-## 🔐 Daftar 5 Akun Demo untuk Pengujian (`src/data/auth-demo.ts`)
+## 🔐 Otorisasi & Peran Pengguna Sistem (RBAC)
 
-Anda dapat menguji kelima peran pengguna melalui halaman **[http://localhost:3000/login](http://localhost:3000/login)** (tersedia tombol **Simulasi Peran / Demo Quick Fill** satu klik di halaman login):
+Sistem menerapkan kontrol akses berbasis peran (*Role-Based Access Control*) untuk 5 peran pengguna melalui halaman `/login` (kredensial akun staf internal dikelola secara privat oleh Administrator Kos Omi):
 
-| No | Peran (Role) | Nama Pengguna | Email | Kata Sandi | Rute Dasbor Utama |
-| :-: | :--- | :--- | :--- | :--- | :--- |
-| 1 | **Admin Utama (`ADMIN`)** | Ibu Omi (Admin) | `admin@kosomi.id` | `Password123!` | `/admin/dashboard` |
-| 2 | **Pengelola Kos (`PENGELOLA`)** | Yanti Susanti (Pengelola) | `pengelola@kosomi.id` | `Password123!` | `/pengelola/dashboard` |
-| 3 | **Staf Keuangan (`KEUANGAN`)** | Aisyah Fitriani (Keuangan) | `keuangan@kosomi.id` | `Password123!` | `/keuangan/dashboard` |
-| 4 | **Calon Penghuni (`CALON_PENGHUNI`)** | Zahra Aulia Putri | `calon@example.com` | `Password123!` | `/calon/dashboard` |
-| 5 | **Penghuni Aktif (`PENGHUNI`)** | Rina Kusuma | `penghuni@example.com` | `Password123!` | `/penghuni/dashboard` |
+| No | Peran (Role) | Deskripsi Akses | Rute Dasbor Utama |
+| :-: | :--- | :--- | :--- |
+| 1 | **Admin Utama (`ADMIN`)** | Manajemen pengguna lintas role, pengaturan sistem, & audit log | `/admin/dashboard` |
+| 2 | **Pengelola Kos (`PENGELOLA`)** | Verifikasi reservasi, validasi pembayaran, kamar 1–67, & check-in/out | `/pengelola/dashboard` |
+| 3 | **Staf Keuangan (`KEUANGAN`)** | Rekap pemasukan, analitik keputusan, & ekspor laporan Excel/CSV | `/keuangan/dashboard` |
+| 4 | **Calon Penghuni (`CALON_PENGHUNI`)** | Pendaftaran mandiri (`/daftar`), pengajuan reservasi, & konfirmasi bayar | `/calon/dashboard` |
+| 5 | **Penghuni Aktif (`PENGHUNI`)** | Informasi kamar aktif, tagihan semesteran, & cetak kuitansi resmi | `/penghuni/dashboard` |
 
 ---
 

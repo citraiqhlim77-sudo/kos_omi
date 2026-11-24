@@ -42,11 +42,9 @@ export const RoleDashboardPreview: React.FC<RoleDashboardPreviewProps> = ({
     if (session) {
       setCurrentUser(session);
     } else {
-      // Otomatis sinkronisasi dengan role halaman demo
-      const { user } = loginWithDemoAccount(role);
-      setCurrentUser(user);
+      router.push('/login');
     }
-  }, [role]);
+  }, [role, router]);
 
   const handleLogout = () => {
     clearClientSession();
@@ -137,33 +135,6 @@ export const RoleDashboardPreview: React.FC<RoleDashboardPreviewProps> = ({
               <span>Uji Halaman 403 Forbidden</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </NextLink>
-          </div>
-        </div>
-
-        {/* Quick Role Switcher for Testing */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-3">
-          <div className="text-xs font-bold text-zinc-500">
-            Peralihan Cepat Antar Peran (Quick Switcher)
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-            {DEMO_ACCOUNTS.map((acc) => {
-              const isCurrent = acc.role === role;
-              return (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => handleSwitchRole(acc.role)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    isCurrent
-                      ? 'border-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] ring-2 ring-[hsl(186,72%,24%)]/20'
-                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 cursor-pointer'
-                  }`}
-                >
-                  <div className="text-xs font-bold text-zinc-900">{acc.roleLabel}</div>
-                  <div className="text-[10px] text-zinc-500 truncate mt-0.5">{acc.dashboardPath}</div>
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>

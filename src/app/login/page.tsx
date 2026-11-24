@@ -154,62 +154,8 @@ export default function LoginPage() {
             Masuk ke Akun Kos Omi
           </h1>
           <p className="text-sm text-zinc-600 max-w-md mx-auto">
-            Gunakan akun terdaftar atau pilih simulasi peran di bawah untuk menguji dashboard masing-masing role.
+            Masukkan alamat email dan kata sandi akun resmi Anda untuk mengakses portal Kos Omi.
           </p>
-        </div>
-
-        {/* Demo Role Switcher Tabs */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-500">
-              Pilih Simulasi Peran (Demo Quick Fill)
-            </span>
-            <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-              5 Role Tersedia
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {DEMO_ACCOUNTS.map((acc) => {
-              const isSelected = selectedRole === acc.role;
-              return (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => handleSelectDemoAccount(acc.role)}
-                  className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                    isSelected
-                      ? 'border-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] ring-2 ring-[hsl(186,72%,24%)]/20'
-                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="p-1 rounded bg-white border border-zinc-100">
-                      {getRoleIcon(acc.role)}
-                    </span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-[hsl(186,72%,24%)] stroke-[3]" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-zinc-900">{acc.roleLabel}</div>
-                    <div className="text-[10px] text-zinc-500 truncate">{acc.email}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedRole && (
-            <div className="text-xs text-zinc-600 bg-zinc-50 px-3 py-2.5 rounded-xl border border-zinc-200 flex items-center justify-between gap-2">
-              <span className="font-medium text-zinc-500">Tujuan Dasbor:</span>
-              <NextLink
-                href={DEMO_ACCOUNTS.find((a) => a.role === selectedRole)?.dashboardPath || '/calon/dashboard'}
-                className="inline-flex items-center gap-1.5 font-bold text-[hsl(186,72%,24%)] bg-white hover:bg-[hsl(180,33%,95%)] px-3 py-1 rounded-lg border border-[hsl(186,50%,82%)] transition-colors"
-              >
-                <span>{DEMO_ACCOUNTS.find((a) => a.role === selectedRole)?.roleDescription || 'Portal Calon Penghuni'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </NextLink>
-            </div>
-          )}
         </div>
 
         {/* Main Login Form Card */}
