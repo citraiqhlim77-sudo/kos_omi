@@ -157,17 +157,36 @@ export async function fetchTransactionByIdAction(
   return found ? { ...found } : null;
 }
 
-// 4. Fetch Daily Report (100% Sinkron dengan Data Transaksi Real & Ekspor Excel/CSV)
+// 4. Fetch Daily Report (Mendukung '2026-ALL' untuk Rekap Semua Bulan maupun bulan spesifik '2026-01' s.d. '2026-12')
 export async function fetchDailyReportAction(
-  month: string = '2026-11'
+  month: string = '2026-ALL'
 ): Promise<DailyReportRow[]> {
   getTransactionsStore();
   const [yearStr, monthStr] = month.split('-');
   const year = parseInt(yearStr || '2026', 10);
-  const monthNum = parseInt(monthStr || '11', 10);
-
-  // Ambil data agregasi terverifikasi (Asia/Jakarta) — sumber data yang sama persis dengan Ekspor CSV/Excel
   const { getDailyRevenueReport } = await import('@/lib/reports/revenue');
+
+  if (!monthStr || monthStr.toUpperCase() === 'ALL') {
+    const allMonthsRows: DailyReportRow[] = [];
+    for (let m = 1; m <= 12; m++) {
+      const monthRows = await getDailyRevenueReport(m, year);
+      for (const existing of monthRows) {
+        allMonthsRows.push({
+          date: existing.dateOrMonth,
+          transactionCount: existing.transactionCount,
+          qrisAmount: existing.byPaymentMethod.qris || 0,
+          vaAmount: existing.byPaymentMethod.va || 0,
+          ewalletAmount: existing.byPaymentMethod.ewallet || 0,
+          rentAmount: existing.byCategory.sewaBulanan || 0,
+          bookingAmount: (existing.byCategory.booking || 0) + (existing.byCategory.deposit || 0),
+          totalAmount: existing.totalIncome,
+        });
+      }
+    }
+    return allMonthsRows;
+  }
+
+  const monthNum = parseInt(monthStr || '11', 10);
   const aggregatedRows = await getDailyRevenueReport(monthNum, year);
 
   return aggregatedRows.map((existing) => ({

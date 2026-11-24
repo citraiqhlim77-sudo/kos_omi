@@ -7,6 +7,11 @@ import type { UserRole } from '@/types/auth';
  * ditambahkan di src/auth.ts yang hanya berjalan di Node.js.
  */
 export const authConfig = {
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    'kos-omi-padang-production-auth-secret-key-2026-kelompok-1',
+  trustHost: true,
   pages: {
     signIn: '/login',
     error: '/login',

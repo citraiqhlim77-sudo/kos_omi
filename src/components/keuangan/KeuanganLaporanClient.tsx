@@ -37,7 +37,7 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
   analytics,
 }) => {
   const [activeTab, setActiveTab] = useState<'HARIAN' | 'BULANAN'>('HARIAN');
-  const [selectedMonth, setSelectedMonth] = useState('2026-11');
+  const [selectedMonth, setSelectedMonth] = useState('2026-ALL');
   const [selectedYear, setSelectedYear] = useState('2026');
   const [dailyRows, setDailyRows] = useState<DailyReportRow[]>(initialDailyRows);
   const [monthlyRows, setMonthlyRows] = useState<MonthlyReportRow[]>(initialMonthlyRows);
@@ -354,9 +354,19 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
               onChange={(e) => handleMonthChange(e.target.value)}
               className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-bold text-zinc-800 bg-white cursor-pointer focus:outline-hidden"
             >
-              <option value="2026-11">November 2026 (Bulan Berjalan)</option>
-              <option value="2026-10">Oktober 2026</option>
+              <option value="2026-ALL">Semua Bulan (Januari – Desember 2026)</option>
+              <option value="2026-01">Januari 2026</option>
+              <option value="2026-02">Februari 2026</option>
+              <option value="2026-03">Maret 2026</option>
+              <option value="2026-04">April 2026</option>
+              <option value="2026-05">Mei 2026</option>
+              <option value="2026-06">Juni 2026</option>
+              <option value="2026-07">Juli 2026</option>
+              <option value="2026-08">Agustus 2026</option>
               <option value="2026-09">September 2026</option>
+              <option value="2026-10">Oktober 2026</option>
+              <option value="2026-11">November 2026 (Bulan Berjalan)</option>
+              <option value="2026-12">Desember 2026</option>
             </select>
           ) : (
             <select
@@ -403,8 +413,10 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
         <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
           <h2 className="text-xs font-bold text-zinc-700">
             {activeTab === 'HARIAN'
-              ? `Rekapitulasi Harian Periode ${selectedMonth}`
-              : `Rekapitulasi Bulanan Tahun ${selectedYear}`}
+              ? selectedMonth === '2026-ALL'
+                ? 'Rekapitulasi Harian Semua Bulan (Januari – Desember 2026)'
+                : `Rekapitulasi Harian Periode ${selectedMonth}`
+              : `Rekapitulasi Bulanan Tahun ${selectedYear} (Januari – Desember)`}
           </h2>
           <span className="text-xs text-zinc-500">Mata uang: Rupiah (IDR)</span>
         </div>

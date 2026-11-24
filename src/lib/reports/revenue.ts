@@ -363,17 +363,7 @@ export async function getDailyRevenueReport(
   monthNumber: number,
   year: number
 ): Promise<RevenueAggregationRow[]> {
-  const currentJkt = getCurrentJakartaDate();
-
-  // Evaluasi apakah periode yang diminta sudah tertutup (bulan sebelum bulan berjalan)
-  const isPastMonth =
-    year < currentJkt.year || (year === currentJkt.year && monthNumber < currentJkt.month);
-
-  if (isPastMonth) {
-    return getCachedPastMonthRevenue(year, monthNumber);
-  }
-
-  // Bulan berjalan: ambil data langsung dari database / store secara real-time
+  // Ambil data langsung dari database / store secara real-time agar selalu sinkron dengan transaksi terbaru
   return queryDailyRevenueFromStore(monthNumber, year);
 }
 

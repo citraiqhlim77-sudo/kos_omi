@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function KeuanganLaporanPage() {
   const [dailyRows, monthlyRows, analytics] = await Promise.all([
-    fetchDailyReportAction('2026-11'),
+    fetchDailyReportAction('2026-ALL'),
     fetchMonthlyReportAction(2026),
     fetchOperationalAnalyticsAction(),
   ]);
