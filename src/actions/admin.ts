@@ -10,6 +10,8 @@ import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { sendEmailWithRetry } from '@/lib/notify/email';
 import { sendWhatsAppWithRetry } from '@/lib/notify/whatsapp';
+import { findUserByEmail, getAuthUsersStore } from '@/lib/auth-store';
+import { hashPassword } from '@/lib/auth/password';
 
 // IN-MEMORY GLOBAL STATE
 declare global {
@@ -30,6 +32,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'admin@kosomi.id',
     phone: '+62 813-7432-9562',
     role: 'ADMIN',
+    plainPassword: 'Password123!',
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',
     lastLoginAt: '2026-11-02T08:30:00Z',
@@ -40,6 +43,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'pengelola@kosomi.id',
     phone: '081288990011',
     role: 'PENGELOLA',
+    plainPassword: 'Password123!',
     isActive: true,
     createdAt: '2026-01-02T10:00:00Z',
     lastLoginAt: '2026-11-02T09:15:00Z',
@@ -50,6 +54,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'keuangan@kosomi.id',
     phone: '081399001122',
     role: 'KEUANGAN',
+    plainPassword: 'Password123!',
     isActive: true,
     createdAt: '2026-01-02T10:30:00Z',
     lastLoginAt: '2026-11-02T09:45:00Z',
@@ -61,6 +66,7 @@ const initialUsers: AdminUserRecord[] = [
     phone: '081234567890',
     role: 'CALON_PENGHUNI',
     roomCode: '1',
+    plainPassword: 'Password123!',
     isActive: true,
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
@@ -122,8 +128,8 @@ function getUsersStore(): AdminUserRecord[] {
 
   const store = global.__kosOmiAdminUsers;
 
-  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers)
-  const authUsers = (global as any).__kosOmiAuthUsers as any[] | undefined;
+  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers) beserta kata sandinya
+  const authUsers = getAuthUsersStore();
   if (Array.isArray(authUsers)) {
     for (const au of authUsers) {
       if (!au?.email) continue;
@@ -135,9 +141,19 @@ function getUsersStore(): AdminUserRecord[] {
           email: au.email,
           phone: au.phone || '-',
           role: au.role || 'CALON_PENGHUNI',
+          plainPassword: au.plainPassword || 'Password123!',
           isActive: au.isActive !== false,
           createdAt: new Date().toISOString(),
         });
+      } else {
+        if (au.plainPassword) {
+          existing.plainPassword = au.plainPassword;
+        } else if (!existing.plainPassword) {
+          existing.plainPassword = 'Password123!';
+        }
+        if (au.role) {
+          existing.role = au.role;
+        }
       }
     }
   }
@@ -252,6 +268,7 @@ export async function createStaffUserAction(data: {
   email: string;
   phone: string;
   role: 'PENGELOLA' | 'KEUANGAN';
+  password?: string;
 }): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
   await requireRole(['ADMIN']);
   const users = getUsersStore();
@@ -260,17 +277,37 @@ export async function createStaffUserAction(data: {
     return { success: false, message: 'Alamat email sudah terdaftar.' };
   }
 
+  const staffPassword = data.password?.trim() || 'Password123!';
+
   const newUser: AdminUserRecord = {
     id: `usr-${Date.now()}`,
     name: data.name,
     email: data.email,
     phone: data.phone,
     role: data.role,
+    plainPassword: staffPassword,
     isActive: true,
     createdAt: new Date().toISOString(),
   };
 
   users.unshift(newUser);
+
+  // Sinkronkan juga ke store login (__kosOmiAuthUsers) agar staf baru bisa langsung login
+  const authStore = getAuthUsersStore();
+  if (!authStore.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
+    authStore.push({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email.toLowerCase().trim(),
+      phone: newUser.phone,
+      role: newUser.role,
+      passwordHash: await hashPassword(staffPassword),
+      plainPassword: staffPassword,
+      isActive: true,
+      failedLoginCount: 0,
+      lockedUntil: null,
+    });
+  }
 
   const auditLogs = getAuditLogsStore();
   auditLogs.unshift({
@@ -290,8 +327,44 @@ export async function createStaffUserAction(data: {
 
   return {
     success: true,
-    message: `Akun staf ${data.name} (${data.role}) berhasil ditambahkan!`,
+    message: `Akun staf ${data.name} (${data.role}) berhasil ditambahkan dengan kata sandi: ${staffPassword}`,
     user: newUser,
+  };
+}
+
+// 2b. Reset / Update User Password by Admin
+export async function adminUpdateUserPasswordAction(
+  userId: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
+  await requireRole(['ADMIN']);
+  const cleanPass = newPassword.trim();
+  if (cleanPass.length < 6) {
+    return { success: false, message: 'Kata sandi baru minimal harus 6 karakter.' };
+  }
+
+  const users = getUsersStore();
+  const target = users.find((u) => u.id === userId);
+  if (!target) {
+    return { success: false, message: 'Pengguna tidak ditemukan.' };
+  }
+
+  target.plainPassword = cleanPass;
+
+  const authUser = findUserByEmail(target.email);
+  if (authUser) {
+    authUser.plainPassword = cleanPass;
+    authUser.passwordHash = await hashPassword(cleanPass);
+    authUser.failedLoginCount = 0;
+    authUser.lockedUntil = null;
+  }
+
+  revalidatePath('/admin/pengguna');
+
+  return {
+    success: true,
+    message: `Kata sandi untuk ${target.name} (${target.email}) berhasil diperbarui menjadi: ${cleanPass}`,
+    user: { ...target },
   };
 }
 

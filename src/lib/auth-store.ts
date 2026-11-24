@@ -10,6 +10,7 @@ import { hashPassword } from '@/lib/auth/password';
 export interface UserAuthState extends SeedUser {
   failedLoginCount: number;
   lockedUntil?: string | null;
+  plainPassword?: string;
 }
 
 export interface ResetTokenRecord {
@@ -38,6 +39,7 @@ export function getAuthUsersStore(): UserAuthState[] {
       ...u,
       failedLoginCount: 0,
       lockedUntil: null,
+      plainPassword: SEED_DEFAULT_PASSWORD,
     }));
     (global as any).__kosOmiAuthVer = 9;
     global.__kosOmiSeedHashReady = undefined;

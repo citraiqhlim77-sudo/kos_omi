@@ -6,6 +6,7 @@ import {
   createStaffUserAction,
   toggleUserStatusAction,
   deleteUserAction,
+  adminUpdateUserPasswordAction,
 } from '@/actions/admin';
 import {
   Search,
@@ -16,6 +17,9 @@ import {
   Trash2,
   UserMinus,
   UserCheck,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 
 interface AdminPenggunaClientProps {
@@ -34,8 +38,16 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [staffPassword, setStaffPassword] = useState('Password123!');
   const [role, setRole] = useState<'PENGELOLA' | 'KEUANGAN'>('PENGELOLA');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State Lihat & Ubah Kata Sandi Pengguna oleh Admin
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [showAllPasswords, setShowAllPasswords] = useState(false);
+  const [userToEditPassword, setUserToEditPassword] = useState<AdminUserRecord | null>(null);
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Modal Konfirmasi Hapus Pengguna (Sudah Keluar Kos)
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
@@ -65,7 +77,13 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
     if (!name.trim() || !email.trim() || !phone.trim()) return;
 
     setIsSubmitting(true);
-    const res = await createStaffUserAction({ name, email, phone, role });
+    const res = await createStaffUserAction({
+      name,
+      email,
+      phone,
+      role,
+      password: staffPassword,
+    });
 
     if (res.success && res.user) {
       setUsers((prev) => [res.user!, ...prev]);
@@ -73,12 +91,42 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
       setName('');
       setEmail('');
       setPhone('');
+      setStaffPassword('Password123!');
       setFeedback({ type: 'success', message: res.message });
     } else {
       setFeedback({ type: 'error', message: res.message });
     }
     setIsSubmitting(false);
     setTimeout(() => setFeedback(null), 5000);
+  };
+
+  const handleUpdateUserPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToEditPassword || !newPasswordInput.trim()) return;
+
+    setIsUpdatingPassword(true);
+    const res = await adminUpdateUserPasswordAction(
+      userToEditPassword.id,
+      newPasswordInput.trim()
+    );
+    setIsUpdatingPassword(false);
+
+    if (res.success && res.user) {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userToEditPassword.id
+            ? { ...u, plainPassword: res.user!.plainPassword }
+            : u
+        )
+      );
+      setRevealedPasswords((prev) => ({ ...prev, [userToEditPassword.id]: true }));
+      setFeedback({ type: 'success', message: res.message });
+      setUserToEditPassword(null);
+      setNewPasswordInput('');
+    } else {
+      setFeedback({ type: 'error', message: res.message });
+    }
+    setTimeout(() => setFeedback(null), 6000);
   };
 
   const handleToggleStatus = async (userId: string) => {
@@ -169,14 +217,34 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99] shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Tambah Akun Staf Baru</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowAllPasswords((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors cursor-pointer"
+          >
+            {showAllPasswords ? (
+              <>
+                <EyeOff className="w-4 h-4 text-zinc-500" />
+                <span>Sembunyikan Semua Kata Sandi</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 text-[hsl(186,72%,24%)]" />
+                <span>Tampilkan Semua Kata Sandi</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99] shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Tambah Akun Staf Baru</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -250,14 +318,15 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Table (Responsif & Sama di Laptop maupun HP, Lengkap dengan Email & Kata Sandi) */}
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-xs text-left">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[920px] text-xs text-left">
             <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
               <tr>
                 <th className="p-3.5">Nama Pengguna</th>
                 <th className="p-3.5">Email & Kontak</th>
+                <th className="p-3.5">Kata Sandi Akun</th>
                 <th className="p-3.5">Peran (Role)</th>
                 <th className="p-3.5">Kamar</th>
                 <th className="p-3.5">Terdaftar Sejak</th>
@@ -268,6 +337,9 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
             <tbody className="divide-y divide-zinc-100 text-zinc-700">
               {filteredUsers.map((user) => {
                 const isAdmin = user.role === 'ADMIN';
+                const isPasswordVisible =
+                  showAllPasswords || Boolean(revealedPasswords[user.id]);
+                const userPassword = user.plainPassword || 'Password123!';
 
                 return (
                   <tr key={user.id} className="hover:bg-zinc-50/60 transition-colors">
@@ -276,8 +348,45 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                     </td>
 
                     <td className="p-3.5 whitespace-nowrap">
-                      <span className="text-zinc-800 font-medium block">{user.email}</span>
+                      <span className="text-zinc-900 font-semibold block">{user.email}</span>
                       <span className="text-[11px] text-zinc-500">{user.phone}</span>
+                    </td>
+
+                    <td className="p-3.5 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
+                        <span className="font-mono text-xs font-bold text-zinc-900 select-all">
+                          {isPasswordVisible ? userPassword : '••••••••••'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRevealedPasswords((prev) => ({
+                              ...prev,
+                              [user.id]: !prev[user.id],
+                            }))
+                          }
+                          className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
+                          title={isPasswordVisible ? 'Sembunyikan Kata Sandi' : 'Lihat Kata Sandi'}
+                        >
+                          {isPasswordVisible ? (
+                            <EyeOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Eye className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserToEditPassword(user);
+                            setNewPasswordInput(userPassword);
+                          }}
+                          className="text-[10px] font-bold text-[hsl(186,72%,24%)] hover:underline pl-1 border-l border-zinc-200 cursor-pointer inline-flex items-center gap-0.5"
+                          title="Ubah / Reset Kata Sandi Pengguna Ini"
+                        >
+                          <KeyRound className="w-3 h-3" />
+                          <span>Ubah</span>
+                        </button>
+                      </div>
                     </td>
 
                     <td className="p-3.5 whitespace-nowrap">
@@ -365,52 +474,83 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
             </tbody>
           </table>
         </div>
-
-        {/* Mobile Cards View */}
-        <div className="sm:hidden divide-y divide-zinc-100 p-3 space-y-3">
-          {filteredUsers.map((user) => {
-            const isAdmin = user.role === 'ADMIN';
-            return (
-              <div key={user.id} className="pt-3 first:pt-0 space-y-2.5 text-xs">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-zinc-900">{user.name}</p>
-                    <p className="text-zinc-500 text-[11px]">{user.email} • {user.phone}</p>
-                  </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getRoleBadgeClass(
-                      user.role
-                    )}`}
-                  >
-                    {user.role}
-                  </span>
-                </div>
-
-                {!isAdmin && (
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(user.id)}
-                      className="px-2.5 py-1 rounded-lg border border-zinc-200 text-[11px] font-semibold text-zinc-700"
-                    >
-                      {user.isActive ? 'Keluar Kos / Nonaktifkan' : 'Aktifkan'}
-                    </button>
-                    {!user.isActive && (
-                      <button
-                        type="button"
-                        onClick={() => setUserToDelete(user)}
-                        className="px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-bold inline-flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3 h-3" /> Hapus Data
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
       </div>
+
+      {/* Modal Ubah / Reset Kata Sandi Pengguna oleh Admin */}
+      {userToEditPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200 animate-in zoom-in-95 duration-150">
+            <div className="bg-zinc-900 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <KeyRound className="w-5 h-5 text-sky-400" />
+                <div>
+                  <h3 className="font-heading font-extrabold text-base leading-tight">
+                    Lihat & Ubah Kata Sandi Pengguna
+                  </h3>
+                  <p className="text-[11px] text-zinc-400">
+                    Bantuan pemulihan akses akun oleh Administrator Kos Omi
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUserToEditPassword(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateUserPassword} className="p-6 space-y-4 text-xs">
+              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
+                <p className="font-bold text-zinc-900 text-sm">{userToEditPassword.name}</p>
+                <p className="text-zinc-600">
+                  Email Login: <strong className="text-zinc-900 select-all">{userToEditPassword.email}</strong>
+                </p>
+                <p className="text-zinc-600">
+                  Kata Sandi Saat Ini:{' '}
+                  <strong className="font-mono text-emerald-700 select-all">
+                    {userToEditPassword.plainPassword || 'Password123!'}
+                  </strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-700 mb-1">
+                  Kata Sandi Baru (Minimal 6 Karakter) *
+                </label>
+                <input
+                  type="text"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  placeholder="Masukkan kata sandi baru"
+                  required
+                  minLength={6}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setUserToEditPassword(null)}
+                  disabled={isUpdatingPassword}
+                  className="px-4 py-2.5 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-colors cursor-pointer"
+                >
+                  {isUpdatingPassword ? 'Menyimpan...' : 'Simpan Kata Sandi Baru'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal Konfirmasi Hapus Data Pengguna (Yang Sudah Keluar Kos) */}
       {userToDelete && (
@@ -545,6 +685,19 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                   <option value="PENGELOLA">PENGELOLA (Operasional Kamar, Reservasi & Check-in/out)</option>
                   <option value="KEUANGAN">KEUANGAN (Laporan, Rekonsiliasi Pembayaran, Tagihan)</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-700 mb-1">Kata Sandi Akun Staf *</label>
+                <input
+                  type="text"
+                  value={staffPassword}
+                  onChange={(e) => setStaffPassword(e.target.value)}
+                  placeholder="Minimal 6 karakter"
+                  required
+                  minLength={6}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                />
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">

@@ -170,6 +170,7 @@ export async function registerAction(data: {
     name,
     email,
     passwordHash: await hashPassword(data.password),
+    plainPassword: data.password,
     phone: phone.replace(/^0/, '62').replace(/^\+/, ''),
     role: 'CALON_PENGHUNI',
     isActive: true,
@@ -178,23 +179,28 @@ export async function registerAction(data: {
   };
   getAuthUsersStore().push(newUser);
 
-  // Sinkronkan otomatis ke Daftar Pengguna Admin Kos (/admin/pengguna)
+  // Sinkronkan otomatis ke Daftar Pengguna Admin Kos (/admin/pengguna) beserta kata sandinya
   const nowIso = new Date().toISOString();
   if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
-    const existsInAdmin = (global as any).__kosOmiAdminUsers.some(
+    const existingInAdmin = (global as any).__kosOmiAdminUsers.find(
       (u: any) => u.email?.toLowerCase() === email.toLowerCase()
     );
-    if (!existsInAdmin) {
+    if (!existingInAdmin) {
       (global as any).__kosOmiAdminUsers.unshift({
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
         phone: data.phone.trim(),
         role: 'CALON_PENGHUNI',
+        plainPassword: data.password,
         isActive: true,
         createdAt: nowIso,
         lastLoginAt: nowIso,
       });
+    } else {
+      existingInAdmin.plainPassword = data.password;
+      existingInAdmin.name = newUser.name;
+      existingInAdmin.phone = data.phone.trim();
     }
   }
 
