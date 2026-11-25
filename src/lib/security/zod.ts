@@ -217,10 +217,10 @@ export const z = {
 // =================================================================
 
 /**
- * 1. Skema Login
+ * 1. Skema Login (Mendukung Login via NIM / Username SIAKAD maupun Email)
  */
 export const loginSchema = z.object({
-  email: z.string().email('Format email tidak valid'),
+  email: z.string().min(3, 'NIM, Username, atau Email wajib diisi (minimal 3 karakter)'),
   password: z.string().min(4, 'Kata sandi minimal 4 karakter'),
 });
 

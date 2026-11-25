@@ -361,7 +361,7 @@ export default async function PengelolaDashboardPage() {
                 Proses Check-out
               </h3>
               <p className="text-xs text-zinc-500 leading-relaxed">
-                Pemeriksaan tagihan akhir, pengembalian deposit, dan pengosongan kamar.
+                Pemeriksaan tagihan akhir, serah terima kunci, dan pengosongan kamar.
               </p>
             </div>
           </NextLink>

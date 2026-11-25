@@ -8,41 +8,57 @@ export const DEFAULT_PASSWORD_HASH =
 export interface SeedUser {
   id: string;
   name: string;
+  nim?: string;
   email: string;
   passwordHash: string;
   phone: string;
   role: 'ADMIN' | 'PENGELOLA' | 'KEUANGAN' | 'CALON_PENGHUNI' | 'PENGHUNI';
+  roomCode?: string;
   isActive: boolean;
   whatsappNotifEnabled?: boolean;
 }
 
-// 1. Akun Pengguna Utama (Hanya 3 Akun Staf Manajemen Resmi Kos Omi, Tanpa Akun Dummy)
+// 1. Akun Pengguna Utama (Pemilik Kos / Super Admin, Pengelola Kos, & Penghuni Terdaftar)
 export const SEED_USERS: SeedUser[] = [
   {
     id: 'usr-admin-01',
-    name: 'Ibu Omi (Pemilik & Administrator Kos Omi)',
+    name: 'Ibu Yulastri (Pemilik Kos & Super Admin)',
+    nim: 'admin',
     email: 'admin@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '+62 813-7432-9562',
+    phone: '0822-8714-6763',
     role: 'ADMIN',
     isActive: true,
   },
   {
     id: 'usr-pengelola-01',
-    name: 'Yanti Susanti (Pengelola Kos Omi)',
+    name: 'Yanti Susanti (Pengelola Operasional Kos)',
+    nim: 'pengelola',
     email: 'pengelola@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '081288990011',
+    phone: '0813-7432-9562',
     role: 'PENGELOLA',
     isActive: true,
   },
   {
     id: 'usr-keuangan-01',
-    name: 'Aisyah Fitriani (Staf Keuangan Kos Omi)',
+    name: 'Aisyah Fitriani (Staf Keuangan)',
+    nim: 'keuangan',
     email: 'keuangan@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '081399001122',
+    phone: '0822-8714-6763',
     role: 'KEUANGAN',
+    isActive: true,
+  },
+  {
+    id: 'usr-calon-zahra',
+    name: 'Zahra Aulia Putri',
+    nim: '2214010045',
+    email: 'zahra.aulia@uinib.ac.id',
+    passwordHash: DEFAULT_PASSWORD_HASH,
+    phone: '081234567890',
+    role: 'CALON_PENGHUNI',
+    roomCode: '1',
     isActive: true,
   },
 ];
@@ -55,13 +71,13 @@ export const SEED_INVOICES: any[] = [];
 
 export const SEED_PAYMENTS: any[] = [];
 
-// 4. Parameter Bisnis Default (PRD Bab 10 Table Settings)
+// 4. Parameter Bisnis Default
 export const SEED_SETTINGS = [
   { key: 'kos_name', value: 'Kos Omi Sungai Bangek, Padang' },
   { key: 'kos_address', value: 'Jl. Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (Dekat Kampus III UIN Imam Bonjol)' },
-  { key: 'admin_phone', value: '+6281234567890' },
+  { key: 'admin_phone', value: '0822-8714-6763' },
   { key: 'due_day_default', value: '5' },
-  { key: 'deposit_percent', value: '100' },
+  { key: 'deposit_percent', value: '0' },
   { key: 'booking_window_hours', value: '24' },
   { key: 'timezone', value: 'Asia/Jakarta' },
 ];

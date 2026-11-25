@@ -60,8 +60,8 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
 
         <div className="flex items-center gap-2 text-xs">
           <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-            <span className="text-zinc-400 block text-[10px]">Peran Anda</span>
-            <span className="font-bold text-zinc-900">Administrator Utama</span>
+            <span className="text-zinc-400 block text-[10px]">Pemilik & Kontak Resmi</span>
+            <span className="font-bold text-zinc-900">Ibu Yulastri (0822-8714-6763)</span>
           </div>
           <div className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
             <span className="text-emerald-600 block text-[10px]">Status Sistem</span>
@@ -226,13 +226,13 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
         <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2 border-b border-zinc-100 pb-3">
           <Server className="w-4 h-4 text-blue-600" />
-          <span>Status Infrastruktur & Layanan Pihak Ketiga (PRD Bab 10)</span>
+          <span>Status Infrastruktur & Layanan Sistem Kos Omi</span>
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Database Neon</span>
+              <span className="font-bold text-zinc-800">Database PostgreSQL</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Connected
               </span>
@@ -242,32 +242,32 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
 
           <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Midtrans Gateway</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Sandbox Ready
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">Snap API v1 & Status API dengan verifikasi signature SHA512.</p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Vercel Cron</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Active 00:05 WIB
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">Pembuat invoice bulanan otomatis & pengingat H-7 jatuh tempo.</p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Notifikasi WA & Mail</span>
+              <span className="font-bold text-zinc-800">Midtrans & DANA</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Ready
               </span>
             </div>
-            <p className="text-zinc-500 text-[11px]">Adapter Fonnte WhatsApp & Resend React Email terintegrasi.</p>
+            <p className="text-zinc-500 text-[11px]">DANA Resmi (082246424353) & Midtrans Snap (VA Bank, QRIS, GoPay, ShopeePay).</p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-zinc-800">Kontak Pemilik Kos</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Ibu Yulastri
+              </span>
+            </div>
+            <p className="text-zinc-500 text-[11px]">WA Utama: 0822-8714-6763 · Kontak Cadangan: 0813-7432-9562.</p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-zinc-800">Log Notifikasi Sistem</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Aktif
+              </span>
+            </div>
+            <p className="text-zinc-500 text-[11px]">Pencatatan otomatis riwayat notifikasi reservasi & pembayaran.</p>
           </div>
         </div>
       </div>

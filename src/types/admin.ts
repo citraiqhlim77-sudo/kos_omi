@@ -8,6 +8,7 @@ export type UserRole =
 export interface AdminUserRecord {
   id: string;
   name: string;
+  nim?: string;
   email: string;
   phone: string;
   role: UserRole;

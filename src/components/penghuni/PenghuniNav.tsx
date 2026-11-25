@@ -5,7 +5,8 @@ import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Receipt, History, BedDouble, User, Home } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
-import { getClientSession } from '@/lib/auth-client';
+import { getClientSession, setClientSession } from '@/lib/auth-client';
+import { fetchTenantProfileAction } from '@/actions/billing';
 
 export const PenghuniNav: React.FC = () => {
   const pathname = usePathname();
@@ -13,11 +14,35 @@ export const PenghuniNav: React.FC = () => {
 
   useEffect(() => {
     const clientUser = getClientSession();
+    const emailToQuery = clientUser?.email || undefined;
+
     if (clientUser) {
       const firstName = clientUser.name ? clientUser.name.split(' ')[0] : 'Penghuni';
-      const roomLabel = clientUser.roomCode ? ` · Kamar ${clientUser.roomCode}` : '';
-      setTenantBadge(`${firstName}${roomLabel}`);
+      const initialRoom = clientUser.roomCode ? ` · Kamar No. ${clientUser.roomCode}` : '';
+      setTenantBadge(`${firstName}${initialRoom}`);
     }
+
+    // Ambil nomor kamar secara dinamis dari kontrak hunian aktif (tenancies/reservations + rooms) milik user yang login
+    fetchTenantProfileAction(emailToQuery)
+      .then((profile) => {
+        if (profile && profile.roomCode) {
+          const displayFirst =
+            (profile.name && profile.name.split(' ')[0]) ||
+            (clientUser?.name && clientUser.name.split(' ')[0]) ||
+            'Penghuni';
+          setTenantBadge(`${displayFirst} · Kamar No. ${profile.roomCode}`);
+
+          if (clientUser && clientUser.roomCode !== profile.roomCode) {
+            setClientSession({
+              ...clientUser,
+              roomCode: profile.roomCode,
+            });
+          }
+        }
+      })
+      .catch(() => {
+        // Pertahankan badge dari clientUser apabila gagal memuat
+      });
   }, [pathname]);
 
   const links = [

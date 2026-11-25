@@ -1,6 +1,6 @@
 export interface FAQItem {
   id: string;
-  category: 'reservasi' | 'pembayaran' | 'deposit' | 'aturan';
+  category: 'reservasi' | 'pembayaran' | 'aturan';
   question: string;
   answer: string;
 }
@@ -10,7 +10,7 @@ export const FAQ_DATA: FAQItem[] = [
     id: 'faq-1',
     category: 'reservasi',
     question: 'Berapa harga sewa kamar dan kapasitas per kamar di Kos Omi?',
-    answer: 'Harga sewa kamar di Kos Omi adalah Rp 5.000.000 per semester per kamar untuk Lantai 1 dan Lantai 2. Setiap 1 kamar memiliki kapasitas untuk 2 orang penghuni dan sudah dilengkapi Kasur, Lemari, serta Kamar Mandi Dalam.',
+    answer: 'Tarif sewa kamar di Kos Omi adalah Rp 5.000.000 / semester per kamar untuk Lantai 1 maupun Lantai 2 dengan kapasitas maksimal 2 orang (boleh diisi 1 orang sendiri seharga Rp 5.000.000, atau patungan 2 orang @ Rp 2.500.000/orang), tanpa biaya deposit. Setiap kamar sudah dilengkapi Kasur, Lemari, dan Kamar Mandi Dalam.',
   },
   {
     id: 'faq-2',
@@ -22,19 +22,19 @@ export const FAQ_DATA: FAQItem[] = [
     id: 'faq-3',
     category: 'pembayaran',
     question: 'Metode pembayaran apa saja yang diterima di Kos Omi?',
-    answer: 'Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (DANA: 082246424353, GoPay, ShopeePay) melalui Midtrans. Seluruh transaksi diverifikasi otomatis secara real-time oleh sistem.',
+    answer: 'Kami menerima pembayaran melalui DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans. Batas waktu pembayaran adalah 1x24 jam setelah pengajuan reservasi disetujui oleh Pengelola.',
   },
   {
     id: 'faq-4',
     category: 'pembayaran',
-    question: 'Bagaimana cara menghubungi Ibu Kos Omi jika ada pertanyaan?',
-    answer: 'Anda dapat menghubungi Ibu Kos Omi secara langsung melalui WhatsApp atau telepon di nomor +62 813-7432-9562, atau datang langsung ke lokasi Kos Omi di Sungai Bangek, Padang (dekat Kampus III UIN Imam Bonjol Padang).',
+    question: 'Bagaimana cara menghubungi Pemilik Kos Omi (Ibu Yulastri) jika ada pertanyaan?',
+    answer: 'Anda dapat menghubungi Ibu Yulastri secara langsung melalui WhatsApp Utama di nomor 0822-8714-6763 (atau kontak cadangan 0813-7432-9562), maupun datang langsung ke lokasi Kos Omi di Jalan Ekora, Sungai Bangek, Padang (dekat Kampus III UIN Imam Bonjol Padang).',
   },
   {
     id: 'faq-5',
-    category: 'deposit',
+    category: 'aturan',
     question: 'Bagaimana prosedur jika penghuni sudah selesai masa sewa atau keluar dari kos?',
-    answer: 'Penghuni yang sudah selesai masa sewanya dapat mengajukan check-out melalui sistem. Setelah tidak lagi menghuni kos (keluar dari kos), Admin dapat menonaktifkan atau menghapus akun/data pengguna tersebut agar data penghuni aktif tetap rapi dan akurat.',
+    answer: 'Penghuni yang sudah selesai masa sewa semesternya dapat melakukan check-out melalui Pengelola Kos. Setelah kamar dikosongkan dan kunci diserahterimakan, status kamar otomatis kembali Tersedia.',
   },
   {
     id: 'faq-6',

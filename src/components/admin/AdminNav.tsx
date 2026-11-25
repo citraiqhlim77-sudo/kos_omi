@@ -11,6 +11,8 @@ import {
   Bell,
   Building2,
   Lock,
+  FileSpreadsheet,
+  Receipt,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 
@@ -18,12 +20,13 @@ export const AdminNav: React.FC = () => {
   const pathname = usePathname();
 
   const links = [
-    { href: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-    { href: '/admin/pengguna', label: 'Pengguna', icon: Users },
+    { href: '/admin/dashboard', label: 'Dasbor Pemilik', icon: LayoutDashboard },
+    { href: '/admin/pengguna', label: 'Kelola Akun (SIAKAD)', icon: Users },
+    { href: '/keuangan/laporan', label: 'Laporan Keuangan', icon: FileSpreadsheet },
+    { href: '/keuangan/transaksi', label: 'Transaksi Kas', icon: Receipt },
     { href: '/pengelola/kamar', label: 'Kamar (1–67)', icon: Building2 },
     { href: '/admin/pengaturan', label: 'Pengaturan', icon: Settings },
     { href: '/admin/log-aktivitas', label: 'Log Audit', icon: History },
-    { href: '/admin/notifikasi', label: 'Notifikasi', icon: Bell },
   ];
 
   const isLinkActive = (href: string) =>
@@ -46,7 +49,7 @@ export const AdminNav: React.FC = () => {
             </span>
             <span className="text-xs font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
               <Lock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span>Admin</span>
+              <span>Pemilik Kos (Super Admin)</span>
             </span>
           </div>
 

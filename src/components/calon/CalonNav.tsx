@@ -3,15 +3,13 @@
 import React from 'react';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BedDouble, User, ShieldCheck } from 'lucide-react';
-import { LogoutButton } from '@/components/layout/LogoutButton';
+import { LayoutDashboard, User, ShieldCheck } from 'lucide-react';
 
 export const CalonNav: React.FC = () => {
   const pathname = usePathname();
 
   const links = [
     { href: '/calon/dashboard', label: 'Reservasi & Pembayaran', icon: LayoutDashboard },
-    { href: '/kamar', label: 'Katalog Kamar', icon: BedDouble },
     { href: '/calon/profil', label: 'Profil Saya', icon: User },
   ];
 
@@ -21,7 +19,7 @@ export const CalonNav: React.FC = () => {
     return (
       isCalonHome ||
       pathname === href ||
-      (href !== '/calon/dashboard' && href !== '/kamar' && Boolean(pathname?.startsWith(href)))
+      (href !== '/calon/dashboard' && Boolean(pathname?.startsWith(href)))
     );
   };
 
@@ -32,12 +30,12 @@ export const CalonNav: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs font-bold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] px-2.5 py-1 rounded-md border border-[hsl(186,50%,82%)] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
               <ShieldCheck className="w-3.5 h-3.5 text-[hsl(186,72%,24%)] shrink-0" />
-              <span>Calon Penghuni</span>
+              <span>Portal Calon Penghuni</span>
             </span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto max-w-full scrollbar-none">
-            <nav className="flex items-center gap-1 shrink-0">
+            <nav aria-label="Menu Portal Calon Penghuni" className="flex items-center gap-1 shrink-0">
               {links.map((link) => {
                 const active = isLinkActive(link.href);
                 const Icon = link.icon;
@@ -57,10 +55,6 @@ export const CalonNav: React.FC = () => {
                 );
               })}
             </nav>
-
-            <div className="flex items-center pl-2 border-l border-zinc-200 shrink-0">
-              <LogoutButton showHomeLink label="Keluar" />
-            </div>
           </div>
         </div>
       </div>

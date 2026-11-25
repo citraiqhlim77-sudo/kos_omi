@@ -7,7 +7,10 @@ import {
   LayoutDashboard,
   FileSpreadsheet,
   Receipt,
-  DollarSign,
+  Users,
+  Building2,
+  Settings,
+  Lock,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 
@@ -16,8 +19,9 @@ export const KeuanganNav: React.FC = () => {
 
   const links = [
     { href: '/keuangan/dashboard', label: 'Dasbor Keuangan', icon: LayoutDashboard },
-    { href: '/keuangan/transaksi', label: 'Daftar Transaksi', icon: Receipt },
-    { href: '/keuangan/laporan', label: 'Rekap Laporan', icon: FileSpreadsheet },
+    { href: '/keuangan/laporan', label: 'Laporan Keuangan', icon: FileSpreadsheet },
+    { href: '/keuangan/transaksi', label: 'Transaksi Kas', icon: Receipt },
+    { href: '/keuangan/tagihan', label: 'Tagihan Sewa', icon: Building2 },
   ];
 
   const isLinkActive = (href: string) =>
@@ -37,9 +41,9 @@ export const KeuanganNav: React.FC = () => {
             <span className="font-heading font-extrabold text-sm text-zinc-900 whitespace-nowrap">
               Kos Omi
             </span>
-            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Keuangan</span>
+            <span className="text-xs font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+              <Lock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              <span>Pemilik Kos · Keuangan</span>
             </span>
           </div>
 

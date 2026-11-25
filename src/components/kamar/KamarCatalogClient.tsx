@@ -78,7 +78,7 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
               Katalog Kamar Kos Omi
             </h1>
             <p className="text-zinc-600 text-sm">
-              Lantai 1 (No. 1–33) & Lantai 2 (No. 34–67) • Rp 5.000.000 / semester (isi 2 orang).
+              Lantai 1 (No. 1–33) & Lantai 2 (No. 34–67) • <strong>Rp 5.000.000 / semester per kamar</strong> untuk <strong>maksimal 2 orang</strong> (boleh diisi <strong>1 orang sendiri</strong> Rp 5.000.000 atau <strong>patungan 2 orang</strong> @ Rp 2.500.000/orang, <strong>tanpa biaya deposit</strong>).
             </p>
           </div>
 

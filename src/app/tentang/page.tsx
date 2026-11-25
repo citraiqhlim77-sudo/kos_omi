@@ -120,29 +120,30 @@ export default function TentangPage() {
               <strong>Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang</strong> (tepat di sekitar Kampus III UIN Imam Bonjol Padang). Dirancang khusus untuk memberikan kenyamanan tempat tinggal dan belajar dengan fasilitas lengkap serta keamanan 24 jam.
             </p>
 
-            {/* Ringkasan Harga, Kapasitas & Kontak Ibu Kos */}
+            {/* Ringkasan Harga, Kapasitas & Kontak Ibu Yulastri */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
               <div className="bg-white p-4 rounded-xl border border-zinc-200">
                 <p className="text-xs text-zinc-500 font-medium">Harga Sewa Kamar</p>
                 <p className="text-lg font-extrabold text-[hsl(186,72%,24%)] font-heading mt-0.5">
                   Rp 5.000.000
                 </p>
-                <p className="text-[11px] text-zinc-600 font-medium">Per Semester / Kamar (Lt. 1 & 2)</p>
+                <p className="text-[11px] text-zinc-600 font-medium">Per Semester · Tanpa Deposit</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-zinc-200">
                 <p className="text-xs text-zinc-500 font-medium">Kapasitas Kamar</p>
                 <p className="text-lg font-extrabold text-emerald-600 font-heading mt-0.5">
-                  2 Orang / Kamar
+                  Maks. 2 Orang
                 </p>
-                <p className="text-[11px] text-zinc-600 font-medium">Kasur, Lemari & KM Dalam</p>
+                <p className="text-[11px] text-zinc-600 font-medium">Sendiri Rp 5 Jt / Patungan @2,5 Jt</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-zinc-200">
-                <p className="text-xs text-zinc-500 font-medium">Kontak Ibu Kos</p>
+                <p className="text-xs text-zinc-500 font-medium">Pemilik Kos (Ibu Yulastri)</p>
                 <p className="text-sm font-extrabold text-zinc-900 font-heading mt-1">
-                  +62 813-7432-9562
+                  0822-8714-6763
                 </p>
+                <p className="text-[10px] text-zinc-500">Cadangan: 0813-7432-9562</p>
                 <a
-                  href="https://wa.me/6281374329562"
+                  href="https://wa.me/6282287146763"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[11px] text-emerald-600 font-semibold hover:underline inline-block mt-0.5"
@@ -208,7 +209,7 @@ export default function TentangPage() {
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-zinc-500 max-w-md">
-              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> (1 kamar diisi 2 orang). Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
+              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit). Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans.
             </p>
           </div>
 
@@ -296,9 +297,12 @@ export default function TentangPage() {
                   </div>
 
                   <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-1">
-                    <p className="font-bold text-zinc-800">Kontak Ibu Kos Omi:</p>
+                    <p className="font-bold text-zinc-800">Pemilik & Kontak Resmi (Ibu Yulastri):</p>
                     <p className="text-sm font-extrabold text-[hsl(186,72%,24%)]">
-                      +62 813-7432-9562
+                      WA Utama: 0822-8714-6763
+                    </p>
+                    <p className="text-xs font-semibold text-zinc-700">
+                      Kontak Cadangan: 0813-7432-9562
                     </p>
                     <p className="text-[11px] text-zinc-500">
                       Tersedia untuk telepon & chat WhatsApp (Tanya kamar / Survei lokasi)
@@ -308,7 +312,7 @@ export default function TentangPage() {
                   <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-1">
                     <p className="font-bold text-zinc-800">Tarif & Kapasitas Kamar:</p>
                     <p className="leading-relaxed">
-                      <strong>Rp 5.000.000 / Semester</strong> per kamar (Lantai 1 & Lantai 2) • Kapasitas <strong>1 kamar 2 orang</strong>.
+                      <strong>Rp 5.000.000 / Semester</strong> per kamar (Lantai 1 & Lantai 2) • Maksimal 2 orang (1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, <strong>tanpa biaya deposit</strong>).
                     </p>
                   </div>
                 </div>
@@ -327,13 +331,13 @@ export default function TentangPage() {
                 </a>
 
                 <a
-                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Kos%20Omi,%20saya%20ingin%20bertanya%20lokasi%20dan%20ketersediaan%20kamar%20kos."
+                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20lokasi%20dan%20ketersediaan%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={15} />
-                  Hubungi Ibu Kos (+62 813-7432-9562)
+                  Hubungi Ibu Yulastri (0822-8714-6763)
                 </a>
               </div>
             </div>
@@ -347,7 +351,7 @@ export default function TentangPage() {
           <div className="space-y-2 text-center md:text-left">
             <h2 className="text-2xl font-extrabold text-white">Siap Memilih Kamar di Kos Omi?</h2>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-xl">
-              Cek kamar yang tersedia di Lantai 1 & Lantai 2 atau hubungi langsung Ibu Kos di +62 813-7432-9562.
+              Cek kamar yang tersedia di Lantai 1 & Lantai 2 atau hubungi langsung Ibu Yulastri di 0822-8714-6763 (cadangan: 0813-7432-9562).
             </p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
@@ -359,13 +363,13 @@ export default function TentangPage() {
               <ArrowRight size={15} />
             </NextLink>
             <a
-              href="https://wa.me/6281374329562"
+              href="https://wa.me/6282287146763"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-lg transition-colors"
             >
               <Phone size={15} />
-              WhatsApp Ibu Kos
+              WhatsApp Ibu Yulastri
             </a>
           </div>
         </div>

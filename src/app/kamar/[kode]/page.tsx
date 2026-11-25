@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `Kamar ${room.code} (Lantai ${room.floor}) - Kos Omi Sungai Bangek, Padang`,
-    description: `Detail Kamar ${room.code} Lantai ${room.floor} Kos Omi Sungai Bangek, Padang. Tarif Rp 5.000.000/semester per kamar (kapasitas 1 kamar 2 orang). Dilengkapi Kasur/Lemari, Kamar Mandi Dalam, Ruang Belajar Umum, Dapur & Area Cuci, CCTV, Wi-Fi, TV, Kulkas, Alat Olahraga, Parkir Motor Dalam, dan Keamanan 24 Jam.`,
+    description: `Detail Kamar ${room.code} Lantai ${room.floor} Kos Omi Sungai Bangek, Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit).`,
   };
 }
 
@@ -111,7 +111,7 @@ export default async function DetailKamarPage({ params }: PageProps) {
                 Lantai {room.floor}
               </span>
               <span className="text-xs text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
-                Kapasitas 1 Kamar 2 Orang
+                Maks. 2 Orang (Sendiri Rp 5 Jt / Patungan @2,5 Jt · Tanpa Deposit)
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[hsl(240,6%,10%)] tracking-tight">
@@ -124,7 +124,7 @@ export default async function DetailKamarPage({ params }: PageProps) {
           </div>
 
           <div className="md:text-right">
-            <p className="text-xs text-zinc-500">Harga Sewa per Kamar (2 Orang)</p>
+            <p className="text-xs text-zinc-500">Harga Sewa per Kamar (Maks. 2 Orang · Tanpa Deposit)</p>
             <p className="text-2xl sm:text-3xl font-extrabold text-[hsl(186,72%,24%)] font-heading tabular-nums">
               {formatRupiah(room.monthlyPrice)}
               <span className="text-xs sm:text-sm text-zinc-400 font-normal"> / semester</span>
@@ -233,11 +233,15 @@ export default async function DetailKamarPage({ params }: PageProps) {
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Kapasitas Penghuni</span>
-                  <span className="font-bold text-zinc-800">2 Orang / Kamar</span>
+                  <span className="font-bold text-zinc-800">Maksimal 2 Orang / Kamar</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Biaya Administrasi</span>
-                  <span className="font-bold text-emerald-600">Gratis (Rp 0)</span>
+                  <span>Skema Hunian</span>
+                  <span className="font-bold text-emerald-700 text-right">1 Orang Sendiri (Rp 5 Jt) atau Patungan 2 Orang (@ Rp 2,5 Jt)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Biaya Deposit & Administrasi</span>
+                  <span className="font-bold text-emerald-600">Tanpa Deposit (Rp 0)</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-100 text-sm font-extrabold text-[hsl(186,72%,24%)]">
                   <span>Total Sewa 1 Semester</span>
@@ -267,19 +271,19 @@ export default async function DetailKamarPage({ params }: PageProps) {
                 )}
 
                 <a
-                  href={`https://wa.me/6281374329562?text=Halo%20Ibu%20Kos%20Omi,%20saya%20tertarik%20dengan%20Kamar%20${room.code}%20(Lantai%20${room.floor}).`}
+                  href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20tertarik%20dengan%20Kamar%20${room.code}%20(Lantai%20${room.floor}).`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={14} className="text-emerald-600" />
-                  Tanya Ibu Kos via WhatsApp (+62 813-7432-9562)
+                  Tanya Ibu Yulastri via WhatsApp (0822-8714-6763)
                 </a>
               </div>
 
               <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500 text-center">
                 <Lock size={13} className="text-sky-600 shrink-0" />
-                <span>Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</span>
+                <span>Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</span>
               </div>
             </Card>
 
@@ -288,7 +292,7 @@ export default async function DetailKamarPage({ params }: PageProps) {
               <ul className="space-y-2 text-zinc-600">
                 <li className="flex items-start gap-2">
                   <Calendar size={14} className="text-zinc-400 shrink-0 mt-0.5" />
-                  <span>Tarif Rp 5.000.000 per semester per kamar untuk Lantai 1 & Lantai 2.</span>
+                  <span>Tarif Rp 5.000.000 / semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri seharga Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang), tanpa biaya deposit.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Clock size={14} className="text-zinc-400 shrink-0 mt-0.5" />

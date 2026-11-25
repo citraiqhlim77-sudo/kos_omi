@@ -18,6 +18,19 @@ export function validateEmail(email: string): string | null {
   return null;
 }
 
+/**
+ * Validasi input Login SIAKAD: Menerima NIM (angka/alfanumerik) maupun Email
+ */
+export function validateLoginIdentifier(identifier: string): string | null {
+  if (!identifier || !identifier.trim()) {
+    return 'NIM atau alamat email wajib diisi';
+  }
+  if (identifier.trim().length < 3) {
+    return 'NIM atau email minimal 3 karakter';
+  }
+  return null;
+}
+
 export function validatePassword(password: string, minLength = 8): string | null {
   if (!password) {
     return 'Kata sandi wajib diisi';

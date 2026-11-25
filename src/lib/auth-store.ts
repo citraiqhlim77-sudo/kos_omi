@@ -34,14 +34,14 @@ declare global {
 }
 
 export function getAuthUsersStore(): UserAuthState[] {
-  if (!global.__kosOmiAuthUsers || (global as any).__kosOmiAuthVer !== 9) {
+  if (!global.__kosOmiAuthUsers || (global as any).__kosOmiAuthVer !== 11) {
     global.__kosOmiAuthUsers = SEED_USERS.map((u) => ({
       ...u,
       failedLoginCount: 0,
       lockedUntil: null,
       plainPassword: SEED_DEFAULT_PASSWORD,
     }));
-    (global as any).__kosOmiAuthVer = 9;
+    (global as any).__kosOmiAuthVer = 11;
     global.__kosOmiSeedHashReady = undefined;
   }
   return global.__kosOmiAuthUsers;
@@ -94,7 +94,16 @@ export function findUserById(id: string): UserAuthState | undefined {
   return getAuthUsersStore().find((u) => u.id === id);
 }
 
-export function findUserByEmail(email: string): UserAuthState | undefined {
-  const normalized = email.toLowerCase().trim();
-  return getAuthUsersStore().find((u) => u.email.toLowerCase() === normalized);
+export function findUserByEmail(identifier: string): UserAuthState | undefined {
+  const normalized = identifier.toLowerCase().trim();
+  if (!normalized) return undefined;
+  const store = getAuthUsersStore();
+
+  // Cari berdasarkan Email, NIM / Username SIAKAD, atau prefix email
+  return store.find(
+    (u) =>
+      u.email.toLowerCase() === normalized ||
+      (u.nim && u.nim.toLowerCase() === normalized) ||
+      u.email.split('@')[0].toLowerCase() === normalized
+  );
 }

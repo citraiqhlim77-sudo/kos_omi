@@ -522,40 +522,7 @@ export function getOccupancyAnalytics(): OccupancyAnalytics {
   const dbRooms = (global as any).__kosOmiDbState?.rooms as typeof ALL_ROOMS | undefined;
   const rooms = Array.isArray(dbRooms) && dbRooms.length > 0 ? dbRooms : ALL_ROOMS;
 
-  // Hitung juga kamar dari transaksi aktif & tenancies agar perbandingan Lantai 1 vs Lantai 2 representatif
-  const activeTxs = getSuccessfulTransactions();
-  const activeTenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
-  const activeReservations = ((global as any).__kosOmiDbState?.reservations as any[] | undefined) || [];
-
-  const occupiedCodes = new Set<string>();
-  const bookedCodes = new Set<string>();
-
-  for (const r of rooms) {
-    if (r.status === 'TERISI') occupiedCodes.add(r.code);
-    else if (r.status === 'DIPESAN') bookedCodes.add(r.code);
-  }
-  for (const t of activeTenancies) {
-    if (t.status === 'AKTIF' && t.roomCode) {
-      occupiedCodes.add(String(t.roomCode));
-      bookedCodes.delete(String(t.roomCode));
-    }
-  }
-  for (const tx of activeTxs) {
-    if (tx.roomCode && !occupiedCodes.has(String(tx.roomCode))) {
-      occupiedCodes.add(String(tx.roomCode));
-      bookedCodes.delete(String(tx.roomCode));
-    }
-  }
-  for (const rsv of activeReservations) {
-    if (
-      rsv.roomCode &&
-      (rsv.status === 'APPROVED' || rsv.status === 'PENDING_REVIEW') &&
-      !occupiedCodes.has(String(rsv.roomCode))
-    ) {
-      bookedCodes.add(String(rsv.roomCode));
-    }
-  }
-
+  // Gunakan satu sumber status kamar (db.rooms) yang sama persis dengan kartu ringkasan atas dan tabel bawah di /pengelola/dashboard
   const computeFloor = (floorNum: number, label: string) => {
     const floorRooms = rooms.filter((r) => {
       const codeNum = parseInt(r.code, 10);
@@ -571,9 +538,9 @@ export function getOccupancyAnalytics(): OccupancyAnalytics {
     for (const r of floorRooms) {
       if (r.status === 'NONAKTIF') {
         maintenanceRooms++;
-      } else if (occupiedCodes.has(r.code)) {
+      } else if (r.status === 'TERISI') {
         occupiedRooms++;
-      } else if (bookedCodes.has(r.code)) {
+      } else if (r.status === 'DIPESAN') {
         bookedRooms++;
       }
     }

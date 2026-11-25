@@ -203,7 +203,7 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                         <span>•</span>
                         <span>Check-in: <strong>{tenant.checkInDate}</strong></span>
                         <span>•</span>
-                        <span>Jatuh Tempo: <strong>Tgl {tenant.dueDay} / bln</strong></span>
+                        <span>Skema: <strong>Sewa Semesteran (6 Bulan)</strong></span>
                       </div>
 
                       <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
@@ -225,7 +225,7 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                   {/* Right: Price & Profile Action */}
                   <div className="flex items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-zinc-100">
                     <div className="text-left lg:text-right">
-                      <span className="text-[11px] text-zinc-500 font-medium block">Tarif Sewa Bulanan</span>
+                      <span className="text-[11px] text-zinc-500 font-medium block">Tarif Sewa Semesteran (6 Bulan)</span>
                       <span className="text-base font-heading font-extrabold text-zinc-900 tabular-nums">
                         {formatRupiah(tenant.monthlyPrice)}
                       </span>

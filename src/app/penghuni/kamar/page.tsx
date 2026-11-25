@@ -35,18 +35,18 @@ export default async function PenghuniKamarPage() {
   const rules = [
     {
       no: '1',
-      title: 'Akses Pintu Gerbang & Jam Kunjung',
-      desc: 'Pintu gerbang utama ditutup pukul 23:00 WIB demi keamanan. Penghuni memiliki kunci akses RFID mandiri untuk keluar masuk darurat 24 jam.',
+      title: 'Akses Pintu Gerbang & Keamanan',
+      desc: 'Pintu gerbang besi utama dikunci pukul 23:00 WIB demi keamanan bersama. Area gerbang, koridor, dan parkiran dipantau kamera CCTV 24 jam.',
     },
     {
       no: '2',
       title: 'Kunjungan Tamu & Privasi',
-      desc: 'Tamu lawan jenis dilarang masuk ke dalam kamar tidur. Tamu dapat diterima dengan nyaman di ruang tamu bersama lantai 1 hingga maksimal pukul 21:30 WIB.',
+      desc: 'Tamu lawan jenis dilarang masuk ke dalam kamar tidur. Tamu dapat diterima di area ruang depan/ruang belajar umum Lantai 1 maksimal hingga pukul 21:30 WIB.',
     },
     {
       no: '3',
-      title: 'Zona Bebas Asap Rokok di Kamar',
-      desc: 'Dilarang keras merokok atau vape di dalam kamar tidur dan kamar mandi. Tersedia area merokok terbuka di gazebo taman belakang dan area terbuka luar kos.',
+      title: 'Larangan Merokok di Dalam Kamar',
+      desc: 'Dilarang merokok di dalam kamar tidur, kamar mandi dalam, maupun koridor gedung untuk menjaga kebersihan udara dan kenyamanan bersama.',
     },
     {
       no: '4',
@@ -55,13 +55,13 @@ export default async function PenghuniKamarPage() {
     },
     {
       no: '5',
-      title: 'Jatuh Tempo Pembayaran Sewa',
-      desc: 'Tagihan sewa bulanan jatuh tempo setiap tanggal 5. Pembayaran dilakukan secara resmi melalui gerbang pembayaran Midtrans di portal penghuni.',
+      title: 'Ketentuan Sewa Semesteran (6 Bulan)',
+      desc: 'Tarif sewa kamar berlaku per semester (6 bulan) sebesar Rp 5.000.000/kamar (maksimal 2 orang, tanpa deposit). Pembayaran dilakukan resmi melalui DANA Resmi (082246424353) atau Midtrans.',
     },
     {
       no: '6',
       title: 'Ketertiban Fasilitas Bersama',
-      desc: 'Selalu bersihkan peralatan dapur bersama setelah digunakan. Sampah kamar harap diikat rapi dan diletakkan di tempat sampah utama setiap pagi.',
+      desc: 'Selalu bersihkan peralatan dapur bersama dan area cuci setelah digunakan. Sampah kamar harap diikat rapi dan dibuang ke tempat sampah utama setiap hari.',
     },
   ];
 
@@ -87,13 +87,13 @@ export default async function PenghuniKamarPage() {
           </div>
 
           <a
-            href="https://wa.me/6281374329562?text=Halo%20Pengelola%20Kos%20Omi,%20saya%20Rina%20Kusuma%20Kamar%20No.%201.%20Saya%20ingin%20mengajukan%20laporan/kendala%20kamar."
+            href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${profile.roomCode}.%20Saya%20ingin%20mengajukan%20laporan/kendala%20kamar.`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
           >
             <Phone className="w-4 h-4" />
-            <span>Lapor Kendala Kamar via WA</span>
+            <span>Lapor Kendala Kamar via WA (0822-8714-6763)</span>
           </a>
         </div>
 
@@ -149,15 +149,15 @@ export default async function PenghuniKamarPage() {
                   <span className="text-sm font-bold text-zinc-900 block">
                     {profile.tenancyEnd}
                   </span>
-                  <span className="text-[10px] text-zinc-400 block">12 Bulan (1 Tahun)</span>
+                  <span className="text-[10px] text-zinc-400 block">6 Bulan (1 Semester)</span>
                 </div>
 
                 <div className="pt-2 sm:pt-0 sm:pl-4">
-                  <span className="text-[11px] text-zinc-500 font-medium block">Jatuh Tempo</span>
-                  <span className="text-sm font-bold text-rose-600 block">
-                    Tgl 5 / Bulan
+                  <span className="text-[11px] text-zinc-500 font-medium block">Skema Tagihan</span>
+                  <span className="text-sm font-bold text-emerald-700 block">
+                    Sewa Semesteran
                   </span>
-                  <span className="text-[10px] text-zinc-400 block">Otomatis via Portal</span>
+                  <span className="text-[10px] text-zinc-400 block">6 Bulan · Tanpa Deposit</span>
                 </div>
               </div>
             </div>
@@ -246,24 +246,24 @@ export default async function PenghuniKamarPage() {
             {/* Shared Facilities */}
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-3 text-xs">
               <h3 className="font-bold text-zinc-700 border-b border-zinc-100 pb-2">
-                Fasilitas Bersama Gedung
+                Fasilitas Bersama Gedung (2 Lantai)
               </h3>
               <ul className="space-y-2 text-zinc-600 text-[11px]">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Dapur Bersama Lantai 1 & 2 (Kompor gas, wastafel)</span>
+                  <span>Dapur & Area Cuci/Jemur Bersama (Lantai 1 & Lantai 2)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Kulkas bersama & Dispenser Air Minum RO gratis</span>
+                  <span>Ruang Belajar Umum, TV, Kulkas Bersama & Alat Olahraga</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Mesin cuci bersama & area jemur beratap lantai 3</span>
+                  <span>Parkir Motor Dalam Gedung dengan Gerbang Besi</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  <span>Parkir motor aman berkanopi dengan CCTV 24 Jam</span>
+                  <span>Pengawasan Kamera CCTV & Keamanan Kos 24 Jam</span>
                 </li>
               </ul>
             </div>

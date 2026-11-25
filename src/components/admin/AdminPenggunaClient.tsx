@@ -337,6 +337,8 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
             <tbody className="divide-y divide-zinc-100 text-zinc-700">
               {filteredUsers.map((user) => {
                 const isAdmin = user.role === 'ADMIN';
+                const isStaff =
+                  user.role === 'ADMIN' || user.role === 'PENGELOLA' || user.role === 'KEUANGAN';
                 const isPasswordVisible =
                   showAllPasswords || Boolean(revealedPasswords[user.id]);
                 const userPassword = user.plainPassword || 'Password123!';
@@ -421,7 +423,13 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                             : 'bg-amber-50 text-amber-800 border border-amber-200'
                         }`}
                       >
-                        {user.isActive ? '✓ Aktif Ngekos' : 'Sudah Keluar Kos / Nonaktif'}
+                        {isStaff
+                          ? user.isActive
+                            ? '✓ Akun Aktif'
+                            : 'Nonaktif'
+                          : user.isActive
+                          ? '✓ Aktif Ngekos'
+                          : 'Sudah Keluar Kos / Nonaktif'}
                       </span>
                     </td>
 
@@ -440,12 +448,12 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                             {user.isActive ? (
                               <>
                                 <UserMinus className="w-3.5 h-3.5" />
-                                <span>Keluar Kos / Nonaktifkan</span>
+                                <span>{isStaff ? 'Nonaktifkan Akun' : 'Keluar Kos'}</span>
                               </>
                             ) : (
                               <>
                                 <UserCheck className="w-3.5 h-3.5" />
-                                <span>Aktifkan</span>
+                                <span>Aktifkan Akun</span>
                               </>
                             )}
                           </button>
@@ -455,7 +463,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                               type="button"
                               onClick={() => setUserToDelete(user)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
-                              title="Hapus akun & data pengguna yang sudah keluar dari kos"
+                              title="Hapus akun & data pengguna"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Hapus Data</span>

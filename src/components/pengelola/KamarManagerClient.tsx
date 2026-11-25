@@ -34,7 +34,6 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
 
   // Filters
   const [selectedFloor, setSelectedFloor] = useState<string>('ALL');
-  const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('code-asc');
@@ -61,14 +60,12 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
     return rooms
       .filter((room) => {
         if (selectedFloor !== 'ALL' && room.floor !== Number(selectedFloor)) return false;
-        if (selectedType !== 'ALL' && room.type !== selectedType) return false;
         if (selectedStatus !== 'ALL' && room.status !== selectedStatus) return false;
         if (searchQuery.trim() !== '') {
           const q = searchQuery.toLowerCase().trim();
           const matchCode = room.code.toLowerCase().includes(q);
-          const matchType = ROOM_TYPE_LABELS[room.type].toLowerCase().includes(q);
           const matchDesc = room.description.toLowerCase().includes(q);
-          return matchCode || matchType || matchDesc;
+          return matchCode || matchDesc;
         }
         return true;
       })
@@ -78,7 +75,7 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
         if (sortBy === 'floor-asc') return a.floor - b.floor || (parseInt(a.code, 10) || 0) - (parseInt(b.code, 10) || 0);
         return a.floor - b.floor || (parseInt(a.code, 10) || 0) - (parseInt(b.code, 10) || 0);
       });
-  }, [rooms, selectedFloor, selectedType, selectedStatus, searchQuery, sortBy]);
+  }, [rooms, selectedFloor, selectedStatus, searchQuery, sortBy]);
 
   // Statistics counters
   const stats = useMemo(() => {
@@ -229,7 +226,7 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
           </div>
 
           {/* Filter Lantai */}
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-3">
             <select
               value={selectedFloor}
               onChange={(e) => setSelectedFloor(e.target.value)}
@@ -241,15 +238,18 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
             </select>
           </div>
 
-          {/* Filter Tipe */}
-          <div className="sm:col-span-3">
+          {/* Filter Status */}
+          <div className="sm:col-span-2">
             <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-800 focus:outline-none focus:border-[hsl(186,72%,24%)]"
             >
-              <option value="ALL">Semua Tipe Kamar</option>
-              <option value="DELUXE_AC">Kamar Kos Putri (Rp 5.000.000/smt • Isi 2 Orang)</option>
+              <option value="ALL">Semua Status</option>
+              <option value="TERSEDIA">Tersedia</option>
+              <option value="DIPESAN">Dipesan</option>
+              <option value="TERISI">Terisi</option>
+              <option value="NONAKTIF">Perawatan</option>
             </select>
           </div>
 
@@ -273,12 +273,11 @@ export const KamarManagerClient: React.FC<KamarManagerClientProps> = ({ initialR
           <span>
             Menampilkan <strong className="text-zinc-900">{filteredRooms.length}</strong> dari 67 kamar
           </span>
-          {(selectedFloor !== 'ALL' || selectedType !== 'ALL' || selectedStatus !== 'ALL' || searchQuery) && (
+          {(selectedFloor !== 'ALL' || selectedStatus !== 'ALL' || searchQuery) && (
             <button
               type="button"
               onClick={() => {
                 setSelectedFloor('ALL');
-                setSelectedType('ALL');
                 setSelectedStatus('ALL');
                 setSearchQuery('');
               }}

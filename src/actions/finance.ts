@@ -14,6 +14,8 @@ import {
 import {
   defaultFallbackTransactions,
   getOperationalDecisionAnalytics,
+  getSuccessfulTransactions,
+  getJakartaDateComponents,
 } from '@/lib/reports/revenue';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
@@ -71,24 +73,56 @@ function getOverdueBillsStore(): OverdueBill[] {
   return global.__kosOmiOverdueBills;
 }
 
-// 1. Fetch Finance Dashboard Stats
+// 1. Fetch Finance Dashboard Stats (100% Sinkron dari Satu Sumber Transaksi Terverifikasi)
 export async function fetchFinanceDashboardStatsAction(): Promise<FinanceDashboardStats> {
   const txs = getTransactionsStore();
-  const settledTxs = txs.filter((t) => t.transactionStatus === 'settlement');
+  const settledTxs = getSuccessfulTransactions();
   const pendingTxs = txs.filter((t) => t.transactionStatus === 'pending');
 
   const currentMonthIncome = settledTxs.reduce((sum, t) => sum + t.grossAmount, 0);
   const previousMonthIncome = 0;
   const growthPercentage = currentMonthIncome > 0 ? 100 : 0;
   const pendingAmount = pendingTxs.reduce((sum, t) => sum + t.grossAmount, 0);
+  const totalEvaluated = settledTxs.length + pendingTxs.length;
   const settlementRate =
-    txs.length > 0 ? Number(((settledTxs.length / txs.length) * 100).toFixed(1)) : 0;
+    totalEvaluated > 0 ? Number(((settledTxs.length / totalEvaluated) * 100).toFixed(1)) : 0;
+
+  // Hitung tren bulanan langsung dari settledTxs agar kartu KPI, grafik tren 2026, dan tabel laporan 100% konsisten
+  const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+  const monthMap = new Map<string, MonthlyTrendData>();
+  for (const tx of settledTxs) {
+    const jkt = getJakartaDateComponents(tx.settlementTime || tx.createdAt);
+    if (!jkt) continue;
+    const key = jkt.monthKey;
+    if (!monthMap.has(key)) {
+      monthMap.set(key, {
+        month: key,
+        label: `${monthNamesShort[jkt.month - 1]} ${jkt.year}`,
+        totalIncome: 0,
+        rentIncome: 0,
+        bookingIncome: 0,
+        transactionCount: 0,
+      });
+    }
+    const item = monthMap.get(key)!;
+    item.totalIncome += tx.grossAmount;
+    if (tx.category === 'SEWA_BULANAN') {
+      item.rentIncome += tx.grossAmount;
+    } else {
+      item.bookingIncome += tx.grossAmount;
+    }
+    item.transactionCount += 1;
+  }
+
+  const dynamicMonthlyTrends = Array.from(monthMap.values()).sort((a, b) =>
+    a.month.localeCompare(b.month)
+  );
 
   return {
     currentMonthIncome,
     previousMonthIncome,
     growthPercentage,
-    currentMonthTransactions: txs.length,
+    currentMonthTransactions: settledTxs.length,
     pendingTransactionsCount: pendingTxs.length,
     pendingAmount,
     settlementRate,
@@ -104,7 +138,7 @@ export async function fetchFinanceDashboardStatsAction(): Promise<FinanceDashboa
         .filter((t) => t.paymentType === 'gopay' || t.paymentType === 'shopeepay')
         .reduce((s, t) => s + t.grossAmount, 0),
     },
-    monthlyTrends: monthlyTrendMock,
+    monthlyTrends: dynamicMonthlyTrends.length > 0 ? dynamicMonthlyTrends : monthlyTrendMock,
     analytics: getOperationalDecisionAnalytics(),
   };
 }

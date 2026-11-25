@@ -17,6 +17,7 @@ const PaymentModal = dynamic(
 );
 import {
   approveReservationForDemoAction,
+  cancelReservationByCalonAction,
   fetchMyReservationsAction,
 } from '@/actions/reservations';
 import {
@@ -45,6 +46,7 @@ import {
   Sparkles,
   MapPin,
   RefreshCw,
+  XCircle,
 } from 'lucide-react';
 
 interface CalonDashboardClientProps {
@@ -72,6 +74,8 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
   const [selectedMethod, setSelectedMethod] = useState<string>('dana');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPayingDirect, setIsPayingDirect] = useState(false);
+  const [isCancellingModalOpen, setIsCancellingModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
@@ -166,7 +170,32 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
     });
   };
 
+  const handleCancelReservation = async (resCode: string) => {
+    setIsCancelling(true);
+    setPaymentError(null);
+    setFeedbackMessage(null);
+    const res = await cancelReservationByCalonAction(resCode);
+    setIsCancelling(false);
+    setIsCancellingModalOpen(false);
+
+    if (res.success && res.data) {
+      setFeedbackMessage(res.message);
+      setReservations((prev) => prev.map((r) => (r.code === resCode ? res.data! : r)));
+      setActiveReservation(res.data);
+      if (res.data.payment) {
+        setSelectedInvoice(res.data.payment);
+      }
+      router.refresh();
+    } else {
+      setPaymentError(res.message || 'Gagal membatalkan pesanan.');
+    }
+  };
+
   const current = activeReservation;
+  const canCancelReservation =
+    Boolean(current) &&
+    (current!.status === 'PENDING_REVIEW' ||
+      (current!.status === 'APPROVED' && current!.payment?.status !== 'SETTLEMENT'));
 
   return (
     <div className="space-y-8">
@@ -239,14 +268,26 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
         <div className="space-y-8">
           {/* 1. STEPPER ALUR RESERVASI & PEMBAYARAN */}
           <Card className="p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-zinc-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100">
               <div>
                 <span className="text-xs text-zinc-500 font-medium">Nomor Kode Reservasi</span>
                 <h2 className="font-heading font-extrabold text-xl text-zinc-900">
                   {current.code}
                 </h2>
               </div>
-              <ReservationStatusBadge status={current.status} size="md" />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <ReservationStatusBadge status={current.status} size="md" />
+                {canCancelReservation && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCancellingModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <XCircle size={14} />
+                    <span>Batalkan Pesanan</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Visualizer 4 Tahap */}
@@ -368,12 +409,17 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-sky-800 max-w-2xl">
-                      Pembayaran otomatis via <strong>Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</strong>. Pilih kanal pembayaran di bawah ini, lalu klik tombol hijau untuk menyelesaikan pembayaran:
+                      Tersedia pembayaran via <strong>DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</strong>.
                     </p>
                   </div>
-                  <span className="px-3 py-1 rounded-lg bg-white border border-sky-200 text-xs font-extrabold text-sky-900 shrink-0 tabular-nums">
-                    Invoice: {current.payment.invoiceCode}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <span className="px-3 py-1 rounded-lg bg-amber-100 border border-amber-300 text-xs font-extrabold text-amber-900">
+                      Batas Waktu Bayar: 1x24 Jam
+                    </span>
+                    <span className="px-3 py-1 rounded-lg bg-white border border-sky-200 text-xs font-extrabold text-sky-900 tabular-nums">
+                      Invoice: {current.payment.invoiceCode}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Status apabila sudah kirim konfirmasi transfer namun menunggu validasi Pengelola */}
@@ -410,38 +456,54 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={isPayingDirect}
-                    onClick={() => handleDirectPay(current.payment!.invoiceCode)}
-                    className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
-                  >
-                    <CheckCircle2 size={18} />
-                    <span>
-                      {isPayingDirect
-                        ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
-                        : current.payment.status === 'PENDING'
-                        ? `Sudah Dikirim ke Pengelola — Kirim Ulang Konfirmasi (${
-                            KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
-                          })`
-                        : `Saya Sudah Transfer via ${
-                            KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
-                          } — Kirim ke Pengelola untuk Divalidasi`}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedInvoice(current.payment!);
-                      setIsPaymentModalOpen(true);
-                    }}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-xs px-4 py-3.5 rounded-xl transition-all shrink-0 cursor-pointer"
-                  >
-                    <CreditCard size={16} />
-                    <span>Buka Pop-up Snap</span>
-                  </button>
+                {/* SATU TOMBOL AKSI UTAMA DINAMIS SESUAI METODE YANG DIPILIH */}
+                <div className="flex flex-col gap-2.5">
+                  {selectedMethod === 'dana' ? (
+                    <button
+                      type="button"
+                      disabled={isPayingDirect}
+                      onClick={() => handleDirectPay(current.payment!.invoiceCode)}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 size={18} />
+                      <span>
+                        {isPayingDirect
+                          ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
+                          : current.payment.status === 'PENDING'
+                          ? 'Sudah Dikirim ke Pengelola — Kirim Ulang Konfirmasi (DANA)'
+                          : 'Saya Sudah Transfer via DANA — Kirim ke Pengelola untuk Divalidasi'}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedInvoice(current.payment!);
+                          setIsPaymentModalOpen(true);
+                        }}
+                        className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                      >
+                        <CreditCard size={18} />
+                        <span>Bayar Sekarang via Midtrans Snap</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPayingDirect}
+                        onClick={() => handleDirectPay(current.payment!.invoiceCode)}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-700 font-bold text-xs px-4 py-3.5 rounded-xl transition-all cursor-pointer shrink-0"
+                      >
+                        <CheckCircle2 size={15} className="text-emerald-600" />
+                        <span>
+                          {isPayingDirect
+                            ? 'Mengirim...'
+                            : `Konfirmasi Sudah Transfer (${
+                                KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'Midtrans'
+                              })`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -560,13 +622,13 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                       </span>
                     </div>
                     <p className="text-zinc-500">
-                      Tipe: <strong>{current.room?.type || 'DELUXE_AC'}</strong>
+                      Tipe: <strong>Kamar Standar Kos Omi (Lantai {current.room?.floor || (parseInt(current.roomCode, 10) <= 33 ? 1 : 2)})</strong>
                     </p>
                     <p className="text-zinc-500">
                       Tanggal Rencana Masuk: <strong>{current.checkInDate}</strong>
                     </p>
                     <p className="text-zinc-500">
-                      Durasi Kontrak Sewa: <strong>{current.durationMonths} Bulan</strong>
+                      Durasi Kontrak Sewa: <strong>{current.durationMonths} Bulan (1 Semester)</strong>
                     </p>
                   </div>
                 </div>
@@ -648,25 +710,15 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                       <span className="text-zinc-500">Status Invoice:</span>
                       <PaymentStatusBadge status={current.payment.status} size="sm" />
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-500">Batas Waktu Pembayaran:</span>
+                      <span className="font-bold text-amber-700">1x24 Jam Setelah Disetujui</span>
+                    </div>
                   </div>
                 )}
 
                 {/* Tombol Tindakan Cepat */}
                 <div className="space-y-2 pt-2">
-                  {current.status === 'APPROVED' && current.payment && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedInvoice(current.payment!);
-                        setIsPaymentModalOpen(true);
-                      }}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 px-4 rounded-lg transition-all"
-                    >
-                      <CreditCard size={16} />
-                      Bayar Sekarang via Midtrans Snap
-                    </button>
-                  )}
-
                   {current.status === 'PAID' && current.payment && (
                     <NextLink
                       href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
@@ -677,17 +729,89 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     </NextLink>
                   )}
 
+                  {canCancelReservation && (
+                    <button
+                      type="button"
+                      onClick={() => setIsCancellingModalOpen(true)}
+                      className="w-full inline-flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs py-2.5 px-4 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <XCircle size={14} />
+                      <span>Batalkan Pesanan Kamar Ini</span>
+                    </button>
+                  )}
+
                   <a
-                    href="https://wa.me/6281234567890?text=Halo%20Pengelola%20Kos%20Omi,%20saya%20ingin%20bertanya%20mengenai%20status%20reservasi%20saya."
+                    href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20status%20reservasi%20saya."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full inline-flex items-center justify-center gap-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs py-2.5 px-4 rounded-lg transition-colors"
                   >
                     <Phone size={13} className="text-emerald-600" />
-                    Hubungi Pengelola via WhatsApp
+                    Hubungi Ibu Yulastri via WhatsApp (0822-8714-6763)
                   </a>
                 </div>
               </Card>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIALOG KONFIRMASI BATALKAN PESANAN */}
+      {isCancellingModalOpen && current && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200 animate-in zoom-in-95 duration-150">
+            <div className="bg-rose-600 text-white p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <XCircle className="w-5 h-5" />
+                <div>
+                  <h3 className="font-heading font-extrabold text-base leading-tight">
+                    Konfirmasi Pembatalan Pesanan
+                  </h3>
+                  <p className="text-[11px] text-rose-100">
+                    Reservasi {current.code} · Kamar No. {current.roomCode}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCancellingModalOpen(false)}
+                className="p-1 rounded-lg text-rose-100 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              <p className="text-zinc-700 leading-relaxed">
+                Apakah Anda yakin ingin membatalkan pesanan <strong>Kamar No. {current.roomCode}</strong>?
+              </p>
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
+                <p className="font-bold">Dampak Pembatalan:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Status reservasi diubah menjadi <strong>DIBATALKAN (CANCELLED)</strong>.</li>
+                  <li>Tagihan/invoice yang belum dibayar otomatis dibatalkan.</li>
+                  <li>Status Kamar No. {current.roomCode} dikembalikan menjadi <strong>TERSEDIA</strong> agar Anda dapat memilih kamar lain.</li>
+                </ul>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  disabled={isCancelling}
+                  onClick={() => setIsCancellingModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+                >
+                  Kembali
+                </button>
+                <button
+                  type="button"
+                  disabled={isCancelling}
+                  onClick={() => handleCancelReservation(current.code)}
+                  className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer"
+                >
+                  {isCancelling ? 'Membatalkan...' : 'Ya, Batalkan Pesanan'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

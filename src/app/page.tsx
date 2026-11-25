@@ -31,13 +31,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Kos Omi Sungai Bangek, Padang - ${availableCount} Kamar Kosong Siap Huni`,
-    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar (Lantai 1 & 2, kapasitas 2 orang/kamar). Fasilitas lengkap: Kasur/Lemari, Kamar Mandi Dalam, Ruang Belajar Umum, Dapur & Area Cuci, CCTV, Wi-Fi, TV, Kulkas, Alat Olahraga, Parkir Motor Dalam, Keamanan 24 Jam.`,
+    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit). Hubungi Ibu Yulastri: 0822-8714-6763 (Cadangan: 0813-7432-9562).`,
     alternates: {
       canonical: 'https://kosomi.id',
     },
     openGraph: {
       title: `Kos Omi Sungai Bangek, Padang - ${availableCount} Kamar Siap Huni`,
-      description: `Cek ketersediaan kamar secara real-time di Sungai Bangek Padang (dekat UIN Imam Bonjol). Rp 5.000.000/semester per kamar (isi 2 orang). Hubungi Ibu Kos: +62 813-7432-9562.`,
+      description: `Cek ketersediaan kamar secara real-time di Sungai Bangek Padang (dekat UIN Imam Bonjol). Rp 5.000.000/semester per kamar (maksimal 2 orang, tanpa deposit). Hubungi Ibu Yulastri: 0822-8714-6763.`,
       url: 'https://kosomi.id',
       siteName: 'Kos Omi Sungai Bangek, Padang',
       type: 'website',
@@ -162,7 +162,7 @@ export default async function HomePage() {
       latitude: -0.827438,
       longitude: 100.357938,
     },
-    telephone: '+6281374329562',
+    telephone: '+6282287146763',
     priceRange: 'Rp 5.000.000 / Semester',
   };
 
@@ -186,7 +186,7 @@ export default async function HomePage() {
               </h1>
 
               <p className="text-base sm:text-lg text-[hsl(240,4%,46%)] leading-relaxed max-w-xl">
-                Hunian kos nyaman di Sungai Bangek, dekat Kampus III UIN Imam Bonjol Padang. Tersedia 67 kamar (Lantai 1 & 2) siap huni dengan fasilitas lengkap.
+                Hunian kos nyaman di Sungai Bangek, dekat Kampus III UIN Imam Bonjol Padang. Tarif <strong>Rp 5.000.000 / semester per kamar</strong> untuk <strong>maksimal 2 orang</strong> (boleh diisi <strong>1 orang sendiri</strong> seharga Rp 5.000.000, atau <strong>patungan 2 orang</strong> @ Rp 2.500.000/orang), <strong>tanpa biaya deposit</strong>.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -198,20 +198,20 @@ export default async function HomePage() {
                   <ArrowRight size={18} />
                 </NextLink>
                 <a
-                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Kos%20Omi,%20saya%20ingin%20bertanya%20tentang%20ketersediaan%20kamar%20kos."
+                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20ketersediaan%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base px-6 py-3.5 rounded-lg transition-all"
                 >
                   <Phone size={18} />
-                  Hubungi Ibu Kos (+62 813-7432-9562)
+                  Hubungi Ibu Yulastri (0822-8714-6763)
                 </a>
               </div>
 
               <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-zinc-600 font-medium border-t border-zinc-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-emerald-600" />
-                  <span>1 Kamar Kapasitas 2 Orang</span>
+                  <span>Maks. 2 Orang / Kamar (Sendiri Rp 5 Jt atau Patungan @ Rp 2,5 Jt/orang · Tanpa Deposit)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-emerald-600" />
@@ -219,7 +219,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Lock size={16} className="text-sky-600" />
-                  <span>Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans</span>
+                  <span>Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</span>
                 </div>
               </div>
             </div>
@@ -280,7 +280,7 @@ export default async function HomePage() {
             Pilihan Lantai Kamar
           </h2>
           <p className="text-zinc-600 text-sm sm:text-base">
-            Tarif seragam <strong>Rp 5.000.000 / semester</strong> per kamar (kapasitas 2 orang).
+            Tarif seragam <strong>Rp 5.000.000 / semester per kamar</strong> untuk <strong>maksimal 2 orang</strong> (boleh diisi <strong>1 orang sendiri</strong> Rp 5.000.000 atau <strong>patungan 2 orang</strong> @ Rp 2.500.000/orang, <strong>tanpa biaya deposit</strong>).
           </p>
         </div>
 
@@ -449,7 +449,7 @@ export default async function HomePage() {
               Alur Reservasi & Pembayaran Mudah
             </h2>
             <p className="text-zinc-400 text-sm sm:text-base">
-              Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
+              Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans.
             </p>
           </div>
 
@@ -472,9 +472,9 @@ export default async function HomePage() {
 
             <div className="bg-zinc-800/80 p-6 rounded-xl border border-zinc-700 space-y-3">
               <span className="text-xs font-bold text-sky-400">Langkah 3</span>
-              <h3 className="font-heading font-bold text-lg text-white">Bayar via Midtrans</h3>
+              <h3 className="font-heading font-bold text-lg text-white">Bayar Tagihan Sewa</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
+                Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans.
               </p>
             </div>
 
@@ -516,14 +516,15 @@ export default async function HomePage() {
             </div>
 
             <div className="space-y-3 bg-white p-6 rounded-xl border border-zinc-200">
-              <h3 className="font-heading font-bold text-lg text-zinc-900">Hubungi Ibu Kos Omi</h3>
+              <h3 className="font-heading font-bold text-lg text-zinc-900">Hubungi Pemilik Kos (Ibu Yulastri)</h3>
               <p className="text-xs text-zinc-600 leading-relaxed">
-                Ingin bertanya langsung mengenai kamar Lantai 1 & Lantai 2 atau menjadwalkan survei lokasi? Silakan hubungi Ibu Kos melalui WhatsApp:
+                Ingin bertanya langsung mengenai kamar Lantai 1 & Lantai 2 atau menjadwalkan survei lokasi? Silakan hubungi Ibu Yulastri melalui WhatsApp:
               </p>
               <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] text-zinc-500 block">Nomor WhatsApp & Telepon Ibu Kos</span>
-                  <span className="font-heading font-extrabold text-base text-zinc-900">+62 813-7432-9562</span>
+                  <span className="text-[11px] text-zinc-500 block">WhatsApp Utama Ibu Yulastri</span>
+                  <span className="font-heading font-extrabold text-base text-zinc-900">0822-8714-6763</span>
+                  <span className="text-[11px] text-zinc-500 block mt-0.5">Kontak Cadangan: 0813-7432-9562</span>
                 </div>
                 <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded">
                   Aktif
@@ -531,13 +532,13 @@ export default async function HomePage() {
               </div>
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <a
-                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Kos%20Omi,%20saya%20ingin%20bertanya%20mengenai%20kamar%20kos."
+                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={14} />
-                  Chat WhatsApp Ibu Kos (+62 813-7432-9562)
+                  Chat WhatsApp Ibu Yulastri (0822-8714-6763)
                 </a>
                 <NextLink
                   href="/kontak"

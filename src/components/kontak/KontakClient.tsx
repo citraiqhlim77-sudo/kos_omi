@@ -48,10 +48,10 @@ export function KontakClient() {
             <span>Layanan Informasi & Survei Kos Omi</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[hsl(240,6%,10%)] tracking-tight">
-            Hubungi Ibu Kos Omi Sungai Bangek, Padang
+            Hubungi Ibu Yulastri — Kos Omi Sungai Bangek, Padang
           </h1>
           <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
-            Ingin menanyakan ketersediaan kamar Lantai 1 & Lantai 2 (Rp 5.000.000/semester per kamar, isi 2 orang) atau menjadwalkan survei langsung? Hubungi Ibu Kos melalui WhatsApp di bawah ini.
+            Ingin menanyakan ketersediaan kamar Lantai 1 & Lantai 2 (Rp 5.000.000/semester per kamar, maksimal 2 orang: sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit) atau menjadwalkan survei langsung? Hubungi Ibu Yulastri melalui WhatsApp di bawah ini.
           </p>
         </div>
 
@@ -70,15 +70,16 @@ export function KontakClient() {
                     <Phone size={18} />
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-medium">WhatsApp & Telepon Ibu Kos</span>
-                    <p className="font-bold text-zinc-900 text-base">+62 813-7432-9562</p>
+                    <span className="text-xs text-zinc-400 font-medium">Pemilik Kos (Ibu Yulastri)</span>
+                    <p className="font-bold text-zinc-900 text-base">0822-8714-6763 (WhatsApp Utama)</p>
+                    <p className="text-xs text-zinc-600 font-medium">Kontak Cadangan: 0813-7432-9562</p>
                     <a
-                      href="https://wa.me/6281374329562?text=Halo%20Ibu%20Kos%20Omi,%20saya%20ingin%20bertanya%20tentang%20kamar%20kos."
+                      href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20kamar%20kos."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-emerald-600 font-semibold hover:underline mt-0.5 inline-block"
                     >
-                      Klik untuk Chat WhatsApp Ibu Kos →
+                      Klik untuk Chat WhatsApp Ibu Yulastri →
                     </a>
                   </div>
                 </div>
@@ -182,7 +183,7 @@ export function KontakClient() {
                       Kirim Pertanyaan atau Jadwal Survei
                     </h2>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Isi formulir di bawah ini atau langsung chat ke WhatsApp Ibu Kos (+62 813-7432-9562).
+                      Isi formulir di bawah ini atau langsung chat ke WhatsApp Ibu Yulastri (0822-8714-6763 / Cadangan: 0813-7432-9562).
                     </p>
                   </div>
 

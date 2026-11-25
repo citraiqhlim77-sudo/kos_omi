@@ -21,7 +21,7 @@ import {
 import { DEMO_ACCOUNTS, getRoleDashboardPath } from '@/data/auth-demo';
 import { loginAction } from '@/actions/auth';
 import { loginWithCredentials, loginWithDemoAccount, setClientSession } from '@/lib/auth-client';
-import { validateEmail, validatePassword } from '@/lib/validations/auth';
+import { validateLoginIdentifier, validatePassword } from '@/lib/validations/auth';
 import { UserRole } from '@/types/auth';
 
 export default function LoginPage() {
@@ -40,8 +40,8 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successRedirect, setSuccessRedirect] = useState<string | null>(null);
 
-  // Field errors
-  const emailError = touched.email ? validateEmail(email) : null;
+  // Field errors (Mendukung NIM maupun Email)
+  const emailError = touched.email ? validateLoginIdentifier(email) : null;
   const passwordError = touched.password ? validatePassword(password, 6) : null;
 
   // Handle Demo Account Click
@@ -60,7 +60,7 @@ export default function LoginPage() {
     e.preventDefault();
     setTouched({ email: true, password: true });
 
-    const eErr = validateEmail(email);
+    const eErr = validateLoginIdentifier(email);
     const pErr = validatePassword(password, 6);
 
     if (eErr || pErr) {
@@ -151,10 +151,10 @@ export default function LoginPage() {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[hsl(186,72%,24%)] text-white font-extrabold text-xl mb-2 overflow-hidden p-0"><img src="/logo-kos-omi.png" alt="Logo Kos Omi" className="w-full h-full object-cover" /></div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Masuk ke Akun Kos Omi
+            Masuk ke Portal Kos Omi
           </h1>
           <p className="text-sm text-zinc-600 max-w-md mx-auto">
-            Masukkan alamat email dan kata sandi akun resmi Anda untuk mengakses portal Kos Omi.
+            Masukkan <strong>NIM / ID Pengguna</strong> atau <strong>Email</strong> beserta kata sandi akun Anda. Sistem otomatis mengarahkan ke portal sesuai peran yang ditetapkan Super Admin.
           </p>
         </div>
 
@@ -184,10 +184,10 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
+            {/* NIM / Email Field (SIAKAD Style) */}
             <div className="space-y-1.5">
               <label htmlFor="email" className="block text-xs font-bold text-zinc-700">
-                Alamat Email
+                NIM / Username / Alamat Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
@@ -195,7 +195,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => {
                     const nextVal = e.target.value;
@@ -206,7 +206,7 @@ export default function LoginPage() {
                     setSelectedRole(matched ? matched.role : null);
                   }}
                   onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-                  placeholder="nama@domain.com"
+                  placeholder="Masukkan NIM (contoh: 2317020041) atau Email"
                   className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm text-zinc-900 transition-colors focus:outline-none ${
                     emailError
                       ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-200'

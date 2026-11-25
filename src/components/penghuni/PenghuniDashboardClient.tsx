@@ -171,7 +171,7 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
             <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-blue-600" />
-                <h2 className="text-sm font-bold text-zinc-900">Tagihan Sewa Bulan Berjalan</h2>
+                <h2 className="text-sm font-bold text-zinc-900">Tagihan Sewa Semesteran (6 Bulan)</h2>
               </div>
               {currentBill && (
                 <span
@@ -339,7 +339,7 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
                   Kamar {profile.roomCode}
                 </h4>
                 <p className="text-xs text-zinc-500">
-                  Lantai 1 · {room ? ROOM_TYPE_LABELS[room.type] : 'Standar AC'}
+                  Lantai {room?.floor || (parseInt(profile.roomCode, 10) <= 33 ? 1 : 2)} · Kamar Standar Kos Omi (Maks. 2 Orang)
                 </p>
               </div>
             </div>
@@ -350,8 +350,8 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
                 <span className="font-semibold text-zinc-800">{profile.checkInDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Jatuh Tempo Sewa:</span>
-                <span className="font-semibold text-zinc-800">Tgl 5 Setiap Bulan</span>
+                <span className="text-zinc-500">Skema Sewa:</span>
+                <span className="font-semibold text-zinc-800">Sewa Semesteran (6 Bulan)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Token Listrik Mandiri:</span>
@@ -382,12 +382,12 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
               Ada kendala fasilitas kamar atau pertanyaan pembayaran? Hubungi kantor pengelola Kos Omi Sungai Bangek.
             </p>
             <a
-              href="https://wa.me/6281374329562?text=Halo%20Pengelola%20Kos%20Omi,%20saya%20Rina%20Kusuma%20Kamar%20No.%201."
+              href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${profile.roomCode}.`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs hover:bg-emerald-100 transition-colors"
             >
-              <span>WhatsApp Pengelola</span>
+              <span>WhatsApp Ibu Yulastri (0822-8714-6763)</span>
             </a>
           </div>
         </div>

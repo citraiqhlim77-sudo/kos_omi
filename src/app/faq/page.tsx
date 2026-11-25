@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Tanya Jawab (FAQ) - Kos Omi Sungai Bangek, Padang',
     description:
-      'Pertanyaan yang sering diajukan seputar reservasi kamar, verifikasi KTP, pembayaran resmi Midtrans, ketentuan deposit, dan tata tertib hunian 67 kamar Kos Omi Sungai Bangek, Padang (dekat UIN Imam Bonjol).',
+      'Pertanyaan yang sering diajukan seputar reservasi kamar, tarif sewa semesteran Rp 5.000.000/kamar (tanpa deposit), pembayaran DANA & Midtrans, serta tata tertib hunian 67 kamar Kos Omi Sungai Bangek, Padang.',
     alternates: {
       canonical: 'https://kosomi.id/faq',
     },

@@ -74,10 +74,10 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Monitoring Notifikasi WhatsApp & Email
+            Riwayat Notifikasi Sistem
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Pantau status pengiriman pesan tagihan, konfirmasi reservasi, dan kuitansi pembayaran via WhatsApp (Fonnte) dan Email (Resend).
+            Catatan log notifikasi sistem untuk pengajuan reservasi kamar, persetujuan berkas, dan validasi pembayaran sewa semesteran Kos Omi.
           </p>
         </div>
       </div>
@@ -102,8 +102,8 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
             className="px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 cursor-pointer"
           >
             <option value="ALL">Semua Saluran</option>
-            <option value="WHATSAPP">WhatsApp (Fonnte)</option>
-            <option value="EMAIL">Email (Resend)</option>
+            <option value="WHATSAPP">Log Pesan WhatsApp</option>
+            <option value="EMAIL">Log Pesan Email</option>
           </select>
 
           <select

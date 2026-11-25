@@ -7,6 +7,7 @@ import {
   dbGetReservations,
   dbApproveReservation,
   dbRejectReservation,
+  dbCancelReservationByUser,
   dbCancelExpiredReservations,
   dbAddAuditLog,
 } from '@/server/db';
@@ -420,6 +421,70 @@ export async function cancelExpiredReservations(): Promise<{
 
 export async function cancelExpiredReservationsAction() {
   return cancelExpiredReservations();
+}
+
+/**
+ * 4b. BATALKAN PESANAN MANDIRI OLEH CALON PENGHUNI
+ * Berlaku jika status reservasi masih PENDING_REVIEW (Menunggu Verifikasi)
+ * atau APPROVED dengan invoice UNPAID/PENDING (sebelum lunas/dibayar).
+ * Mengubah status reservasi menjadi CANCELLED, membatalkan invoice terkait,
+ * dan otomatis mengembalikan status kamar di tabel rooms dari DIPESAN menjadi TERSEDIA.
+ */
+export async function cancelReservationByCalonAction(
+  reservationCode: string
+): Promise<ActionResponse<Reservation>> {
+  try {
+    if (!reservationCode) {
+      return { success: false, message: 'Kode reservasi tidak valid.' };
+    }
+
+    const result = await dbCancelReservationByUser(reservationCode);
+    if (!result.success) {
+      return { success: false, message: result.message };
+    }
+
+    const currentUser = await getCurrentUser();
+    await dbAddAuditLog({
+      userId: currentUser?.id || result.reservation?.userId || 'calon-penghuni',
+      action: 'CANCEL_RESERVATION_BY_USER',
+      entityType: 'RESERVATION',
+      entityId: reservationCode,
+      payloadAfter: {
+        status: 'CANCELLED',
+        roomCode: result.reservation?.roomCode,
+        roomStatus: 'TERSEDIA',
+      },
+    });
+
+    try {
+      revalidateTag('rooms');
+    } catch {
+      // Abaikan jika di luar konteks tag cache
+    }
+    revalidatePath('/');
+    revalidatePath('/kamar');
+    if (result.reservation?.roomCode) {
+      revalidatePath(`/kamar/${result.reservation.roomCode}`);
+    }
+    revalidatePath('/calon');
+    revalidatePath('/calon/dashboard');
+    revalidatePath('/calon/reservasi');
+    revalidatePath('/pengelola/reservasi');
+    revalidatePath('/pengelola/kamar');
+    revalidatePath('/pengelola/dashboard');
+    revalidatePath('/admin/dashboard');
+
+    return {
+      success: true,
+      message: result.message,
+      data: result.reservation,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.message || 'Gagal membatalkan pesanan reservasi.',
+    };
+  }
 }
 
 /**

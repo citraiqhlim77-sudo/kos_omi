@@ -598,6 +598,63 @@ export async function dbRejectReservation(
 }
 
 /**
+ * Pembatalan reservasi mandiri oleh Calon Penghuni sebelum lunas (status PENDING_REVIEW atau APPROVED dengan invoice belum SETTLEMENT).
+ * Mengubah status reservasi menjadi CANCELLED, membatalkan invoice UNPAID/PENDING terkait,
+ * dan otomatis mengembalikan status kamar di tabel rooms dari DIPESAN (RESERVED) menjadi TERSEDIA (AVAILABLE).
+ */
+export async function dbCancelReservationByUser(
+  reservationCode: string,
+  reason: string = 'Dibatalkan mandiri oleh Calon Penghuni melalui Portal Calon Penghuni.'
+): Promise<{ success: boolean; message: string; reservation?: Reservation }> {
+  const db = getDb();
+  const res = await dbGetReservationByCode(reservationCode);
+  if (!res) {
+    return { success: false, message: `Reservasi ${reservationCode} tidak ditemukan.` };
+  }
+
+  if (res.status === 'PAID' || res.payment?.status === 'SETTLEMENT') {
+    return {
+      success: false,
+      message: 'Reservasi yang sudah lunas tidak dapat dibatalkan secara mandiri. Silakan hubungi Pengelola Kos Omi.',
+    };
+  }
+
+  if (res.status !== 'PENDING_REVIEW' && res.status !== 'APPROVED') {
+    return {
+      success: false,
+      message: `Reservasi dengan status ${res.status} tidak dapat dibatalkan.`,
+    };
+  }
+
+  const index = db.reservations.findIndex((r) => r.code === res.code);
+  if (index === -1) {
+    return { success: false, message: 'Data reservasi tidak ditemukan.' };
+  }
+
+  const nowIso = new Date().toISOString();
+  db.reservations[index].status = 'CANCELLED';
+  db.reservations[index].adminNotes =
+    (db.reservations[index].adminNotes ? `${db.reservations[index].adminNotes} | ` : '') + reason;
+  db.reservations[index].updatedAt = nowIso;
+
+  // Batalkan invoice UNPAID / PENDING terkait jika ada
+  const pIndex = db.payments.findIndex((p) => p.reservationCode === res.code);
+  if (pIndex !== -1 && db.payments[pIndex].status !== 'SETTLEMENT') {
+    db.payments[pIndex].status = 'EXPIRED';
+  }
+
+  // Kembalikan status kamar dari DIPESAN menjadi TERSEDIA agar bisa langsung dipesan kembali
+  await dbUpdateRoomStatus(res.roomCode, 'TERSEDIA');
+
+  const updated = await dbGetReservationByCode(res.code);
+  return {
+    success: true,
+    message: `Pesanan ${res.code} (Kamar No. ${res.roomCode}) berhasil dibatalkan dan status kamar telah dikembalikan menjadi TERSEDIA.`,
+    reservation: updated || undefined,
+  };
+}
+
+/**
  * Job pembatalan reservasi kedaluwarsa (PRD Bab 5.C & Bab 11 Task 2.5)
  * Membatalkan reservasi yang batas waktu pembayarannya (24 jam) telah lewat
  * dan mengembalikan kamar menjadi TERSEDIA.

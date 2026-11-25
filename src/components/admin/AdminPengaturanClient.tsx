@@ -74,7 +74,7 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
             Pengaturan Sistem & Bisnis Kos
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Atur parameter operasional kos seperti tanggal jatuh tempo tagihan sewa, persentase deposit, dan profil properti.
+            Atur parameter operasional Kos Omi seperti kontak resmi pemilik (Ibu Yulastri), kebijakan sewa semesteran (6 bulan), dan batas waktu pembayaran reservasi.
           </p>
         </div>
       </div>
@@ -84,7 +84,7 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-5">
           <div className="border-b border-zinc-100 pb-3 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-bold text-zinc-900">Identitas Properti Kos</h2>
+            <h2 className="text-sm font-bold text-zinc-900">Identitas Properti & Kontak Pemilik Kos</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -111,7 +111,7 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
             </div>
 
             <div>
-              <label className="block font-bold text-zinc-700 mb-1">No. WhatsApp Admin Kos *</label>
+              <label className="block font-bold text-zinc-700 mb-1">Pemilik & No. WhatsApp Utama (Ibu Yulastri) *</label>
               <input
                 type="tel"
                 value={settings.adminPhone}
@@ -119,6 +119,9 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-medium text-zinc-800 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Pemilik: Ibu Yulastri · WA Utama: 0822-8714-6763 · Cadangan: 0813-7432-9562
+              </span>
             </div>
 
             <div>
@@ -137,47 +140,31 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-5">
           <div className="border-b border-zinc-100 pb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-bold text-zinc-900">Kebijakan Tagihan & Deposit</h2>
+            <h2 className="text-sm font-bold text-zinc-900">Kebijakan Sewa Semesteran (6 Bulan)</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                Tanggal Jatuh Tempo Sewa Default (PRD Bab 3.E)
+                Skema & Tarif Sewa Kamar
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={28}
-                  value={settings.dueDay}
-                  onChange={(e) => setSettings({ ...settings, dueDay: Number(e.target.value) })}
-                  className="w-24 px-3.5 py-2.5 rounded-xl border border-zinc-200 font-bold text-zinc-900 text-center"
-                />
-                <span className="text-zinc-600 font-medium">Setiap bulan (Tanggal 5)</span>
+              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-800 font-bold">
+                Sewa Semesteran (6 Bulan) — Rp 5.000.000 / Kamar
               </div>
-              <span className="text-[10px] text-zinc-400 mt-1 block">
-                Cron otomatis menerbitkan invoice H-7 dan menandai terlambat H+3.
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Maksimal 2 orang/kamar (boleh 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang).
               </span>
             </div>
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                Persentase Uang Jaminan (Deposit)
+                Kebijakan Biaya Jaminan
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  max={200}
-                  value={settings.depositPercentage}
-                  onChange={(e) => setSettings({ ...settings, depositPercentage: Number(e.target.value) })}
-                  className="w-24 px-3.5 py-2.5 rounded-xl border border-zinc-200 font-bold text-zinc-900 text-center"
-                />
-                <span className="text-zinc-600 font-medium">% (1 Bulan Sewa)</span>
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
+                Tanpa Biaya Jaminan (Rp 0)
               </div>
-              <span className="text-[10px] text-zinc-400 mt-1 block">
-                Deposit ditagihkan saat reservasi disetujui bersama biaya bulan pertama.
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Penghuni hanya membayar tarif sewa semesteran sesuai kamar yang dipesan.
               </span>
             </div>
 
@@ -194,25 +181,25 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
                   onChange={(e) => setSettings({ ...settings, bookingWindowHours: Number(e.target.value) })}
                   className="w-24 px-3.5 py-2.5 rounded-xl border border-zinc-200 font-bold text-zinc-900 text-center"
                 />
-                <span className="text-zinc-600 font-medium">Jam (Default 24 Jam)</span>
+                <span className="text-zinc-600 font-medium">Jam (1x24 Jam)</span>
               </div>
-              <span className="text-[10px] text-zinc-400 mt-1 block">
-                Jika lewat 24 jam belum dibayar, kamar otomatis kembali Tersedia.
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Jika lewat 1x24 jam belum dibayar, status kamar otomatis kembali Tersedia.
               </span>
             </div>
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                Status Denda Keterlambatan
+                Kebijakan Status Tagihan & Keterlambatan
               </label>
-              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-600 font-medium flex items-center justify-between">
-                <span>Nonaktif pada Versi Awal (MVP)</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-200 text-zinc-700">
-                  Sesuai PRD
+              <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-700 font-semibold flex items-center justify-between">
+                <span>Tanpa Denda Keterlambatan Otomatis</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                  Belum Lunas / Menunggu Pelunasan
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-400 mt-1 block">
-                Status TERLAMBAT hanya sebagai penanda untuk tindak lanjut pengelola.
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Status tagihan hanya menampilkan Belum Lunas / Menunggu Pelunasan tanpa tambahan denda otomatis.
               </span>
             </div>
           </div>

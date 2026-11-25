@@ -28,9 +28,10 @@ declare global {
 const initialUsers: AdminUserRecord[] = [
   {
     id: 'usr-admin-1',
-    name: 'Ibu Omi (Pemilik & Administrator Kos Omi)',
+    name: 'Ibu Yulastri (Pemilik Kos & Super Admin)',
+    nim: 'admin',
     email: 'admin@kosomi.id',
-    phone: '+62 813-7432-9562',
+    phone: '0822-8714-6763',
     role: 'ADMIN',
     plainPassword: 'Password123!',
     isActive: true,
@@ -39,9 +40,10 @@ const initialUsers: AdminUserRecord[] = [
   },
   {
     id: 'usr-pengelola-1',
-    name: 'Yanti Susanti (Pengelola Kos Omi)',
+    name: 'Yanti Susanti (Pengelola Operasional Kos)',
+    nim: 'pengelola',
     email: 'pengelola@kosomi.id',
-    phone: '081288990011',
+    phone: '0813-7432-9562',
     role: 'PENGELOLA',
     plainPassword: 'Password123!',
     isActive: true,
@@ -50,18 +52,20 @@ const initialUsers: AdminUserRecord[] = [
   },
   {
     id: 'usr-keuangan-1',
-    name: 'Aisyah Fitriani (Staf Keuangan Kos Omi)',
+    name: 'Aisyah Fitriani (Staf Keuangan)',
+    nim: 'keuangan',
     email: 'keuangan@kosomi.id',
-    phone: '081399001122',
+    phone: '0822-8714-6763',
     role: 'KEUANGAN',
     plainPassword: 'Password123!',
     isActive: true,
     createdAt: '2026-01-02T10:30:00Z',
-    lastLoginAt: '2026-11-02T09:45:00Z',
+    lastLoginAt: '2026-11-02T09:30:00Z',
   },
   {
     id: 'usr-calon-zahra',
-    name: 'Zahra Aulia Putri (Studi Kasus Kamar 1)',
+    name: 'Zahra Aulia Putri (Kamar 1)',
+    nim: '2214010045',
     email: 'zahra.aulia@uinib.ac.id',
     phone: '081234567890',
     role: 'CALON_PENGHUNI',
@@ -77,13 +81,13 @@ const initialSettings: AdminSettings = {
   kosName: 'Kos Omi Sungai Bangek, Padang',
   kosAddress:
     'Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (59F5+25 Balai Gadang) (Dekat Kampus III UIN Imam Bonjol)',
-  adminPhone: '+62 813-7432-9562',
+  adminPhone: '0822-8714-6763 (Ibu Yulastri) / 0813-7432-9562',
   dueDay: 5,
-  depositPercentage: 100,
+  depositPercentage: 0,
   bookingWindowHours: 24,
   timezone: 'Asia/Jakarta (WIB)',
   lateFeeEnabled: false,
-  lateFeeDailyAmount: 25000,
+  lateFeeDailyAmount: 0,
 };
 
 const initialAuditLogs: AuditLogRecord[] = [
@@ -121,14 +125,14 @@ const initialNotificationLogs: NotificationLogRecord[] = [
 ];
 
 function getUsersStore(): AdminUserRecord[] {
-  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 10) {
+  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 14) {
     global.__kosOmiAdminUsers = [...initialUsers];
-    (global as any).__kosOmiUsersVer = 10;
+    (global as any).__kosOmiUsersVer = 14;
   }
 
   const store = global.__kosOmiAdminUsers;
 
-  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers) beserta kata sandinya
+  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers) beserta NIM & kata sandinya
   const authUsers = getAuthUsersStore();
   if (Array.isArray(authUsers)) {
     for (const au of authUsers) {
@@ -138,9 +142,11 @@ function getUsersStore(): AdminUserRecord[] {
         store.unshift({
           id: au.id || `usr-${Date.now()}`,
           name: au.name || au.email.split('@')[0],
+          nim: au.nim || au.email.split('@')[0],
           email: au.email,
           phone: au.phone || '-',
           role: au.role || 'CALON_PENGHUNI',
+          roomCode: au.roomCode,
           plainPassword: au.plainPassword || 'Password123!',
           isActive: au.isActive !== false,
           createdAt: new Date().toISOString(),
@@ -150,6 +156,9 @@ function getUsersStore(): AdminUserRecord[] {
           existing.plainPassword = au.plainPassword;
         } else if (!existing.plainPassword) {
           existing.plainPassword = 'Password123!';
+        }
+        if (au.nim && !existing.nim) {
+          existing.nim = au.nim;
         }
         if (au.role) {
           existing.role = au.role;
@@ -168,16 +177,21 @@ function getUsersStore(): AdminUserRecord[] {
         store.unshift({
           id: rsv.userId || `usr-rsv-${Date.now()}`,
           name: rsv.userName || rsv.userEmail,
+          nim: rsv.userNik || rsv.userEmail.split('@')[0],
           email: rsv.userEmail,
           phone: rsv.userPhone || '-',
           role: 'CALON_PENGHUNI',
           roomCode: rsv.roomCode,
+          plainPassword: 'Password123!',
           isActive: true,
           createdAt: rsv.createdAt || new Date().toISOString(),
         });
       } else {
         if (!existing.roomCode && rsv.roomCode) {
           existing.roomCode = rsv.roomCode;
+        }
+        if (rsv.userNik && !existing.nim) {
+          existing.nim = rsv.userNik;
         }
         if (rsv.userName && existing.name.startsWith('Akun Demo')) {
           existing.name = rsv.userName;
@@ -262,50 +276,94 @@ export async function fetchAdminUsersAction(filters?: {
   return result;
 }
 
-// 2. Create Staff User (Pengelola or Keuangan)
+// 2. Create User Account by Super Admin (SIAKAD Style: Supports NIM + Password + Role for Penghuni/Calon/Pengelola/Admin)
 export async function createStaffUserAction(data: {
   name: string;
-  email: string;
+  nim?: string;
+  email?: string;
   phone: string;
-  role: 'PENGELOLA' | 'KEUANGAN';
+  role: 'PENGHUNI' | 'CALON_PENGHUNI' | 'PENGELOLA' | 'ADMIN' | 'KEUANGAN';
+  roomCode?: string;
   password?: string;
 }): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
   await requireRole(['ADMIN']);
   const users = getUsersStore();
 
-  if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-    return { success: false, message: 'Alamat email sudah terdaftar.' };
+  const cleanNim = (data.nim || '').trim();
+  const resolvedEmail = (
+    data.email && data.email.trim()
+      ? data.email.trim()
+      : cleanNim
+      ? `${cleanNim.toLowerCase()}@uinib.ac.id`
+      : `user${Date.now()}@kosomi.id`
+  ).toLowerCase();
+
+  if (
+    users.some(
+      (u) =>
+        u.email.toLowerCase() === resolvedEmail ||
+        (cleanNim && u.nim && u.nim.toLowerCase() === cleanNim.toLowerCase())
+    )
+  ) {
+    return { success: false, message: 'NIM atau Alamat Email tersebut sudah terdaftar di sistem.' };
   }
 
-  const staffPassword = data.password?.trim() || 'Password123!';
+  const userPassword = data.password?.trim() || 'Password123!';
 
   const newUser: AdminUserRecord = {
     id: `usr-${Date.now()}`,
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
+    name: data.name.trim(),
+    nim: cleanNim || resolvedEmail.split('@')[0],
+    email: resolvedEmail,
+    phone: data.phone.trim(),
     role: data.role,
-    plainPassword: staffPassword,
+    roomCode: data.roomCode?.trim() || undefined,
+    plainPassword: userPassword,
     isActive: true,
     createdAt: new Date().toISOString(),
   };
 
   users.unshift(newUser);
 
-  // Sinkronkan juga ke store login (__kosOmiAuthUsers) agar staf baru bisa langsung login
+  // Sinkronkan ke store login (__kosOmiAuthUsers) agar bisa langsung login pakai NIM atau Email
   const authStore = getAuthUsersStore();
-  if (!authStore.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-    authStore.push({
+  authStore.unshift({
+    id: newUser.id,
+    name: newUser.name,
+    nim: newUser.nim,
+    email: newUser.email,
+    phone: newUser.phone,
+    role: newUser.role,
+    roomCode: newUser.roomCode,
+    passwordHash: await hashPassword(userPassword),
+    plainPassword: userPassword,
+    isActive: true,
+    failedLoginCount: 0,
+    lockedUntil: null,
+  });
+
+  // Jika role yang dibuat adalah PENGHUNI (Penghuni Aktif), sinkronkan otomatis ke Portal Penghuni
+  if (newUser.role === 'PENGHUNI') {
+    const roomNum = newUser.roomCode || '1';
+    if (!(global as any).__kosOmiBillingState) {
+      (global as any).__kosOmiBillingState = { bills: [], profiles: [] };
+      (global as any).__kosOmiBillingVer = 12;
+    }
+    (global as any).__kosOmiBillingState.profiles.unshift({
       id: newUser.id,
       name: newUser.name,
-      email: newUser.email.toLowerCase().trim(),
+      nik: newUser.nim || '2317020001',
+      email: newUser.email,
       phone: newUser.phone,
-      role: newUser.role,
-      passwordHash: await hashPassword(staffPassword),
-      plainPassword: staffPassword,
-      isActive: true,
-      failedLoginCount: 0,
-      lockedUntil: null,
+      occupation: 'Mahasiswi UIN Imam Bonjol Padang',
+      roomCode: roomNum,
+      checkInDate: new Date().toISOString().split('T')[0],
+      tenancyEnd: '2027-05-10',
+      emergencyContactName: 'Orang Tua / Wali',
+      emergencyContactRelation: 'Orang Tua',
+      emergencyContactPhone: newUser.phone,
+      monthlyRent: 5000000,
+      avatarUrl: `/rooms/kamar-${roomNum}.png`,
     });
   }
 
@@ -313,12 +371,18 @@ export async function createStaffUserAction(data: {
   auditLogs.unshift({
     id: `aud-${Date.now()}`,
     actorId: 'usr-admin-1',
-    actorName: 'Ibu Omi',
+    actorName: 'Ibu Omi (Super Admin)',
     actorRole: 'ADMIN',
-    action: 'STAFF_USER_CREATED',
+    action: 'USER_ACCOUNT_CREATED_SIAKAD',
     entity: 'users',
     entityId: newUser.id,
-    meta: { name: newUser.name, role: newUser.role, email: newUser.email },
+    meta: {
+      name: newUser.name,
+      nim: newUser.nim,
+      role: newUser.role,
+      email: newUser.email,
+      roomCode: newUser.roomCode,
+    },
     createdAt: new Date().toISOString(),
   });
 
@@ -327,8 +391,44 @@ export async function createStaffUserAction(data: {
 
   return {
     success: true,
-    message: `Akun staf ${data.name} (${data.role}) berhasil ditambahkan dengan kata sandi: ${staffPassword}`,
+    message: `Akun ${newUser.name} (Login NIM: ${newUser.nim} | Sandi: ${userPassword} | Role: ${newUser.role}) berhasil dibuat!`,
     user: newUser,
+  };
+}
+
+// 2c. Change User Role & Room directly by Super Admin (SIAKAD Role Management)
+export async function adminUpdateUserRoleAction(
+  userId: string,
+  newRole: AdminUserRecord['role'],
+  roomCode?: string
+): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
+  await requireRole(['ADMIN']);
+  const users = getUsersStore();
+  const target = users.find((u) => u.id === userId);
+  if (!target) {
+    return { success: false, message: 'Pengguna tidak ditemukan.' };
+  }
+
+  target.role = newRole;
+  if (roomCode !== undefined) {
+    target.roomCode = roomCode.trim() || undefined;
+  }
+
+  const authUser = findUserByEmail(target.email) || (target.nim ? findUserByEmail(target.nim) : undefined);
+  if (authUser) {
+    authUser.role = newRole;
+    if (roomCode !== undefined) {
+      authUser.roomCode = target.roomCode;
+    }
+  }
+
+  revalidatePath('/admin/pengguna');
+  revalidatePath('/admin/dashboard');
+
+  return {
+    success: true,
+    message: `Role akun ${target.name} (NIM/ID: ${target.nim || target.email}) berhasil diubah menjadi ${newRole}! Saat login berikutnya, pengguna akan langsung masuk ke portal ${newRole}.`,
+    user: { ...target },
   };
 }
 
