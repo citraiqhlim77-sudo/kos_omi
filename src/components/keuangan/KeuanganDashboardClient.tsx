@@ -51,6 +51,31 @@ interface KeuanganDashboardClientProps {
   recentTransactions: PaymentTransaction[];
 }
 
+function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
+  const type = (paymentType || '').toLowerCase();
+  const bankUpper = bank ? bank.toUpperCase() : '';
+  if (type === 'qris') return 'QRIS';
+  if (type === 'dana') return 'DANA';
+  if (type === 'gopay') return 'GoPay';
+  if (type === 'shopeepay') return 'ShopeePay';
+  if (type === 'bank_transfer' || type.includes('va')) {
+    return bankUpper ? `Transfer Bank ${bankUpper}` : 'Transfer Bank VA';
+  }
+  if (bankUpper) return `Transfer Bank ${bankUpper}`;
+  return 'Transfer Bank / QRIS';
+}
+
+function formatTxStatusLabel(status: string): string {
+  const s = (status || '').toLowerCase();
+  if (s === 'settlement' || s === 'capture' || s === 'paid' || s === 'lunas') {
+    return 'Terverifikasi / Lunas';
+  }
+  if (s === 'pending' || s === 'unpaid') {
+    return 'Menunggu Pembayaran';
+  }
+  return 'Kedaluwarsa';
+}
+
 export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = ({
   stats,
   recentTransactions,
@@ -317,7 +342,7 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
                     {formatPaymentCategoryLabel(tx.category)}
                   </td>
                   <td className="p-3.5 whitespace-nowrap font-medium text-zinc-800">
-                    {tx.paymentType.toUpperCase()} {tx.bank ? `(${tx.bank.toUpperCase()})` : ''}
+                    {formatPaymentMethodLabel(tx.paymentType, tx.bank)}
                   </td>
                   <td className="p-3.5 whitespace-nowrap text-right font-bold text-zinc-900 tabular-nums">
                     {formatRupiah(tx.grossAmount)}
@@ -332,7 +357,7 @@ export const KeuanganDashboardClient: React.FC<KeuanganDashboardClientProps> = (
                           : 'bg-rose-50 text-rose-800 border border-rose-200'
                       }`}
                     >
-                      {tx.transactionStatus.toUpperCase()}
+                      {formatTxStatusLabel(tx.transactionStatus)}
                     </span>
                   </td>
                   <td className="p-3.5 whitespace-nowrap text-right">

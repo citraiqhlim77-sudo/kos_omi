@@ -8,22 +8,20 @@ import {
   fetchNotificationLogsAction,
 } from '@/actions/admin';
 import { fetchRoomStatsAction } from '@/actions/rooms';
-import { fetchFinanceDashboardStatsAction } from '@/actions/finance';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Dasbor Administrator Utama | Kos Omi',
-  description: 'Pusat kendali master data 67 kamar, manajemen staf, konfigurasi sistem, dan log audit Kos Omi.',
+  description: 'Pusat kendali master data 67 kamar, manajemen pengguna 5 role, riwayat notifikasi sistem, konfigurasi sistem, dan log audit Kos Omi.',
 };
 
 export default async function AdminDashboardPage() {
-  const [users, auditLogs, notifLogs, roomStats, financeStats] = await Promise.all([
+  const [users, auditLogs, notifLogs, roomStats] = await Promise.all([
     fetchAdminUsersAction(),
     fetchAuditLogsAction(),
     fetchNotificationLogsAction(),
     fetchRoomStatsAction(),
-    fetchFinanceDashboardStatsAction(),
   ]);
 
   return (
@@ -37,7 +35,6 @@ export default async function AdminDashboardPage() {
           notifCount={notifLogs.length}
           occupiedCount={roomStats.occupied}
           bookedCount={roomStats.booked}
-          monthlyIncome={financeStats.currentMonthIncome}
           users={users}
         />
       </main>

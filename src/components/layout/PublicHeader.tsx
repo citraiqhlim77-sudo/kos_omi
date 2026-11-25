@@ -81,10 +81,10 @@ export const PublicHeader: React.FC = () => {
             </div>
           </NextLink>
 
-          {/* Navigation Links (Peletakan sama di Laptop & HP, responsif menyesuaikan layar) */}
+          {/* Navigation Links (Peletakan sama di Laptop & HP, responsif menyesuaikan layar tanpa terpotong) */}
           <nav
             aria-label="Navigasi Utama"
-            className="order-3 lg:order-2 w-full lg:w-auto flex items-center gap-1 overflow-x-auto pt-1.5 lg:pt-0 border-t lg:border-t-0 border-zinc-100 scrollbar-none"
+            className="order-3 lg:order-2 w-full lg:w-auto flex items-center gap-1 overflow-x-auto whitespace-nowrap pt-2 pb-1 lg:py-0 pr-4 lg:pr-0 border-t lg:border-t-0 border-zinc-100 scrollbar-none"
           >
             {navLinks.map((link) => {
               const active = isActive(link.href);
@@ -106,7 +106,7 @@ export const PublicHeader: React.FC = () => {
             })}
           </nav>
 
-          {/* Auth CTA Buttons (Peletakan & tombol sama persis di Laptop & HP) */}
+          {/* Auth CTA Buttons & Mobile Drawer Toggle */}
           <div className="order-2 lg:order-3 flex items-center gap-1.5 sm:gap-2 shrink-0">
             {sessionUser || isOnCalonPortal ? (
               <>
@@ -140,8 +140,41 @@ export const PublicHeader: React.FC = () => {
                 </NextLink>
               </>
             )}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle Menu Navigasi"
+              className="lg:hidden p-2 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Drawer */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden py-2.5 border-t border-zinc-200 space-y-1">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              const Icon = link.icon;
+              return (
+                <NextLink
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-2.5 ${
+                    active
+                      ? 'bg-[hsl(186,72%,24%)] text-white'
+                      : 'text-zinc-700 hover:bg-zinc-100'
+                  }`}
+                >
+                  <Icon size={16} className="shrink-0" />
+                  <span>{link.label}</span>
+                </NextLink>
+              );
+            })}
+          </div>
+        )}
       </div>
     </header>
   );

@@ -18,6 +18,42 @@ interface AdminNotifikasiClientProps {
   initialLogs: NotificationLogRecord[];
 }
 
+function formatNotificationTemplateLabel(template: string): string {
+  if (!template) return 'Pemberitahuan Sistem Kos Omi';
+  const raw = template.trim();
+
+  // reservasi_disetujui_invoice_INV-202611-1_kamar_1
+  const matchApproved = raw.match(/reservasi_disetujui_invoice_([A-Za-z0-9-]+)_kamar_([A-Za-z0-9-]+)/i);
+  if (matchApproved) {
+    return `Pemberitahuan Persetujuan Reservasi & Tagihan Kamar No. ${matchApproved[2]} (${matchApproved[1]})`;
+  }
+
+  // pembayaran_lunas_INV-202610-3_kamar_1_siap_checkin
+  const matchPaid = raw.match(/pembayaran_lunas_([A-Za-z0-9-]+)_kamar_([A-Za-z0-9-]+)/i);
+  if (matchPaid) {
+    return `Konfirmasi Pelunasan Tagihan Kamar No. ${matchPaid[2]} & Siap Check-in (${matchPaid[1]})`;
+  }
+
+  // registrasi_akun_calon_penghuni_Citra_Dewi_Lestari
+  const matchReg = raw.match(/registrasi_akun_calon_penghuni_(.+)/i);
+  if (matchReg) {
+    const cleanName = matchReg[1].replace(/_/g, ' ');
+    return `Pemberitahuan Pendaftaran Akun Calon Penghuni (${cleanName})`;
+  }
+
+  // pengingat_tagihan_...
+  const matchReminder = raw.match(/pengingat_tagihan_([A-Za-z0-9-]+)/i);
+  if (matchReminder) {
+    return `Pengingat Pembayaran Tagihan Sewa (${matchReminder[1]})`;
+  }
+
+  if (!raw.includes('_')) return raw;
+
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
   initialLogs,
 }) => {
@@ -36,7 +72,8 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
       !q ||
       log.recipient.toLowerCase().includes(q) ||
       log.recipientName.toLowerCase().includes(q) ||
-      log.template.toLowerCase().includes(q);
+      log.template.toLowerCase().includes(q) ||
+      formatNotificationTemplateLabel(log.template).toLowerCase().includes(q);
     return matchesChannel && matchesStatus && matchesSearch;
   });
 
@@ -112,9 +149,9 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
             className="px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 cursor-pointer"
           >
             <option value="ALL">Semua Status</option>
-            <option value="SENT">Terkirim (SENT)</option>
-            <option value="FAILED">Gagal (FAILED)</option>
-            <option value="PENDING">Menunggu (PENDING)</option>
+            <option value="SENT">Terkirim</option>
+            <option value="FAILED">Gagal Terkirim</option>
+            <option value="PENDING">Menunggu</option>
           </select>
         </div>
       </div>
@@ -163,11 +200,11 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
                       )}
                     </td>
 
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="text-zinc-800 font-bold text-[11px]">
-                        {log.template}
+                    <td className="px-5 py-4">
+                      <div className="text-zinc-800 font-bold text-xs max-w-sm break-words">
+                        {formatNotificationTemplateLabel(log.template)}
                       </div>
-                      <div className="text-[10px] text-zinc-400 tabular-nums">Percobaan ke-{log.attempts}</div>
+                      <div className="text-[10px] text-zinc-400 tabular-nums mt-0.5">Percobaan pengiriman ke-{log.attempts}</div>
                     </td>
 
                     <td className="px-5 py-4">
@@ -274,10 +311,12 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
                 )}
               </div>
 
-              <div className="p-2.5 rounded-lg bg-white border border-zinc-200/60 text-xs space-y-1 text-zinc-600">
-                <div className="flex justify-between">
-                  <span>Template:</span>
-                  <span className="font-bold text-zinc-800">{log.template}</span>
+              <div className="p-2.5 rounded-lg bg-white border border-zinc-200/60 text-xs space-y-1.5 text-zinc-600">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[11px] text-zinc-400">Jenis Pemberitahuan:</span>
+                  <span className="font-bold text-zinc-800 break-words">
+                    {formatNotificationTemplateLabel(log.template)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Status:</span>

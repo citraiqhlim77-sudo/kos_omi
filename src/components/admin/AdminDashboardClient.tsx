@@ -9,7 +9,6 @@ import {
   History,
   Bell,
   BedDouble,
-  DollarSign,
   Activity,
   ArrowRight,
   Server,
@@ -18,8 +17,15 @@ import {
   Clock,
   Layers,
 } from 'lucide-react';
-import { formatRupiah } from '@/data/rooms';
 import { AdminUserRecord } from '@/types/admin';
+
+const ROLE_DISPLAY_LABELS: Record<string, string> = {
+  ADMIN: 'Admin Sistem',
+  PENGELOLA: 'Pengelola Kos',
+  KEUANGAN: 'Staf Keuangan',
+  PENGHUNI: 'Penghuni Aktif',
+  CALON_PENGHUNI: 'Calon Penghuni',
+};
 
 interface AdminDashboardClientProps {
   userCount: number;
@@ -27,7 +33,6 @@ interface AdminDashboardClientProps {
   notifCount: number;
   occupiedCount?: number;
   bookedCount?: number;
-  monthlyIncome?: number;
   users?: AdminUserRecord[];
 }
 
@@ -37,7 +42,6 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   notifCount,
   occupiedCount = 0,
   bookedCount = 0,
-  monthlyIncome = 0,
   users = [],
 }) => {
   return (
@@ -70,10 +74,10 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
         </div>
       </div>
 
-      {/* KPI Cards (Semua Bisa Diklik Langsung ke Halamannya) */}
+      {/* KPI Cards (4 Kartu Utama Administrasi Sistem) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <NextLink
-          href="/pengelola/kamar"
+          href="/admin/pengaturan"
           className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-blue-400 hover:shadow-sm transition-all space-y-2 group block"
         >
           <div className="flex items-center justify-between">
@@ -111,28 +115,29 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
             <span className="text-xs text-zinc-500 font-normal ml-1">Akun</span>
           </div>
           <div className="text-[11px] text-indigo-700 font-semibold flex items-center justify-between">
-            <span>Klik untuk lihat daftar {userCount} akun</span>
+            <span>Kelola akses 5 role pengguna</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
         </NextLink>
 
         <NextLink
-          href="/keuangan/transaksi"
+          href="/admin/notifikasi"
           className="bg-white p-5 rounded-2xl border border-zinc-200 hover:border-emerald-400 hover:shadow-sm transition-all space-y-2 group block"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-zinc-500 group-hover:text-emerald-700">
-              Pemasukan Bulan Ini
+              Riwayat Notifikasi Sistem
             </span>
             <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
-              <DollarSign className="w-4 h-4" />
+              <Bell className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-heading font-extrabold text-zinc-900 tabular-nums">
-            {formatRupiah(monthlyIncome)}
+          <div className="text-3xl font-heading font-extrabold text-zinc-900 tabular-nums">
+            {notifCount}
+            <span className="text-xs text-zinc-500 font-normal ml-1">Notifikasi</span>
           </div>
           <div className="text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
-            <span>Klik rincian transaksi masuk</span>
+            <span>Klik buka riwayat notifikasi</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
         </NextLink>
@@ -143,18 +148,18 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-zinc-500 group-hover:text-amber-700">
-              Log Audit & Notifikasi
+              Log Aktivitas Audit
             </span>
             <div className="p-2 rounded-xl bg-amber-50 text-amber-700">
               <Activity className="w-4 h-4" />
             </div>
           </div>
           <div className="text-3xl font-heading font-extrabold text-zinc-900 tabular-nums">
-            {auditCount + notifCount}
+            {auditCount}
             <span className="text-xs text-zinc-500 font-normal ml-1">Event</span>
           </div>
           <div className="text-[11px] text-amber-700 font-semibold flex items-center justify-between">
-            <span>Klik buka riwayat aktivitas</span>
+            <span>Klik buka riwayat audit sistem</span>
             <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </div>
         </NextLink>
@@ -195,16 +200,16 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
               <tbody className="divide-y divide-zinc-100">
                 {users.map((u) => (
                   <tr key={u.id} className="hover:bg-zinc-50/80">
-                    <td className="py-2.5 px-4 font-bold text-zinc-900">{u.name}</td>
-                    <td className="py-2.5 px-4 text-zinc-600">{u.email}</td>
-                    <td className="py-2.5 px-4 text-zinc-600 tabular-nums">{u.phone}</td>
-                    <td className="py-2.5 px-4">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        {u.role}
+                    <td className="py-2.5 px-4 font-bold text-zinc-900 whitespace-nowrap">{u.name}</td>
+                    <td className="py-2.5 px-4 text-zinc-600 break-all">{u.email}</td>
+                    <td className="py-2.5 px-4 text-zinc-600 tabular-nums whitespace-nowrap">{u.phone}</td>
+                    <td className="py-2.5 px-4 whitespace-nowrap">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        {ROLE_DISPLAY_LABELS[u.role] || u.role}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 font-semibold text-zinc-700">
-                      {u.roomCode ? `Kamar ${u.roomCode}` : '-'}
+                    <td className="py-2.5 px-4 font-semibold text-zinc-700 whitespace-nowrap">
+                      {u.roomCode ? `Kamar No. ${u.roomCode}` : '-'}
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <NextLink

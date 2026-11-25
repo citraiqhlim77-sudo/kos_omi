@@ -172,6 +172,23 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
     }
   };
 
+  const getRoleDisplayLabel = (r: string) => {
+    switch (r) {
+      case 'ADMIN':
+        return 'Admin Sistem';
+      case 'PENGELOLA':
+        return 'Pengelola Kos';
+      case 'KEUANGAN':
+        return 'Staf Keuangan';
+      case 'PENGHUNI':
+        return 'Penghuni Aktif';
+      case 'CALON_PENGHUNI':
+        return 'Calon Penghuni';
+      default:
+        return r;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Feedback Banner */}
@@ -356,7 +373,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
 
                     <td className="p-3.5 whitespace-nowrap">
                       <div className="inline-flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
-                        <span className="font-mono text-xs font-bold text-zinc-900 select-all">
+                        <span className="tabular-nums text-xs font-bold text-zinc-900 select-all">
                           {isPasswordVisible ? userPassword : '••••••••••'}
                         </span>
                         <button
@@ -397,7 +414,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                           user.role
                         )}`}
                       >
-                        {user.role}
+                        {getRoleDisplayLabel(user.role)}
                       </span>
                     </td>
 

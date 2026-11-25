@@ -115,9 +115,9 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
               </span>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-              Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (59F5+25 Balai Gadang) (Dekat Kampus III UIN Imam Bonjol)
+              Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (Dekat Kampus III UIN Imam Bonjol)
               <br />
-              WhatsApp Ibu Kos: +62 813-7432-9562 • kontak@kosomi.id
+              WhatsApp Ibu Yulastri: 0822-8714-6763 • kontak@kosomi.id
             </p>
           </div>
 
@@ -175,7 +175,7 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
             Rincian Biaya Sewa
           </h2>
 
-          <div className="border border-zinc-200 rounded-xl overflow-hidden">
+          <div className="border border-zinc-200 rounded-xl overflow-hidden w-full overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
                 <tr>
@@ -219,8 +219,8 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
             </p>
           </div>
           <div className="sm:text-right space-y-1">
-            <h3 className="font-bold text-zinc-800">Pengelola Kos Omi Sungai Bangek</h3>
-            <p className="text-[11px]">Kontak Ibu Kos: +62 813-7432-9562</p>
+            <h3 className="font-bold text-zinc-800">Pemilik & Pengelola Kos Omi</h3>
+            <p className="text-[11px]">Ibu Yulastri: 0822-8714-6763</p>
           </div>
         </div>
       </div>

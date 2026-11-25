@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { UserRole } from './types/auth';
 import { applySecurityHeaders } from './lib/security/headers';
 
-// Peta otorisasi prefiks rute terhadap peran pengguna (PRD Bab 5 & Bab 11 Task 2.3)
+// Peta otorisasi prefiks rute terhadap peran pengguna (Pemisahan tegas RBAC 5 Role)
 export const ROUTE_ROLE_MAP: Record<string, UserRole[]> = {
   '/admin': ['ADMIN'],
-  '/pengelola': ['ADMIN', 'PENGELOLA'],
-  '/keuangan': ['ADMIN', 'KEUANGAN'],
-  '/penghuni': ['ADMIN', 'PENGHUNI'],
-  '/calon': ['ADMIN', 'CALON_PENGHUNI'],
+  '/pengelola': ['PENGELOLA'],
+  '/keuangan': ['KEUANGAN'],
+  '/penghuni': ['PENGHUNI'],
+  '/calon': ['CALON_PENGHUNI'],
 };
 
 export default function middleware(request: NextRequest) {

@@ -195,27 +195,16 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
             )}
 
             {isPaid && (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-bold text-sm text-emerald-950">
-                      Pembayaran Berhasil Diverifikasi di Server!
-                    </p>
-                    <p className="text-emerald-800 leading-relaxed">
-                      Status transaksi telah resmi tercatat sebagai <strong>SETTLEMENT</strong>. Kamar telah terkunci dan Anda siap untuk melakukan proses check-in.
-                    </p>
-                  </div>
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-sm text-emerald-950">
+                    Pembayaran Berhasil Diverifikasi!
+                  </p>
+                  <p className="text-emerald-800 leading-relaxed">
+                    Status transaksi telah resmi tercatat sebagai <strong>Terverifikasi / Lunas</strong>. Kamar telah terkunci dan Anda siap untuk melakukan proses check-in.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  disabled={isPayingDirect}
-                  onClick={handleResetToUnpaid}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs shrink-0 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Ubah ke Belum Dibayar (Uji Ulang)</span>
-                </button>
               </div>
             )}
 
@@ -273,7 +262,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                 Rincian Biaya Reservasi Awal
               </h3>
 
-              <div className="border border-zinc-200 rounded-xl overflow-hidden text-xs">
+              <div className="border border-zinc-200 rounded-xl overflow-hidden text-xs w-full overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-bold">
@@ -441,7 +430,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
 
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2.5 text-xs text-emerald-900">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Transaksi Berstatus SETTLEMENT</span>
+                  <span>Transaksi Terverifikasi Lunas</span>
                 </div>
               </div>
             )}

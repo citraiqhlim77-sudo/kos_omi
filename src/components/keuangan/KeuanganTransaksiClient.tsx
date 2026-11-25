@@ -27,6 +27,31 @@ interface KeuanganTransaksiClientProps {
   initialTransactions: PaymentTransaction[];
 }
 
+function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
+  const type = (paymentType || '').toLowerCase();
+  const bankUpper = bank ? bank.toUpperCase() : '';
+  if (type === 'qris') return 'QRIS';
+  if (type === 'dana') return 'DANA';
+  if (type === 'gopay') return 'GoPay';
+  if (type === 'shopeepay') return 'ShopeePay';
+  if (type === 'bank_transfer' || type.includes('va')) {
+    return bankUpper ? `Transfer Bank ${bankUpper}` : 'Transfer Bank VA';
+  }
+  if (bankUpper) return `Transfer Bank ${bankUpper}`;
+  return 'Transfer Bank / QRIS';
+}
+
+function formatTxStatusLabel(status: string): string {
+  const s = (status || '').toLowerCase();
+  if (s === 'settlement' || s === 'capture' || s === 'paid' || s === 'lunas') {
+    return 'Terverifikasi / Lunas';
+  }
+  if (s === 'pending' || s === 'unpaid') {
+    return 'Menunggu Pembayaran';
+  }
+  return 'Kedaluwarsa';
+}
+
 export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = ({
   initialTransactions,
 }) => {
@@ -137,15 +162,15 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-xs">
             <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Settlement</span>
+              <span className="text-zinc-400 block text-[10px]">Terverifikasi Lunas</span>
               <span className="font-bold text-emerald-700">{settlementCount} Transaksi</span>
             </div>
             <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Pending</span>
+              <span className="text-zinc-400 block text-[10px]">Menunggu</span>
               <span className="font-bold text-amber-600">{pendingCount} Transaksi</span>
             </div>
             <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Expire</span>
+              <span className="text-zinc-400 block text-[10px]">Kedaluwarsa</span>
               <span className="font-bold text-rose-600">{expireCount} Transaksi</span>
             </div>
           </div>
@@ -179,7 +204,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Filter */}
-          <div className="flex items-center bg-zinc-100 p-1 rounded-xl text-xs font-semibold text-zinc-600">
+          <div className="flex flex-wrap items-center bg-zinc-100 p-1 rounded-xl text-xs font-semibold text-zinc-600">
             <button
               type="button"
               onClick={() => setStatusFilter('ALL')}
@@ -196,7 +221,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                 statusFilter === 'settlement' ? 'bg-white text-emerald-700 font-bold' : 'hover:text-zinc-900'
               }`}
             >
-              Settlement
+              Lunas
             </button>
             <button
               type="button"
@@ -205,7 +230,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                 statusFilter === 'pending' ? 'bg-white text-amber-700 font-bold' : 'hover:text-zinc-900'
               }`}
             >
-              Pending
+              Menunggu
             </button>
             <button
               type="button"
@@ -214,7 +239,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                 statusFilter === 'expire' ? 'bg-white text-rose-700 font-bold' : 'hover:text-zinc-900'
               }`}
             >
-              Expire
+              Kedaluwarsa
             </button>
           </div>
 
@@ -285,7 +310,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                       </td>
 
                       <td className="p-3.5 whitespace-nowrap font-medium text-zinc-800">
-                        {tx.paymentType.toUpperCase()} {tx.bank ? `(${tx.bank.toUpperCase()})` : ''}
+                        {formatPaymentMethodLabel(tx.paymentType, tx.bank)}
                       </td>
 
                       <td className="p-3.5 whitespace-nowrap text-right font-heading font-bold text-zinc-900 tabular-nums">
@@ -302,7 +327,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                               : 'bg-rose-50 text-rose-800 border border-rose-200'
                           }`}
                         >
-                          {tx.transactionStatus.toUpperCase()}
+                          {formatTxStatusLabel(tx.transactionStatus)}
                         </span>
                       </td>
 
@@ -335,7 +360,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                       </span>
                     </div>
                     <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded shrink-0 ${
                         tx.transactionStatus === 'settlement' || tx.transactionStatus === 'capture'
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           : tx.transactionStatus === 'pending'
@@ -343,19 +368,19 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                           : 'bg-rose-50 text-rose-800 border border-rose-200'
                       }`}
                     >
-                      {tx.transactionStatus.toUpperCase()}
+                      {formatTxStatusLabel(tx.transactionStatus)}
                     </span>
                   </div>
 
                   <div className="p-2.5 rounded-lg bg-white border border-zinc-200/60 text-xs space-y-1">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-zinc-500">Invoice:</span>
-                      <span className="tabular-nums font-semibold text-zinc-800">{tx.invoiceNumber}</span>
+                      <span className="tabular-nums font-semibold text-zinc-800 break-all">{tx.invoiceNumber}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-2">
                       <span className="text-zinc-500">Saluran Bayar:</span>
                       <span className="font-medium text-zinc-800">
-                        {tx.paymentType.toUpperCase()} {tx.bank ? `(${tx.bank.toUpperCase()})` : ''}
+                        {formatPaymentMethodLabel(tx.paymentType, tx.bank)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center border-t border-zinc-100 pt-1 mt-1 font-bold">
@@ -480,12 +505,12 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
                       </td>
                       <td className="p-3">
                         <span className="tabular-nums text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-100 text-zinc-800">
-                          {item.systemStatus}
+                          {formatTxStatusLabel(item.systemStatus)}
                         </span>
                       </td>
                       <td className="p-3">
                         <span className="tabular-nums text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {item.gatewayStatus}
+                          {formatTxStatusLabel(item.gatewayStatus)}
                         </span>
                       </td>
                       <td className="p-3 text-right font-bold tabular-nums">

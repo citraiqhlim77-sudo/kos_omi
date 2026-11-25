@@ -120,7 +120,7 @@ export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
           <span className="text-2xl font-heading font-extrabold text-[hsl(186,72%,24%)] tabular-nums">
             {formatRupiah(tenant.monthlyPrice)}
           </span>
-          <span className="text-[10px] text-zinc-400 block">Jatuh Tempo: Tgl {tenant.dueDay} / Bulan</span>
+          <span className="text-[10px] text-zinc-400 block">Sewa Semesteran (6 Bulan)</span>
         </div>
       </div>
 
@@ -194,7 +194,7 @@ export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
               </div>
             </div>
 
-            <div className="border border-zinc-200 rounded-xl overflow-hidden">
+            <div className="border border-zinc-200 rounded-xl overflow-hidden w-full overflow-x-auto">
               <table className="w-full text-xs text-left">
                 <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
                   <tr>
@@ -246,7 +246,7 @@ export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Tipe Kamar:</span>
-                <span className="font-bold text-zinc-900">{tenant.roomType.replace('_', ' ')}</span>
+                <span className="font-bold text-zinc-900">Kamar Standar Kos Omi (Maks. 2 Orang)</span>
               </div>
             </div>
           </div>

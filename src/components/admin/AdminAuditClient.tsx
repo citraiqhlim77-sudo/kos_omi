@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { AuditLogRecord } from '@/types/admin';
@@ -29,16 +29,48 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     label: 'Proses Check-in Penghuni',
     badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
   },
+  CHECKOUT_COMPLETED: {
+    label: 'Proses Check-out Penghuni',
+    badgeClass: 'bg-zinc-100 text-zinc-800 border-zinc-200',
+  },
   PAYMENT_RECONCILED: {
     label: 'Rekonsiliasi Pembayaran',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+  SETTLE_PAYMENT: {
+    label: 'Validasi Pembayaran Lunas',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   RESERVATION_APPROVED: {
     label: 'Persetujuan Reservasi',
     badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
   },
+  APPROVE_RESERVATION: {
+    label: 'Persetujuan Reservasi',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
+  CREATE_RESERVATION: {
+    label: 'Pengajuan Reservasi Baru',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+  },
+  REJECT_RESERVATION: {
+    label: 'Penolakan Reservasi',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+  },
+  CANCEL_RESERVATION_BY_USER: {
+    label: 'Pembatalan Reservasi Mandiri',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
+  CANCEL_EXPIRED_RESERVATIONS: {
+    label: 'Pembatalan Otomatis Reservasi Kedaluwarsa',
+    badgeClass: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+  },
   ROOM_PRICE_UPDATED: {
     label: 'Perubahan Tarif Kamar',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
+  ROOM_STATUS_UPDATED: {
+    label: 'Perubahan Status Kamar',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
   },
   SETTINGS_UPDATED: {
@@ -51,6 +83,10 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
   },
   USER_STATUS_TOGGLED: {
     label: 'Perubahan Status Akun',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+  },
+  USER_DELETED: {
+    label: 'Penghapusan Data Pengguna',
     badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 };
@@ -66,8 +102,20 @@ const ENTITY_LABELS: Record<string, string> = {
 
 const META_KEY_LABELS: Record<string, string> = {
   roomCode: 'Nomor Kamar',
+  roomStatus: 'Status Kamar',
   tenant: 'Nama Penghuni',
+  tenantName: 'Nama Penghuni',
   applicant: 'Calon Penghuni',
+  userName: 'Nama Pengguna',
+  userEmail: 'Email Pengguna',
+  nim: 'Nomor Identitas',
+  invoiceCode: 'Nomor Invoice',
+  checkInDate: 'Tanggal Rencana Masuk',
+  durationMonths: 'Durasi Sewa',
+  adminNotes: 'Catatan Pengelola',
+  rejectionReason: 'Alasan Penolakan',
+  count: 'Jumlah Data',
+  codes: 'Daftar Kode Reservasi',
   amount: 'Nominal Pembayaran',
   oldPrice: 'Tarif Sewa Lama',
   newPrice: 'Tarif Sewa Baru',
@@ -87,6 +135,14 @@ const META_KEY_LABELS: Record<string, string> = {
   newStatus: 'Status Akun Baru',
 };
 
+const ROLE_DISPLAY_LABELS: Record<string, string> = {
+  ADMIN: 'Admin Sistem',
+  PENGELOLA: 'Pengelola Kos',
+  KEUANGAN: 'Staf Keuangan',
+  CALON_PENGHUNI: 'Calon Penghuni',
+  PENGHUNI: 'Penghuni Aktif',
+};
+
 function formatMetaValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return '-';
 
@@ -97,12 +153,16 @@ function formatMetaValue(key: string, value: unknown): string {
     return formatRupiah(value);
   }
 
+  if (key === 'durationMonths' && typeof value === 'number') {
+    return `${value} Bulan (1 Semester)`;
+  }
+
   if (key === 'depositPercentage' && typeof value === 'number') {
-    return `${value}% dari harga sewa bulanan`;
+    return value === 0 ? 'Tanpa Deposit (0%)' : `${value}% dari harga sewa`;
   }
 
   if (key === 'dueDay' && typeof value === 'number') {
-    return `Tanggal ${value} setiap bulan`;
+    return `Tanggal ${value} setiap periode`;
   }
 
   if (key === 'bookingWindowHours' && typeof value === 'number') {
@@ -113,13 +173,33 @@ function formatMetaValue(key: string, value: unknown): string {
     return value ? 'Aktif' : 'Tidak Aktif';
   }
 
+  if (key === 'role' && typeof value === 'string') {
+    return ROLE_DISPLAY_LABELS[value] || value;
+  }
+
+  if (key === 'roomStatus' && typeof value === 'string') {
+    const map: Record<string, string> = {
+      TERSEDIA: 'Tersedia',
+      DIPESAN: 'Dipesan',
+      TERISI: 'Terisi',
+      NONAKTIF: 'Dalam Perawatan',
+    };
+    return map[value] || value;
+  }
+
   if (key === 'status' && typeof value === 'string') {
-    if (value.toLowerCase() === 'settlement') return 'Lunas (Settlement)';
+    if (value.toLowerCase() === 'settlement') return 'Terverifikasi / Lunas';
+    if (value.toLowerCase() === 'pending') return 'Menunggu Pembayaran';
+    if (value.toLowerCase() === 'expire' || value.toLowerCase() === 'expired') return 'Kedaluwarsa';
     return value;
   }
 
   if (key === 'roomCode' && typeof value === 'string') {
-    return `Kamar ${value}`;
+    return `Kamar No. ${value}`;
+  }
+
+  if (Array.isArray(value)) {
+    return value.join(', ') || '-';
   }
 
   if (typeof value === 'boolean') {
@@ -152,7 +232,8 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
     const matchesAction =
       actionFilter === 'ALL' ||
       log.action === actionFilter ||
-      (actionFilter === 'CHECKIN_PROCESSED' && log.action === 'CHECKIN_COMPLETED');
+      (actionFilter === 'CHECKIN_PROCESSED' && log.action === 'CHECKIN_COMPLETED') ||
+      (actionFilter === 'RESERVATION_APPROVED' && log.action === 'APPROVE_RESERVATION');
     const q = search.toLowerCase().trim();
     const actionLabel = getActionInfo(log.action).label.toLowerCase();
     const entityLabel = getEntityLabel(log.entity).toLowerCase();
@@ -175,22 +256,15 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'KEUANGAN':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'PENGHUNI':
+        return 'bg-sky-50 text-sky-700 border-sky-200';
       default:
         return 'bg-zinc-50 text-zinc-700 border-zinc-200';
     }
   };
 
   const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'Administrator';
-      case 'PENGELOLA':
-        return 'Pengelola Kos';
-      case 'KEUANGAN':
-        return 'Staf Keuangan';
-      default:
-        return role;
-    }
+    return ROLE_DISPLAY_LABELS[role] || role;
   };
 
   return (

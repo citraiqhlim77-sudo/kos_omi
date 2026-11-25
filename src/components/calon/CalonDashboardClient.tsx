@@ -435,7 +435,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-amber-900 leading-relaxed">
-                      Konfirmasi pembayaran Anda sebesar <strong>{formatRupiah(current.totalInitialPayment)}</strong> telah masuk ke antrean Pengelola Kos Omi. Tagihan Anda akan berubah menjadi <strong>LUNAS</strong> segera setelah <strong>Pengelola memeriksa dana masuk di rekening/DANA (082246424353) dan menekan tombol Validasi Pembayaran</strong> di Portal Pengelola (<code>/pengelola/reservasi</code>).
+                      Konfirmasi pembayaran Anda sebesar <strong>{formatRupiah(current.totalInitialPayment)}</strong> telah masuk ke antrean Pengelola Kos Omi. Tagihan Anda akan berubah menjadi <strong>LUNAS</strong> segera setelah <strong>Pengelola memeriksa dana masuk di rekening/DANA (082246424353) dan memvalidasi pembayaran Anda</strong>.
                     </p>
                   </div>
                 )}
@@ -764,9 +764,9 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
               <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
                 <p className="font-bold">Dampak Pembatalan:</p>
                 <ul className="list-disc pl-4 space-y-0.5">
-                  <li>Status reservasi diubah menjadi <strong>DIBATALKAN (CANCELLED)</strong>.</li>
+                  <li>Status reservasi diubah menjadi <strong>Dibatalkan</strong>.</li>
                   <li>Tagihan/invoice yang belum dibayar otomatis dibatalkan.</li>
-                  <li>Status Kamar No. {current.roomCode} dikembalikan menjadi <strong>TERSEDIA</strong> agar Anda dapat memilih kamar lain.</li>
+                  <li>Status Kamar No. {current.roomCode} dikembalikan menjadi <strong>Tersedia</strong> agar Anda dapat memilih kamar lain.</li>
                 </ul>
               </div>
 

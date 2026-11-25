@@ -65,9 +65,9 @@ export default async function PembayaranSelesaiPage({
         <div className="w-16 h-16 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center mx-auto border border-zinc-200">
           <AlertCircle size={32} />
         </div>
-        <h1 className="text-2xl font-extrabold text-zinc-900">Parameter Order Tidak Ditemukan</h1>
+        <h1 className="text-2xl font-extrabold text-zinc-900">Nomor Pesanan Tidak Ditemukan</h1>
         <p className="text-sm text-zinc-600 max-w-md mx-auto">
-          Halaman ini membutuhkan parameter <code>order_id</code> yang valid. Akses halaman ini melalui alur pembayaran resmi Kos Omi.
+          Halaman ini membutuhkan nomor tagihan yang valid. Silakan akses halaman ini melalui portal calon penghuni Kos Omi.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <NextLink
@@ -83,31 +83,6 @@ export default async function PembayaranSelesaiPage({
           >
             Katalog 67 Kamar
           </NextLink>
-        </div>
-
-        {/* Sandbox Quick Testing Bar */}
-        <div className="p-4 rounded-xl bg-zinc-100 border border-zinc-200 text-xs text-left space-y-2 mt-6">
-          <span className="font-bold text-zinc-700 block">Uji Simulasi Status Pembayaran (Task 1.7 PRD):</span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <NextLink
-              href="/pembayaran/selesai?order_id=INV-202506-00012"
-              className="p-2.5 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-50 text-center"
-            >
-              ✓ Uji Status Lunas (SETTLEMENT)
-            </NextLink>
-            <NextLink
-              href="/pembayaran/selesai?order_id=INV-202506-00045"
-              className="p-2.5 rounded-lg bg-white border border-amber-200 text-amber-800 font-semibold hover:bg-amber-50 text-center"
-            >
-              ⏳ Uji Status Menunggu (UNPAID)
-            </NextLink>
-            <NextLink
-              href="/pembayaran/selesai?order_id=INV-202506-00014"
-              className="p-2.5 rounded-lg bg-white border border-rose-200 text-rose-800 font-semibold hover:bg-rose-50 text-center"
-            >
-              ✕ Uji Status Kedaluwarsa (EXPIRED)
-            </NextLink>
-          </div>
         </div>
       </div>
     );
@@ -156,14 +131,14 @@ export default async function PembayaranSelesaiPage({
                 Pembayaran Lunas Terverifikasi!
               </h1>
               <p className="text-sm text-zinc-600 max-w-lg mx-auto">
-                Status <strong>SETTLEMENT</strong> dikonfirmasi langsung oleh server database Kos Omi — bukan dari parameter URL. Kamar Anda telah resmi terkunci dan siap untuk check-in.
+                Status <strong>Terverifikasi / Lunas</strong> telah dikonfirmasi oleh sistem Kos Omi. Kamar Anda telah resmi terkunci dan siap untuk check-in.
               </p>
             </div>
 
             {/* Server Verification Badge */}
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-4 py-2 rounded-lg">
               <ShieldCheck size={16} />
-              <span>Diverifikasi Langsung dari Server Database Kos Omi — Bukan dari URL Parameter</span>
+              <span>Bukti Kuitansi Resmi Terverifikasi Sistem Kos Omi</span>
             </div>
           </div>
 
@@ -332,13 +307,13 @@ export default async function PembayaranSelesaiPage({
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <a
-                href={`https://wa.me/6281374329562?text=Halo%20Pengelola%20Kos%20Omi,%20saya%20${encodeURIComponent(reservation.userName)}%20telah%20menyelesaikan%20pembayaran%20Invoice%20${payment.invoiceCode}%20untuk%20Kamar%20${reservation.roomCode}.%20Mohon%20konfirmasi%20jadwal%20serah%20terima%20kunci.`}
+                href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(reservation.userName)}%20telah%20menyelesaikan%20pembayaran%20Invoice%20${payment.invoiceCode}%20untuk%20Kamar%20${reservation.roomCode}.%20Mohon%20konfirmasi%20jadwal%20serah%20terima%20kunci.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-3 rounded-lg transition-colors"
               >
                 <Phone size={14} />
-                Konfirmasi Check-in via WhatsApp
+                Konfirmasi Check-in via WhatsApp (0822-8714-6763)
               </a>
               <NextLink
                 href="/calon"

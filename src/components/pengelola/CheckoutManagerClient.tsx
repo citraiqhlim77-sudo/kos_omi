@@ -267,17 +267,17 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
               <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
                 <div className="flex items-center gap-1.5 font-bold text-amber-800">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Sistem mendeteksi tagihan tertunggak pada penghuni ini</span>
+                  <span>Sistem mendeteksi tagihan belum lunas pada penghuni ini</span>
                 </div>
                 <p className="leading-relaxed">
-                  Sesuai aturan PRD Bab 3.F, proses check-out kamar normal mensyaratkan seluruh kewajiban sewa bulan berjalan telah lunas, kecuali disetujui secara khusus oleh Pengelola/Admin dengan kompensasi pemotongan deposit.
+                  Proses check-out kamar normal mensyaratkan seluruh kewajiban sewa semester berjalan telah lunas, kecuali disetujui secara khusus oleh Pengelola Kos Omi.
                 </p>
               </div>
 
               {/* Rincian Invoice Tertunggak */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-zinc-700 block">
-                  Rincian Invoice Tertunggak:
+                  Rincian Tagihan Belum Lunas:
                 </span>
                 <div className="space-y-2">
                   {selectedTenant.unpaidInvoices.map((inv) => (
@@ -297,31 +297,13 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-zinc-500 block">Tertunggak</span>
+                        <span className="text-xs text-zinc-500 block">Belum Lunas</span>
                         <span className="font-heading font-extrabold text-rose-700 text-sm tabular-nums">
                           {formatRupiah(inv.amount)}
                         </span>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Perhitungan Kompensasi Deposit */}
-              <div className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50 text-xs space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-zinc-600">Total Uang Jaminan (Deposit Awal):</span>
-                  <span className="font-bold text-zinc-900">{formatRupiah(selectedTenant.depositAmount)}</span>
-                </div>
-                <div className="flex justify-between text-rose-600 font-semibold">
-                  <span>Potongan Tagihan Sewa Tertunggak:</span>
-                  <span>- {formatRupiah(selectedTenant.totalUnpaidAmount)}</span>
-                </div>
-                <div className="flex justify-between border-t border-zinc-200 pt-1.5 font-bold text-emerald-800">
-                  <span>Sisa Pengembalian Deposit ke Penghuni:</span>
-                  <span className="tabular-nums">
-                    {formatRupiah(selectedTenant.depositAmount - selectedTenant.totalUnpaidAmount)}
-                  </span>
                 </div>
               </div>
 
@@ -343,7 +325,7 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
                     disabled={isProcessing}
                     className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer"
                   >
-                    {isProcessing ? 'Memproses...' : 'Setujui Check-out (Potong Deposit)'}
+                    {isProcessing ? 'Memproses...' : 'Setujui Check-out Khusus'}
                   </button>
                 </div>
               </div>
