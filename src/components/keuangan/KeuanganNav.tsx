@@ -7,9 +7,7 @@ import {
   LayoutDashboard,
   FileSpreadsheet,
   Receipt,
-  Users,
   Building2,
-  Settings,
   Lock,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
@@ -56,11 +54,10 @@ export const KeuanganNav: React.FC = () => {
                   <NextLink
                     key={link.href}
                     href={link.href}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
-                      active
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${active
                         ? 'bg-[hsl(186,72%,24%)] text-white'
                         : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{link.label}</span>
