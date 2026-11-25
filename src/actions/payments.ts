@@ -13,6 +13,8 @@ import { PaymentInvoice, Reservation } from '@/types/reservation';
 import { Room } from '@/types/room';
 import { revalidatePath } from 'next/cache';
 import { paymentGateway } from '@/lib/payment/gateway';
+import { createAuditLog } from '@/lib/audit';
+import { getCurrentUser } from '@/lib/auth-server';
 
 export interface PaymentVerificationResult {
   isVerified: boolean;
@@ -147,19 +149,40 @@ export async function settlePaymentAction(
     const result = await dbSettlePayment(invoiceCode, paymentMethod);
 
     if (result.success) {
+      const currentUser = await getCurrentUser();
+      await createAuditLog({
+        userId: currentUser?.id || 'usr-pengelola-1',
+        actorName: currentUser?.name || 'Pengelola Kos Omi',
+        actorRole: (currentUser?.role as any) || 'PENGELOLA',
+        action: 'SETTLE_PAYMENT',
+        category: 'payments',
+        entityId: invoiceCode,
+        description: `Memvalidasi pembayaran lunas untuk Invoice ${invoiceCode} via ${paymentMethod}`,
+        meta: {
+          invoiceCode,
+          roomCode: result.payment?.roomCode,
+          amount: result.payment?.amount,
+          status: 'Terverifikasi / Lunas',
+        },
+      });
+
       revalidatePath('/');
       revalidatePath('/kamar');
       revalidatePath('/calon');
       revalidatePath('/pembayaran/selesai');
       revalidatePath('/penghuni');
       revalidatePath('/penghuni/tagihan');
+      revalidatePath('/pengelola/dashboard');
+      revalidatePath('/pengelola/reservasi');
       revalidatePath('/pengelola/kamar');
       revalidatePath('/pengelola/checkin');
       revalidatePath('/keuangan');
       revalidatePath('/keuangan/dashboard');
       revalidatePath('/keuangan/transaksi');
       revalidatePath('/keuangan/laporan');
-      revalidatePath('/keuangan/rekonsiliasi');
+      revalidatePath('/admin/dashboard');
+      revalidatePath('/admin/log-aktivitas');
+      revalidatePath('/admin/notifikasi');
     }
 
     return {
@@ -186,12 +209,31 @@ export async function submitPaymentConfirmationAction(
   try {
     const result = await dbSubmitPaymentConfirmation(invoiceCode, paymentMethod);
     if (result.success) {
+      const currentUser = await getCurrentUser();
+      await createAuditLog({
+        userId: currentUser?.id || result.reservation?.userId || 'calon-penghuni',
+        actorName: result.reservation?.userName || currentUser?.name || 'Calon Penghuni',
+        actorRole: 'CALON_PENGHUNI',
+        action: 'SUBMIT_PAYMENT_CONFIRMATION',
+        category: 'payments',
+        entityId: invoiceCode,
+        description: `Mengirim konfirmasi pembayaran Invoice ${invoiceCode} via ${paymentMethod.toUpperCase()}`,
+        meta: {
+          invoiceCode,
+          roomCode: result.reservation?.roomCode || result.payment?.roomCode,
+          amount: result.payment?.amount,
+          status: 'Menunggu Validasi Pengelola',
+        },
+      });
+
       revalidatePath('/calon');
       revalidatePath('/calon/dashboard');
       revalidatePath(`/calon/pembayaran/${invoiceCode}`);
       revalidatePath('/pembayaran/selesai');
       revalidatePath('/pengelola/dashboard');
       revalidatePath('/pengelola/reservasi');
+      revalidatePath('/admin/log-aktivitas');
+      revalidatePath('/admin/notifikasi');
       if (result.reservation) {
         revalidatePath(`/pengelola/reservasi/${result.reservation.code}`);
       }

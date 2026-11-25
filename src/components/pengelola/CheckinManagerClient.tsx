@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { CheckinCandidate } from '@/types/tenancy';
 import { processCheckinAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
@@ -31,6 +32,7 @@ interface CheckinManagerClientProps {
 export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
   initialCandidates,
 }) => {
+  const router = useRouter();
   const [candidates, setCandidates] = useState<CheckinCandidate[]>(initialCandidates);
   const [selectedCandidate, setSelectedCandidate] = useState<CheckinCandidate | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -52,14 +54,16 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
     const res = await processCheckinAction(selectedCandidate.id);
 
     if (res.success) {
+      // Hilangkan kandidat dari antrean /pengelola/checkin segera setelah Check-in berhasil
       setCandidates((prev) =>
-        prev.map((c) => (c.id === selectedCandidate.id ? { ...c, status: 'CHECKIN' } : c))
+        prev.filter((c) => c.id !== selectedCandidate.id && c.reservationCode !== selectedCandidate.reservationCode)
       );
       setIsConfirmModalOpen(false);
       setFeedback({
         type: 'success',
         message: res.message || `Check-in berhasil diproses untuk ${selectedCandidate.userName}!`,
       });
+      router.refresh();
     } else {
       setFeedback({
         type: 'error',
@@ -70,7 +74,8 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
     setIsProcessing(false);
   };
 
-  const pendingCheckinCount = candidates.filter((c) => c.status === 'LUNAS').length;
+  const activeQueue = candidates.filter((c) => c.status === 'LUNAS');
+  const pendingCheckinCount = activeQueue.length;
 
   return (
     <div className="space-y-6">
@@ -129,7 +134,35 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
 
       {/* Candidate List */}
       <div className="space-y-4">
-        {candidates.map((cand) => {
+        {activeQueue.length === 0 ? (
+          <div className="bg-white p-12 rounded-2xl border border-zinc-200 text-center space-y-3">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+            <div className="space-y-1">
+              <p className="text-sm font-heading font-extrabold text-zinc-900">
+                Tidak Ada Antrean Calon Penghuni yang Menunggu Check-in
+              </p>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                Calon penghuni akan muncul di halaman ini setelah reservasi disetujui dan pembayarannya divalidasi lunas di menu Verifikasi Reservasi.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+              <NextLink
+                href="/pengelola/reservasi"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors"
+              >
+                <span>Buka Verifikasi Reservasi</span>
+              </NextLink>
+              <NextLink
+                href="/pengelola/penghuni"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors"
+              >
+                <span>Lihat Daftar Penghuni Aktif</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </NextLink>
+            </div>
+          </div>
+        ) : (
+          activeQueue.map((cand) => {
           const isReady = cand.status === 'LUNAS';
           return (
             <div
@@ -235,7 +268,8 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* CONFIRM CHECK-IN MODAL */}

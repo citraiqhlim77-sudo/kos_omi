@@ -47,7 +47,9 @@ export default async function PengelolaDashboardPage() {
   const waitingPaymentValidationCount = reservations.filter(
     (r) => r.status === 'APPROVED' && r.payment?.status === 'PENDING'
   ).length;
-  const readyCheckinCount = checkinRes.candidates.length;
+  const readyCheckinCount = checkinRes.candidates.filter(
+    (c) => c.status === 'LUNAS'
+  ).length;
 
   const occupancyRate = Math.round((stats.occupied / stats.total) * 100);
   const occupancyAnalytics = getOccupancyAnalytics();

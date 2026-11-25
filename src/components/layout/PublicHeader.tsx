@@ -63,7 +63,7 @@ export const PublicHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[hsl(240,6%,90%)] transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between py-2.5 lg:py-0 lg:h-20 gap-2 sm:gap-3">
+        <div className="flex items-center justify-between py-2.5 md:h-20 gap-2 sm:gap-3">
           {/* Logo Brand */}
           <NextLink href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 shrink-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[hsl(186,72%,24%)] flex items-center justify-center text-white font-bold text-xl transition-transform group-hover:scale-105 overflow-hidden p-0 shrink-0">
@@ -81,10 +81,10 @@ export const PublicHeader: React.FC = () => {
             </div>
           </NextLink>
 
-          {/* Navigation Links (Peletakan sama di Laptop & HP, responsif menyesuaikan layar tanpa terpotong) */}
+          {/* Desktop Navigation Links (Disembunyikan di HP < md karena sudah ada di menu hamburger ☰) */}
           <nav
             aria-label="Navigasi Utama"
-            className="order-3 lg:order-2 w-full lg:w-auto flex items-center gap-1 overflow-x-auto whitespace-nowrap pt-2 pb-1 lg:py-0 pr-4 lg:pr-0 border-t lg:border-t-0 border-zinc-100 scrollbar-none"
+            className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-none"
           >
             {navLinks.map((link) => {
               const active = isActive(link.href);
@@ -93,11 +93,10 @@ export const PublicHeader: React.FC = () => {
                 <NextLink
                   key={link.href}
                   href={link.href}
-                  className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                    active
+                  className={`px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${active
                       ? 'text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] font-semibold'
                       : 'text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] hover:bg-[hsl(210,20%,98%)]'
-                  }`}
+                    }`}
                 >
                   <Icon size={15} className={active ? 'text-[hsl(186,72%,24%)]' : 'text-zinc-400'} />
                   {link.label}
@@ -106,54 +105,57 @@ export const PublicHeader: React.FC = () => {
             })}
           </nav>
 
-          {/* Auth CTA Buttons & Mobile Drawer Toggle */}
-          <div className="order-2 lg:order-3 flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {sessionUser || isOnCalonPortal ? (
-              <>
-                <NextLink
-                  href={dashboardHref}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] hover:bg-[hsl(180,33%,90%)] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg transition-colors whitespace-nowrap"
-                >
-                  <LayoutDashboard size={15} />
-                  <span>{sessionUser ? sessionUser.name.split(' ')[0] : 'Dasbor Saya'}</span>
-                </NextLink>
-                <LogoutButton
-                  variant="header"
-                  label="Keluar"
-                  onAfterLogout={() => setSessionUser(null)}
-                />
-              </>
-            ) : (
-              <>
-                <NextLink
-                  href="/login"
-                  className="text-xs sm:text-sm font-medium text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-zinc-200 lg:border-transparent transition-colors whitespace-nowrap"
-                >
-                  Masuk
-                </NextLink>
-                <NextLink
-                  href="/daftar"
-                  className="inline-flex items-center gap-1.5 sm:gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-lg transition-all active:scale-[0.99] whitespace-nowrap"
-                >
-                  <span>Daftar Akun</span>
-                  <ArrowRight size={15} />
-                </NextLink>
-              </>
-            )}
+          {/* Desktop Auth CTA Buttons (Disembunyikan di HP < md agar header rapi) & Mobile Hamburger Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="hidden md:inline-flex items-center gap-2">
+              {sessionUser || isOnCalonPortal ? (
+                <>
+                  <NextLink
+                    href={dashboardHref}
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] hover:bg-[hsl(180,33%,90%)] px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <LayoutDashboard size={15} />
+                    <span>{sessionUser ? sessionUser.name.split(' ')[0] : 'Dasbor Saya'}</span>
+                  </NextLink>
+                  <LogoutButton
+                    variant="header"
+                    label="Keluar"
+                    onAfterLogout={() => setSessionUser(null)}
+                  />
+                </>
+              ) : (
+                <>
+                  <NextLink
+                    href="/login"
+                    className="text-xs sm:text-sm font-medium text-[hsl(240,6%,10%)] hover:text-[hsl(186,72%,24%)] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    Masuk
+                  </NextLink>
+                  <NextLink
+                    href="/daftar"
+                    className="inline-flex items-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition-all active:scale-[0.99] whitespace-nowrap"
+                  >
+                    <span>Daftar Akun</span>
+                    <ArrowRight size={15} />
+                  </NextLink>
+                </>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               aria-label="Toggle Menu Navigasi"
-              className="lg:hidden p-2 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+              className="md:hidden p-2 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
             >
-              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+              {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Drawer */}
+        {/* Mobile Hamburger Drawer (☰) */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden py-2.5 border-t border-zinc-200 space-y-1">
+          <div className="md:hidden py-3 border-t border-zinc-200 space-y-1">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               const Icon = link.icon;
@@ -162,17 +164,57 @@ export const PublicHeader: React.FC = () => {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-2.5 ${
-                    active
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-2.5 ${active
                       ? 'bg-[hsl(186,72%,24%)] text-white'
                       : 'text-zinc-700 hover:bg-zinc-100'
-                  }`}
+                    }`}
                 >
                   <Icon size={16} className="shrink-0" />
                   <span>{link.label}</span>
                 </NextLink>
               );
             })}
+
+            <div className="pt-2.5 mt-1.5 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-2">
+              {sessionUser || isOnCalonPortal ? (
+                <>
+                  <NextLink
+                    href={dashboardHref}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[hsl(186,72%,24%)] bg-[hsl(180,33%,95%)] px-3.5 py-2 rounded-lg"
+                  >
+                    <LayoutDashboard size={15} />
+                    <span>{sessionUser ? sessionUser.name.split(' ')[0] : 'Dasbor Saya'}</span>
+                  </NextLink>
+                  <LogoutButton
+                    variant="header"
+                    label="Keluar"
+                    onAfterLogout={() => {
+                      setSessionUser(null);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  />
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <NextLink
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-center text-xs font-bold text-zinc-800 py-2.5 rounded-xl border border-zinc-200 hover:bg-zinc-50"
+                  >
+                    Masuk
+                  </NextLink>
+                  <NextLink
+                    href="/daftar"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="inline-flex items-center justify-center gap-1.5 bg-[hsl(186,72%,24%)] text-white text-xs font-bold py-2.5 rounded-xl"
+                  >
+                    <span>Daftar Akun</span>
+                    <ArrowRight size={14} />
+                  </NextLink>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

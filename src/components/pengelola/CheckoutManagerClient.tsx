@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TenancyRecord } from '@/types/tenancy';
 import { processCheckoutAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
@@ -28,7 +29,10 @@ interface CheckoutManagerClientProps {
 export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
   initialTenants,
 }) => {
-  const [tenants, setTenants] = useState<TenancyRecord[]>(initialTenants);
+  const router = useRouter();
+  const [tenants, setTenants] = useState<TenancyRecord[]>(
+    initialTenants.filter((t) => t.status === 'AKTIF')
+  );
   const [selectedTenant, setSelectedTenant] = useState<TenancyRecord | null>(null);
 
   // Modal States
@@ -55,15 +59,15 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
     const res = await processCheckoutAction(selectedTenant.id, forceApproved);
 
     if (res.success) {
-      setTenants((prev) =>
-        prev.map((t) => (t.id === selectedTenant.id ? { ...t, status: 'SELESAI' } : t))
-      );
+      // Hilangkan permanen dari daftar penghuni aktif segera setelah Check-out selesai
+      setTenants((prev) => prev.filter((t) => t.id !== selectedTenant.id));
       setIsWarningModalOpen(false);
       setIsNormalModalOpen(false);
       setFeedback({
         type: 'success',
         message: res.message || `Check-out berhasil diproses untuk ${selectedTenant.userName}!`,
       });
+      router.refresh();
     } else {
       setFeedback({
         type: 'error',
@@ -133,7 +137,18 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
 
       {/* Tenant List for Checkout */}
       <div className="space-y-4">
-        {tenants.map((tenant) => {
+        {activeTenants.length === 0 ? (
+          <div className="bg-white p-12 rounded-2xl border border-zinc-200 text-center space-y-2">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+            <p className="text-sm font-heading font-extrabold text-zinc-900">
+              Tidak Ada Penghuni Aktif Saat Ini
+            </p>
+            <p className="text-xs text-zinc-500">
+              Seluruh kamar sedang tersedia atau belum ada penghuni aktif yang perlu diproses check-out.
+            </p>
+          </div>
+        ) : (
+        activeTenants.map((tenant) => {
           const isActive = tenant.status === 'AKTIF';
           const hasUnpaid = tenant.unpaidBillsCount > 0;
 
@@ -232,7 +247,8 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* DIALOG PERINGATAN TAGIHAN BELUM LUNAS (REQUIRED IN PRD) */}

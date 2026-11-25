@@ -111,7 +111,13 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
 
   const filtered = useMemo(() => {
     return reservations.filter((item) => {
-      if (statusFilter !== 'ALL' && item.status !== statusFilter) return false;
+      if (statusFilter !== 'ALL') {
+        if (statusFilter === 'PAID') {
+          if (item.status !== 'PAID' && item.status !== 'CHECKED_IN') return false;
+        } else if (item.status !== statusFilter) {
+          return false;
+        }
+      }
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase().trim();
         const matchCode = item.code.toLowerCase().includes(q);
@@ -133,7 +139,7 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
       waitingPaymentValidation: reservations.filter(
         (r) => r.status === 'APPROVED' && r.payment?.status === 'PENDING'
       ).length,
-      paid: reservations.filter((r) => r.status === 'PAID').length,
+      paid: reservations.filter((r) => r.status === 'PAID' || r.status === 'CHECKED_IN').length,
       rejected: reservations.filter((r) => r.status === 'REJECTED').length,
     };
   }, [reservations]);
@@ -166,7 +172,21 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Lunas Terverifikasi
+            Lunas · Siap Check-In
+          </span>
+        );
+      case 'CHECKED_IN':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            Sudah Check-In (Aktif)
+          </span>
+        );
+      case 'CHECKED_OUT':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+            Selesai Sewa (Check-Out)
           </span>
         );
       case 'REJECTED':

@@ -76,6 +76,16 @@ export const ReservationStatusBadge: React.FC<{ status: ReservationStatus; size?
       icon: CheckCircle2,
       style: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     },
+    CHECKED_IN: {
+      label: 'Sudah Check-in (Penghuni Aktif)',
+      icon: UserCheck,
+      style: 'bg-blue-50 text-blue-800 border-blue-200',
+    },
+    CHECKED_OUT: {
+      label: 'Selesai Sewa (Check-out)',
+      icon: CheckCircle2,
+      style: 'bg-zinc-100 text-zinc-700 border-zinc-300',
+    },
     REJECTED: {
       label: 'Reservasi Ditolak',
       icon: XCircle,

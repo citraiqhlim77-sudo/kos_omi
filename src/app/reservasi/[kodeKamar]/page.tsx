@@ -122,7 +122,7 @@ export default async function ReservasiKamarPage({ params }: ReservationPageProp
   }
 
   return (
-    <div className="bg-zinc-50 min-h-screen py-8 md:py-14">
+    <div className="bg-zinc-50 min-h-screen pt-8 pb-28 md:py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* BREADCRUMB */}
         <nav className="flex items-center gap-2 text-xs text-zinc-500 font-medium">

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AdminUserRecord } from '@/types/admin';
 import {
   createStaffUserAction,
@@ -29,7 +30,12 @@ interface AdminPenggunaClientProps {
 export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
   initialUsers,
 }) => {
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUserRecord[]>(initialUsers);
+
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -136,6 +142,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
         prev.map((u) => (u.id === userId ? { ...u, isActive: res.user!.isActive } : u))
       );
       setFeedback({ type: 'success', message: res.message });
+      router.refresh();
     } else {
       setFeedback({ type: 'error', message: res.message });
     }
@@ -146,14 +153,15 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
     if (!userToDelete) return;
     setIsDeleting(true);
     const res = await deleteUserAction(userToDelete.id);
+    setIsDeleting(false);
     if (res.success) {
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
-      setFeedback({ type: 'success', message: res.message });
       setUserToDelete(null);
+      setFeedback({ type: 'success', message: res.message });
+      router.refresh();
     } else {
       setFeedback({ type: 'error', message: res.message });
     }
-    setIsDeleting(false);
     setTimeout(() => setFeedback(null), 5000);
   };
 

@@ -456,7 +456,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   </div>
                 )}
 
-                {/* SATU TOMBOL AKSI UTAMA DINAMIS SESUAI METODE YANG DIPILIH */}
+                {/* SATU TOMBOL AKSI UTAMA BERSIH (TANPA TOMBOL DOBEL) SESUAI METODE YANG DIPILIH */}
                 <div className="flex flex-col gap-2.5">
                   {selectedMethod === 'dana' ? (
                     <button
@@ -471,38 +471,25 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                           ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
                           : current.payment.status === 'PENDING'
                           ? 'Sudah Dikirim ke Pengelola — Kirim Ulang Konfirmasi (DANA)'
-                          : 'Saya Sudah Transfer via DANA — Kirim ke Pengelola untuk Divalidasi'}
+                          : 'Saya Sudah Transfer via DANA — Kirim Konfirmasi Pembayaran'}
                       </span>
                     </button>
                   ) : (
-                    <div className="flex flex-col sm:flex-row items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedInvoice(current.payment!);
-                          setIsPaymentModalOpen(true);
-                        }}
-                        className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
-                      >
-                        <CreditCard size={18} />
-                        <span>Bayar Sekarang via Midtrans Snap</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isPayingDirect}
-                        onClick={() => handleDirectPay(current.payment!.invoiceCode)}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-700 font-bold text-xs px-4 py-3.5 rounded-xl transition-all cursor-pointer shrink-0"
-                      >
-                        <CheckCircle2 size={15} className="text-emerald-600" />
-                        <span>
-                          {isPayingDirect
-                            ? 'Mengirim...'
-                            : `Konfirmasi Sudah Transfer (${
-                                KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'Midtrans'
-                              })`}
-                        </span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedInvoice(current.payment!);
+                        setIsPaymentModalOpen(true);
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                    >
+                      <CreditCard size={18} />
+                      <span>
+                        Bayar Sekarang via Midtrans ({
+                          KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'QRIS / VA'
+                        })
+                      </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -522,7 +509,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
               </div>
             )}
 
-            {current.status === 'PAID' && current.payment && (
+            {(current.status === 'PAID' || current.status === 'CHECKED_IN') && current.payment && (
               <div className="p-5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
@@ -695,7 +682,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
 
                 {/* Tombol Tindakan Cepat */}
                 <div className="space-y-2 pt-2">
-                  {current.status === 'PAID' && current.payment && (
+                  {(current.status === 'PAID' || current.status === 'CHECKED_IN') && current.payment && (
                     <NextLink
                       href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
                       className="w-full inline-flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs py-2.5 px-4 rounded-lg transition-colors text-center"

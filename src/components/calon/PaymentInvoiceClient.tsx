@@ -384,29 +384,31 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
               </div>
             </div>
 
-            {/* Conditional Button based on Status */}
+            {/* Conditional Button based on Status (1 Tombol Aksi Bersih Tanpa Dobel) */}
             {isUnpaid && (
               <div className="space-y-3">
-                <button
-                  type="button"
-                  disabled={isPayingDirect}
-                  onClick={handleDirectPay}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>
-                    {isPayingDirect ? 'Memproses...' : 'Konfirmasi Lunas Sekarang'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs text-[hsl(186,72%,24%)] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all cursor-pointer"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Buka Pop-up Pembayaran</span>
-                </button>
+                {selectedMethod === 'dana' ? (
+                  <button
+                    type="button"
+                    disabled={isPayingDirect}
+                    onClick={handleDirectPay}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>
+                      {isPayingDirect ? 'Mengirim...' : 'Konfirmasi Transfer DANA'}
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Bayar via Midtrans Snap</span>
+                  </button>
+                )}
 
                 {/* Badge Pembayaran Aman */}
                 <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center gap-2.5 text-xs text-blue-900">

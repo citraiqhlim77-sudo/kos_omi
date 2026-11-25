@@ -13,7 +13,7 @@ export default async function PenghuniProfilPage() {
   const profile = await fetchTenantProfileAction();
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 pb-16">
+    <div className="min-h-screen bg-zinc-50/50 pb-28 md:pb-16">
       <PenghuniNav />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">

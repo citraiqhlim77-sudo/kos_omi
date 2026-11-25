@@ -24,11 +24,14 @@ export interface AdminSettings {
   kosAddress: string;
   adminPhone: string;
   dueDay: number; // default 5
-  depositPercentage: number; // default 100
+  depositPercentage: number; // default 0
   bookingWindowHours: number; // default 24
   timezone: string;
   lateFeeEnabled: boolean;
   lateFeeDailyAmount: number;
+  semesterPrice?: number; // default 5000000
+  depositPolicy?: string; // default "Tanpa Biaya Jaminan (Rp 0)"
+  latePolicy?: string; // default "Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)"
 }
 
 export interface AuditLogRecord {

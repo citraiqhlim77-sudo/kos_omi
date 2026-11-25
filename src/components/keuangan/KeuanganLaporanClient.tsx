@@ -9,6 +9,8 @@ import {
 import {
   fetchDailyReportAction,
   fetchMonthlyReportAction,
+  reconcileGatewayTransactionsAction,
+  recordReportExportAuditAction,
 } from '@/actions/finance';
 import { formatRupiah } from '@/data/rooms';
 import { OperationalDecisionAnalyticsPanel } from '@/components/keuangan/OperationalDecisionAnalyticsPanel';
@@ -178,6 +180,7 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    recordReportExportAuditAction('EXCEL', isHarian ? selectedMonth : selectedYear).catch(() => {});
   };
 
   // Ekspor CSV resmi (100% identik dengan baris tabel yang tampil di layar)
@@ -237,15 +240,24 @@ export const KeuanganLaporanClient: React.FC<KeuanganLaporanClientProps> = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    recordReportExportAuditAction('CSV', isHarian ? selectedMonth : selectedYear).catch(() => {});
   };
 
-  const handleReconcile = () => {
+  const handleReconcile = async () => {
     setIsReconciling(true);
-    setTimeout(() => {
-      setIsReconciling(false);
+    try {
+      await reconcileGatewayTransactionsAction();
+      const [updatedDaily, updatedMonthly] = await Promise.all([
+        fetchDailyReportAction(selectedMonth),
+        fetchMonthlyReportAction(parseInt(selectedYear, 10)),
+      ]);
+      setDailyRows(updatedDaily);
+      setMonthlyRows(updatedMonthly);
       setReconcileSuccess(true);
       setTimeout(() => setReconcileSuccess(false), 5000);
-    }, 800);
+    } finally {
+      setIsReconciling(false);
+    }
   };
 
   return (

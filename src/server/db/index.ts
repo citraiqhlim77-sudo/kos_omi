@@ -2,6 +2,7 @@ import type { Room, RoomFilterOptions, RoomStatus } from '@/types/room';
 import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } from '../../types/reservation';
 import type { PaymentMethodType } from '@/types/finance';
 import { ALL_ROOMS } from '@/data/rooms';
+import { createAuditLog } from '@/lib/audit';
 
 function toPaymentMethodType(methodOrType?: string): PaymentMethodType {
   const lower = (methodOrType || 'qris').toLowerCase();
@@ -70,7 +71,7 @@ function initializeState(): DatabaseState {
   const nowIso = new Date().toISOString();
   const expiresIso = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
 
-  // 1 Studi Kasus Terpadu: Zahra Aulia Putri (Kamar No. 1)
+  // 1 Studi Kasus Terpadu: Zahra Aulia Putri (Kamar No. 1) — Mulai bersih dari tahap awal PENDING_REVIEW (Menunggu Verifikasi)
   const caseStudyReservation: Reservation = {
     id: 'rsv-studi-kasus-1',
     code: 'RSV-202611-1',
@@ -91,26 +92,11 @@ function initializeState(): DatabaseState {
     monthlyPrice: 5000000,
     depositAmount: 0,
     totalInitialPayment: 5000000,
-    status: 'APPROVED',
-    adminNotes: 'Berkas KTM & KRS Mahasiswi UIN Imam Bonjol telah diverifikasi lengkap. Silakan selesaikan pembayaran via QRIS atau Transfer Bank.',
+    status: 'PENDING_REVIEW',
+    adminNotes: 'Pengajuan reservasi Kamar No. 1 menunggu verifikasi berkas KTM/KRS oleh Pengelola Kos Omi.',
     expiresAt: expiresIso,
     createdAt: nowIso,
     updatedAt: nowIso,
-  };
-
-  const caseStudyInvoice: PaymentInvoice = {
-    id: 'inv-studi-kasus-1',
-    invoiceCode: 'INV-202611-1',
-    reservationId: 'rsv-studi-kasus-1',
-    reservationCode: 'RSV-202611-1',
-    roomCode: '1',
-    amount: 5000000,
-    status: 'UNPAID',
-    paymentMethod: 'QRIS',
-    snapToken: 'snap-token-inv-202611-1',
-    snapRedirectUrl: '/pembayaran/selesai?order_id=INV-202611-1',
-    expiresAt: expiresIso,
-    createdAt: nowIso,
   };
 
   return {
@@ -131,32 +117,17 @@ function initializeState(): DatabaseState {
       },
     ],
     reservations: [caseStudyReservation],
-    payments: [caseStudyInvoice],
-    auditLogs: [
-      {
-        id: 'aud-studi-kasus-1',
-        userId: 'usr-pengelola-1',
-        action: 'APPROVE_RESERVATION',
-        entityType: 'RESERVATION',
-        entityId: 'RSV-202611-1',
-        payloadAfter: {
-          roomCode: '1',
-          userName: 'Zahra Aulia Putri',
-          invoiceCode: 'INV-202611-1',
-          amount: 5000000,
-        },
-        createdAt: nowIso,
-      },
-    ],
+    payments: [],
+    auditLogs: [],
     isInitialized: true,
   };
 }
 
-// Dapatkan instance global
+// Dapatkan instance global (tanpa auto-reset berulang di runtime)
 function getDb(): DatabaseState {
-  if (!global.__kosOmiDbState || (global as any).__kosOmiDbVer !== 16) {
+  if (!global.__kosOmiDbState || (global as any).__kosOmiDbVer !== 25) {
     global.__kosOmiDbState = initializeState();
-    (global as any).__kosOmiDbVer = 16;
+    (global as any).__kosOmiDbVer = 25;
   }
   return global.__kosOmiDbState;
 }
@@ -450,6 +421,9 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
 
   db.reservations.unshift(newReservation);
 
+  // Kunci kamar menjadi DIPESAN segera setelah reservasi diajukan (Menunggu Verifikasi)
+  await dbUpdateRoomStatus(room.code, 'DIPESAN');
+
   // Sinkronkan pemohon reservasi ke daftar pengguna Admin Kos (__kosOmiAdminUsers)
   if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
     const existingAdminUser = (global as any).__kosOmiAdminUsers.find(
@@ -553,9 +527,8 @@ export async function dbApproveReservation(reservationCode: string, adminNotes?:
     };
     db.payments.unshift(newInvoice);
 
-    if (!(global as any).__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 8) {
+    if (!(global as any).__kosOmiNotifLogs) {
       (global as any).__kosOmiNotifLogs = [];
-      (global as any).__kosOmiNotifVer = 8;
     }
     (global as any).__kosOmiNotifLogs.unshift({
       id: `ntf-approve-${Date.now()}`,
@@ -831,19 +804,23 @@ export async function dbSettlePayment(
       });
     }
 
-    // Sinkronisasi ke antrean Check-in Pengelola & Promosi Otomatis ke Penghuni Aktif (PENGHUNI)
+    // Sinkronisasi ke antrean Check-in Pengelola (jangan membuat tenancy AKTIF sebelum Check-in resmi)
     if (!global.__kosOmiCheckinCandidates) {
       global.__kosOmiCheckinCandidates = [];
     }
     if (resObj) {
       const roomNum = parseInt(resObj.roomCode, 10) || 1;
       const floorNum = roomNum <= 33 ? 1 : 2;
-      const alreadyExists = global.__kosOmiCheckinCandidates.some(
-        (c) => c.reservationCode === resObj.code
+      const existingCandidate = global.__kosOmiCheckinCandidates.find(
+        (c) => c.reservationCode === resObj.code || c.id === resObj.id
       );
-      if (!alreadyExists) {
+      if (existingCandidate) {
+        existingCandidate.status = 'LUNAS';
+        existingCandidate.paidAt = payment.paidAt || new Date().toISOString();
+        existingCandidate.paymentMethod = method || 'QRIS';
+      } else {
         global.__kosOmiCheckinCandidates.unshift({
-          id: `cand-${Date.now()}`,
+          id: resObj.id || `cand-${Date.now()}`,
           reservationCode: resObj.code,
           userId: resObj.userId,
           userName: resObj.userName,
@@ -865,36 +842,15 @@ export async function dbSettlePayment(
           idCardUrl:
             resObj.ktpUrl ||
             'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
-          notes: resObj.adminNotes || 'Pembayaran lunas via Midtrans Snap',
+          notes: resObj.adminNotes || 'Pembayaran lunas terverifikasi',
           status: 'LUNAS',
         });
-      }
-
-      // Promosikan role akun Calon Penghuni menjadi PENGHUNI (Penghuni Aktif)
-      const normalizedEmail = resObj.userEmail.toLowerCase().trim();
-      if (global.__kosOmiAuthUsers && Array.isArray(global.__kosOmiAuthUsers)) {
-        const authUser = global.__kosOmiAuthUsers.find(
-          (u) => u.email.toLowerCase().trim() === normalizedEmail
-        );
-        if (authUser && authUser.role === 'CALON_PENGHUNI') {
-          authUser.role = 'PENGHUNI';
-        }
-      }
-      if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
-        const adminUser = (global as any).__kosOmiAdminUsers.find(
-          (u: any) => u.email?.toLowerCase().trim() === normalizedEmail
-        );
-        if (adminUser) {
-          adminUser.role = 'PENGHUNI';
-          adminUser.roomCode = resObj.roomCode;
-        }
       }
     }
 
     // Catat ke Monitoring Notifikasi Admin
-    if (!(global as any).__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 8) {
+    if (!(global as any).__kosOmiNotifLogs) {
       (global as any).__kosOmiNotifLogs = [];
-      (global as any).__kosOmiNotifVer = 8;
     }
     if (resObj) {
       const nowIso = payment.paidAt || new Date().toISOString();
@@ -1311,42 +1267,118 @@ export async function dbAddAuditLog(log: {
   };
   db.auditLogs.unshift(newLog);
 
-  // Sinkronkan juga ke global.__kosOmiAuditLogs untuk halaman /admin/log-aktivitas
-  if (!(global as any).__kosOmiAuditLogs || (global as any).__kosOmiAuditVer !== 8) {
-    (global as any).__kosOmiAuditLogs = [];
-    (global as any).__kosOmiAuditVer = 8;
-  }
-  const roleMap: Record<string, 'ADMIN' | 'PENGELOLA' | 'KEUANGAN' | 'PENGHUNI' | 'SYSTEM'> = {
+  const roleMap: Record<string, 'ADMIN' | 'PENGELOLA' | 'KEUANGAN' | 'PENGHUNI' | 'CALON_PENGHUNI'> = {
     'admin-01': 'ADMIN',
+    'usr-admin-01': 'ADMIN',
     'usr-admin-1': 'ADMIN',
     'pengelola-01': 'PENGELOLA',
+    'usr-pengelola-01': 'PENGELOLA',
     'usr-pengelola-1': 'PENGELOLA',
+    'usr-keuangan-01': 'KEUANGAN',
     'usr-keuangan-1': 'KEUANGAN',
   };
   const nameMap: Record<string, string> = {
-    'admin-01': 'Ibu Kos Omi (Admin)',
-    'usr-admin-1': 'Ibu Kos Omi (Admin)',
-    'pengelola-01': 'Nadia Putri (Pengelola)',
-    'usr-pengelola-1': 'Nadia Putri (Pengelola)',
-    'usr-keuangan-1': 'Rahma Sari (Keuangan)',
+    'admin-01': 'Ibu Yulastri (Admin Sistem)',
+    'usr-admin-01': 'Ibu Yulastri (Admin Sistem)',
+    'usr-admin-1': 'Ibu Yulastri (Admin Sistem)',
+    'pengelola-01': 'Yanti Susanti (Pengelola Kos)',
+    'usr-pengelola-01': 'Yanti Susanti (Pengelola Kos)',
+    'usr-pengelola-1': 'Yanti Susanti (Pengelola Kos)',
+    'usr-keuangan-01': 'Aisyah Fitriani (Staf Keuangan)',
+    'usr-keuangan-1': 'Aisyah Fitriani (Staf Keuangan)',
   };
-  (global as any).__kosOmiAuditLogs.unshift({
-    id: newLog.id,
-    actorId: log.userId,
+
+  await createAuditLog({
+    userId: log.userId,
     actorName:
       nameMap[log.userId] ||
+      log.payloadAfter?.actorName ||
       log.payloadAfter?.userName ||
       log.payloadAfter?.tenantName ||
-      'Pengguna Kos Omi',
-    actorRole: roleMap[log.userId] || 'PENGELOLA',
+      'Pengelola Kos Omi',
+    actorRole:
+      log.payloadAfter?.actorRole ||
+      roleMap[log.userId] ||
+      (log.action === 'CREATE_RESERVATION' || log.action === 'CANCEL_RESERVATION_BY_USER'
+        ? 'CALON_PENGHUNI'
+        : 'PENGELOLA'),
     action: log.action,
-    entity: log.entityType.toLowerCase(),
+    category: log.entityType.toLowerCase(),
     entityId: log.entityId,
+    description:
+      log.payloadAfter?.description ||
+      `Aktivitas ${log.action.replace(/_/g, ' ').toLowerCase()} pada ${log.entityId}`,
     meta: (log.payloadAfter || log.payloadBefore || {}) as Record<string, unknown>,
-    createdAt,
   });
 
   return newLog;
+}
+
+/**
+ * Membersihkan seluruh relasi reservasi, invoice/pembayaran, dan mengembalikan status kamar
+ * menjadi TERSEDIA saat akun pengguna dihapus permanen oleh Admin.
+ */
+export async function dbCleanupUserRelations(params: {
+  userId: string;
+  email: string;
+  roomCode?: string;
+}): Promise<{ releasedRooms: string[] }> {
+  const db = getDb();
+  const normalizedEmail = params.email.toLowerCase().trim();
+  const affectedRoomCodes = new Set<string>();
+  if (params.roomCode) {
+    affectedRoomCodes.add(params.roomCode);
+  }
+
+  const removedReservationCodes = new Set<string>();
+  db.reservations = db.reservations.filter((r) => {
+    const isTarget =
+      r.userId === params.userId || r.userEmail.toLowerCase().trim() === normalizedEmail;
+    if (isTarget) {
+      affectedRoomCodes.add(r.roomCode);
+      removedReservationCodes.add(r.code);
+      return false;
+    }
+    return true;
+  });
+
+  db.payments = db.payments.filter(
+    (p) => !removedReservationCodes.has(p.reservationCode)
+  );
+
+  db.users = db.users.filter(
+    (u) => u.id !== params.userId && u.email.toLowerCase().trim() !== normalizedEmail
+  );
+
+  const releasedRooms: string[] = [];
+  const activeTenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
+
+  for (const rCode of affectedRoomCodes) {
+    const stillHasActiveReservation = db.reservations.some(
+      (r) =>
+        r.roomCode === rCode &&
+        (r.status === 'PENDING_REVIEW' ||
+          r.status === 'APPROVED' ||
+          r.status === 'PAID' ||
+          r.status === 'CHECKED_IN')
+    );
+    const stillHasActiveTenancy = activeTenancies.some(
+      (t) =>
+        t.roomCode === rCode &&
+        t.status === 'AKTIF' &&
+        t.userId !== params.userId &&
+        t.userEmail?.toLowerCase().trim() !== normalizedEmail
+    );
+    if (!stillHasActiveReservation && !stillHasActiveTenancy) {
+      const room = await dbGetRoomByCode(rCode);
+      if (room && (room.status === 'DIPESAN' || room.status === 'TERISI')) {
+        await dbUpdateRoomStatus(rCode, 'TERSEDIA');
+        releasedRooms.push(rCode);
+      }
+    }
+  }
+
+  return { releasedRooms };
 }
 
 /**

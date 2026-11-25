@@ -19,52 +19,15 @@ declare global {
 
 function initBillingState(): BillingState {
   return {
-    bills: [
-      {
-        id: 'bill-studi-kasus-1',
-        invoiceCode: 'INV-202611-1',
-        periodMonth: 'Semester Ganjil 2026/2027 (6 Bulan)',
-        periodKey: '2026-11',
-        year: 2026,
-        roomCode: '1',
-        tenantName: 'Zahra Aulia Putri',
-        tenantEmail: 'zahra.aulia@uinib.ac.id',
-        tenantPhone: '081234567890',
-        dueDate: '2026-11-10',
-        rentAmount: 5000000,
-        amount: 5000000,
-        penaltyAmount: 0,
-        totalAmount: 5000000,
-        status: 'BELUM_BAYAR',
-        createdAt: new Date().toISOString(),
-        notes: 'Tagihan sewa 1 Semester (6 Bulan) Kamar No. 1 Kos Omi.',
-      },
-    ],
-    profiles: [
-      {
-        id: 'usr-calon-zahra',
-        name: 'Zahra Aulia Putri',
-        nik: '2214010045',
-        email: 'zahra.aulia@uinib.ac.id',
-        phone: '081234567890',
-        occupation: 'Mahasiswi FEBI - UIN Imam Bonjol Padang',
-        roomCode: '1',
-        checkInDate: '2026-11-10',
-        tenancyEnd: '2027-05-10',
-        emergencyContactName: 'Hj. Rahmawati (Ibu Kandung)',
-        emergencyContactRelation: 'Orang Tua',
-        emergencyContactPhone: '081363459988',
-        monthlyRent: 5000000,
-        avatarUrl: '/rooms/kamar-1.png',
-      },
-    ],
+    bills: [],
+    profiles: [],
   };
 }
 
 function getBillingDb(): BillingState {
-  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 12) {
+  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 20) {
     global.__kosOmiBillingState = initBillingState();
-    (global as any).__kosOmiBillingVer = 12;
+    (global as any).__kosOmiBillingVer = 20;
   }
   return global.__kosOmiBillingState;
 }
@@ -87,15 +50,56 @@ async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
   }
 
   if (!resolvedEmail) {
-    resolvedEmail = db.profiles[0]?.email?.toLowerCase().trim() || 'penghuni@example.com';
+    const activeTenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
+    const firstActive = activeTenancies.find((t) => t.status === 'AKTIF');
+    resolvedEmail =
+      firstActive?.userEmail?.toLowerCase().trim() ||
+      db.profiles[0]?.email?.toLowerCase().trim() ||
+      'penghuni@example.com';
   }
 
-  // Sinkronkan data reservasi milik resolvedEmail ke db.profiles & db.bills jika belum ada
+  // 1. Prioritaskan kontrak tenancy AKTIF milik user yang sedang login (agar nomor kamar 100% sesuai kontrak aktif)
+  const activeTenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
+  const activeTenancy = activeTenancies.find(
+    (t) => t.status === 'AKTIF' && t.userEmail?.toLowerCase().trim() === resolvedEmail
+  );
+
+  if (activeTenancy) {
+    const existingProfileIdx = db.profiles.findIndex(
+      (p) => p.email.toLowerCase().trim() === resolvedEmail
+    );
+    const tenancyProfile: TenantProfile = {
+      id: activeTenancy.userId || activeTenancy.id,
+      name: activeTenancy.userName,
+      nik: activeTenancy.userNik || '1371000000000001',
+      email: activeTenancy.userEmail,
+      phone: activeTenancy.userPhone,
+      occupation: 'Mahasiswi UIN Imam Bonjol Padang',
+      roomCode: activeTenancy.roomCode,
+      checkInDate: activeTenancy.checkInDate,
+      tenancyEnd: activeTenancy.contractEndDate,
+      emergencyContactName: activeTenancy.emergencyContact?.name || 'Orang Tua / Wali',
+      emergencyContactRelation: activeTenancy.emergencyContact?.relation || 'Orang Tua',
+      emergencyContactPhone: activeTenancy.emergencyContact?.phone || activeTenancy.userPhone,
+      monthlyRent: activeTenancy.monthlyPrice || 5000000,
+      avatarUrl: `/rooms/kamar-${activeTenancy.roomCode}.png`,
+    };
+    if (existingProfileIdx === -1) {
+      db.profiles.unshift(tenancyProfile);
+    } else {
+      db.profiles[existingProfileIdx] = {
+        ...db.profiles[existingProfileIdx],
+        ...tenancyProfile,
+      };
+    }
+    return resolvedEmail;
+  }
+
+  // 2. Fallback: Sinkronkan data reservasi aktif (bukan yang sudah CHECKED_OUT / CANCELLED / REJECTED) milik resolvedEmail
   const userReservations = await dbGetReservationsByUserEmail(resolvedEmail);
   const activeRes =
-    userReservations.find((r) => r.status === 'PAID') ||
-    userReservations.find((r) => r.status === 'APPROVED') ||
-    userReservations[0];
+    userReservations.find((r) => r.status === 'CHECKED_IN' || r.status === 'PAID') ||
+    userReservations.find((r) => r.status === 'APPROVED');
 
   if (activeRes && activeRes.userEmail.toLowerCase().trim() === resolvedEmail) {
     const existingProfileIdx = db.profiles.findIndex(

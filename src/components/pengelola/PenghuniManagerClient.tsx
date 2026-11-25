@@ -33,11 +33,12 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
   const [floorFilter, setFloorFilter] = useState('ALL');
 
   const filteredTenants = tenants.filter((t) => {
+    // Hanya tampilkan penghuni berstatus AKTIF (yang sudah Check-out otomatis hilang permanen)
+    if (t.status !== 'AKTIF') return false;
+
     // Status filter
     if (statusFilter === 'LUNAS' && t.unpaidBillsCount > 0) return false;
     if (statusFilter === 'UNPAID' && t.unpaidBillsCount === 0) return false;
-    if (statusFilter === 'AKTIF' && t.status !== 'AKTIF') return false;
-    if (statusFilter === 'SELESAI' && t.status !== 'SELESAI') return false;
 
     // Floor filter
     if (floorFilter !== 'ALL' && t.roomFloor.toString() !== floorFilter) {
@@ -231,13 +232,21 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                       </span>
                     </div>
 
-                    <NextLink
-                      href={`/pengelola/penghuni/${tenant.id}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors"
-                    >
-                      <span>Detail Profil</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                    </NextLink>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <NextLink
+                        href={`/pengelola/penghuni/${tenant.id}`}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors"
+                      >
+                        <span>Detail Profil</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+                      </NextLink>
+                      <NextLink
+                        href="/pengelola/checkout"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors"
+                      >
+                        <span>Proses Check-out</span>
+                      </NextLink>
+                    </div>
                   </div>
                 </div>
               );

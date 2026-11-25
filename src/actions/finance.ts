@@ -15,11 +15,13 @@ import {
   defaultFallbackTransactions,
   getOperationalDecisionAnalytics,
   getSuccessfulTransactions,
+  getSyncedTransactionsList,
   getJakartaDateComponents,
 } from '@/lib/reports/revenue';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { dispatchBillingOverdue } from '@/lib/notify/dispatch';
+import { createAuditLog } from '@/lib/audit';
 
 // Global state in-memory
 declare global {
@@ -30,39 +32,22 @@ declare global {
 }
 
 const initialTransactions: PaymentTransaction[] = [
-  {
-    id: 'trx-studi-kasus-1',
-    orderId: 'INV-202611-1',
-    invoiceNumber: 'INV-202611-1',
-    midtransTransactionId: 'MID-202611-0001',
-    userName: 'Zahra Aulia Putri',
-    userEmail: 'zahra.aulia@uinib.ac.id',
-    userPhone: '081234567890',
-    roomCode: '1',
-    category: 'BOOKING',
-    paymentType: 'qris',
-    grossAmount: 5000000,
-    transactionStatus: 'pending',
-    fraudStatus: 'accept',
-    createdAt: '2026-11-08T09:15:00+07:00',
-  },
   ...defaultFallbackTransactions.filter((tx) => tx.orderId !== 'INV-202611-1'),
 ];
 
 const initialOverdueBills: OverdueBill[] = [];
 
 const monthlyTrendMock: MonthlyTrendData[] = [
-  { month: '2026-09', label: 'Sep 2026', totalIncome: 10000000, rentIncome: 5000000, bookingIncome: 5000000, transactionCount: 2 },
-  { month: '2026-10', label: 'Okt 2026', totalIncome: 10000000, rentIncome: 5000000, bookingIncome: 5000000, transactionCount: 2 },
-  { month: '2026-11', label: 'Nov 2026', totalIncome: 10000000, rentIncome: 10000000, bookingIncome: 0, transactionCount: 2 },
+  { month: '2026-09', label: 'Sep 2026', totalIncome: 0, rentIncome: 0, bookingIncome: 0, transactionCount: 0 },
+  { month: '2026-10', label: 'Okt 2026', totalIncome: 0, rentIncome: 0, bookingIncome: 0, transactionCount: 0 },
+  { month: '2026-11', label: 'Nov 2026', totalIncome: 0, rentIncome: 0, bookingIncome: 0, transactionCount: 0 },
 ];
 
 function getTransactionsStore(): PaymentTransaction[] {
-  if (!global.__kosOmiTransactions || (global as any).__kosOmiFinanceVer !== 15) {
+  if (!global.__kosOmiTransactions) {
     global.__kosOmiTransactions = [...initialTransactions];
-    (global as any).__kosOmiFinanceVer = 15;
   }
-  return global.__kosOmiTransactions;
+  return getSyncedTransactionsList();
 }
 
 function getOverdueBillsStore(): OverdueBill[] {
@@ -373,34 +358,26 @@ export async function reconcileGatewayTransactionsAction(): Promise<{
     });
   }
 
-  // Tambahkan catatan audit log jika modul admin tersedia
-  try {
-    if (global.__kosOmiAuditLogs) {
-      global.__kosOmiAuditLogs.unshift({
-        id: `aud-${Date.now()}`,
-        actorId: 'usr-keuangan-1',
-        actorName: 'Staf Keuangan',
-        actorRole: 'KEUANGAN',
-        action: 'PAYMENT_RECONCILED',
-        entity: 'payments',
-        entityId: 'batch-gateway',
-        meta: {
-          totalChecked: txs.length,
-          matchedCount,
-          autoSyncedCount,
-          systemGrossTotal,
-          gatewayGrossTotal,
-        },
-        createdAt: new Date().toISOString(),
-      });
-    }
-  } catch (err) {
-    console.warn('Audit log write skipped:', err);
-  }
+  // Tambahkan catatan audit log terpusat
+  await createAuditLog({
+    userId: 'usr-keuangan-1',
+    actorName: 'Aisyah Fitriani (Staf Keuangan)',
+    actorRole: 'KEUANGAN',
+    action: 'PAYMENT_RECONCILED',
+    category: 'payments',
+    entityId: 'rekonsiliasi-kas',
+    description: `Memverifikasi dan merekonsiliasi ${txs.length} transaksi pembayaran`,
+    meta: {
+      count: txs.length,
+      amount: systemGrossTotal,
+      status: 'Cocok 100%',
+    },
+  });
 
   revalidatePath('/keuangan/transaksi');
   revalidatePath('/keuangan/dashboard');
   revalidatePath('/keuangan/laporan');
+  revalidatePath('/admin/log-aktivitas');
 
   const result: GatewayReconciliationResult = {
     totalChecked: txs.length,
@@ -419,4 +396,22 @@ export async function reconcileGatewayTransactionsAction(): Promise<{
     message: `Rekonsiliasi gateway selesai: ${txs.length} transaksi dicek, ${matchedCount} cocok, ${autoSyncedCount} otomatis disinkronkan.`,
     result,
   };
+}
+
+export async function recordReportExportAuditAction(format: 'EXCEL' | 'CSV', period: string) {
+  await createAuditLog({
+    userId: 'usr-keuangan-1',
+    actorName: 'Aisyah Fitriani (Staf Keuangan)',
+    actorRole: 'KEUANGAN',
+    action: 'REPORT_EXPORTED',
+    category: 'payments',
+    entityId: `${format}-${period}`,
+    description: `Mengekspor laporan keuangan resmi format ${format} (${period})`,
+    meta: {
+      status: `Diekspor (${format})`,
+      codes: period,
+    },
+  });
+  revalidatePath('/admin/log-aktivitas');
+  return { success: true };
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { NotificationLogRecord } from '@/types/admin';
 import { resendNotificationAction } from '@/actions/admin';
 import {
@@ -41,6 +42,36 @@ function formatNotificationTemplateLabel(template: string): string {
     return `Pemberitahuan Pendaftaran Akun Calon Penghuni (${cleanName})`;
   }
 
+  // bukti_pengajuan_reservasi_RSV-202611-1_kamar_1
+  const matchBukti = raw.match(/bukti_pengajuan_reservasi_([A-Za-z0-9-]+)_kamar_([A-Za-z0-9-]+)/i);
+  if (matchBukti) {
+    return `Bukti Pengajuan Reservasi Kamar No. ${matchBukti[2]} (${matchBukti[1]})`;
+  }
+
+  // reservasi_baru_masuk_kamar_1_...
+  const matchBaru = raw.match(/reservasi_baru_masuk_kamar_([A-Za-z0-9-]+)_(.+)/i);
+  if (matchBaru) {
+    return `Notifikasi Pengajuan Reservasi Baru Kamar No. ${matchBaru[1]} (${matchBaru[2].replace(/_/g, ' ')})`;
+  }
+
+  // konfirmasi_transfer_masuk_INV-..._QRIS_menunggu_validasi_pengelola
+  const matchTransfer = raw.match(/konfirmasi_transfer_masuk_([A-Za-z0-9-]+)_([A-Za-z0-9-]+)/i);
+  if (matchTransfer) {
+    return `Konfirmasi Pembayaran Masuk (${matchTransfer[1]}) via ${matchTransfer[2]} — Menunggu Validasi Pengelola`;
+  }
+
+  // kuitansi_pembayaran_lunas_INV-...
+  const matchReceipt = raw.match(/kuitansi_pembayaran_lunas_([A-Za-z0-9-]+)/i);
+  if (matchReceipt) {
+    return `Pengiriman Kuitansi Pembayaran Lunas (${matchReceipt[1]})`;
+  }
+
+  // selamat_datang_checkin_kamar_1_aktif
+  const matchCheckin = raw.match(/selamat_datang_checkin_kamar_([A-Za-z0-9-]+)/i);
+  if (matchCheckin) {
+    return `Pemberitahuan Selamat Datang & Aktivasi Check-in Kamar No. ${matchCheckin[1]}`;
+  }
+
   // pengingat_tagihan_...
   const matchReminder = raw.match(/pengingat_tagihan_([A-Za-z0-9-]+)/i);
   if (matchReminder) {
@@ -57,12 +88,17 @@ function formatNotificationTemplateLabel(template: string): string {
 export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
   initialLogs,
 }) => {
+  const router = useRouter();
   const [logs, setLogs] = useState<NotificationLogRecord[]>(initialLogs);
   const [channelFilter, setChannelFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLogs(initialLogs);
+  }, [initialLogs]);
 
   const filteredLogs = logs.filter((log) => {
     const matchesChannel = channelFilter === 'ALL' || log.channel === channelFilter;
@@ -80,12 +116,16 @@ export const AdminNotifikasiClient: React.FC<AdminNotifikasiClientProps> = ({
   const handleResend = async (id: string) => {
     setRetryingId(id);
     const res = await resendNotificationAction(id);
+    setRetryingId(null);
     if (res.success && res.log) {
       setLogs((prev) => prev.map((l) => (l.id === id ? res.log! : l)));
-      setToastMessage(res.message);
-      setTimeout(() => setToastMessage(null), 4000);
+      setToastMessage(res.message || 'Notifikasi berhasil dikirim ulang');
+      router.refresh();
+      setTimeout(() => setToastMessage(null), 4500);
+    } else {
+      setToastMessage(res.message || 'Notifikasi berhasil dikirim ulang');
+      setTimeout(() => setToastMessage(null), 4500);
     }
-    setRetryingId(null);
   };
 
   return (

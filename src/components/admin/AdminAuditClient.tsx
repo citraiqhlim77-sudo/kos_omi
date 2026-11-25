@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuditLogRecord } from '@/types/admin';
 import { formatRupiah } from '@/data/rooms';
 import {
@@ -29,7 +29,15 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     label: 'Proses Check-in Penghuni',
     badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
   },
+  CHECK_IN_TENANT: {
+    label: 'Proses Check-in Penghuni',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+  },
   CHECKOUT_COMPLETED: {
+    label: 'Proses Check-out Penghuni',
+    badgeClass: 'bg-zinc-100 text-zinc-800 border-zinc-200',
+  },
+  CHECK_OUT_TENANT: {
     label: 'Proses Check-out Penghuni',
     badgeClass: 'bg-zinc-100 text-zinc-800 border-zinc-200',
   },
@@ -37,9 +45,17 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     label: 'Rekonsiliasi Pembayaran',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
+  REPORT_EXPORTED: {
+    label: 'Ekspor Laporan Keuangan',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
   SETTLE_PAYMENT: {
     label: 'Validasi Pembayaran Lunas',
     badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+  SUBMIT_PAYMENT_CONFIRMATION: {
+    label: 'Konfirmasi Transfer Calon Penghuni',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
   },
   RESERVATION_APPROVED: {
     label: 'Persetujuan Reservasi',
@@ -69,6 +85,10 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     label: 'Perubahan Tarif Kamar',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
   },
+  ROOM_DETAIL_UPDATED: {
+    label: 'Pembaruan Detail & Tarif Kamar',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
   ROOM_STATUS_UPDATED: {
     label: 'Perubahan Status Kamar',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
@@ -78,7 +98,11 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   STAFF_USER_CREATED: {
-    label: 'Penambahan Akun Staf',
+    label: 'Penambahan Akun Pengguna',
+    badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
+  },
+  USER_ROLE_UPDATED: {
+    label: 'Perubahan Peran Akun',
     badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
   },
   USER_STATUS_TOGGLED: {
@@ -89,18 +113,27 @@ const ACTION_LABELS: Record<string, { label: string; badgeClass: string }> = {
     label: 'Penghapusan Data Pengguna',
     badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
   },
+  NOTIFICATION_RESENT: {
+    label: 'Pengiriman Ulang Notifikasi',
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+  },
 };
 
 const ENTITY_LABELS: Record<string, string> = {
   tenancies: 'Data Hunian Kamar',
+  tenancy: 'Data Hunian Kamar',
   payments: 'Transaksi Pembayaran',
   reservations: 'Reservasi Kamar',
+  reservation: 'Reservasi Kamar',
   rooms: 'Master Kamar',
+  room: 'Master Kamar',
   settings: 'Pengaturan Sistem',
   users: 'Akun Pengguna',
+  notifications: 'Notifikasi Sistem',
 };
 
 const META_KEY_LABELS: Record<string, string> = {
+  description: 'Keterangan Aktivitas',
   roomCode: 'Nomor Kamar',
   roomStatus: 'Status Kamar',
   tenant: 'Nama Penghuni',
@@ -117,6 +150,9 @@ const META_KEY_LABELS: Record<string, string> = {
   count: 'Jumlah Data',
   codes: 'Daftar Kode Reservasi',
   amount: 'Nominal Pembayaran',
+  semesterPrice: 'Tarif Sewa per Semester',
+  depositPolicy: 'Kebijakan Biaya Jaminan',
+  latePolicy: 'Kebijakan Status Tagihan & Keterlambatan',
   oldPrice: 'Tarif Sewa Lama',
   newPrice: 'Tarif Sewa Baru',
   status: 'Status Pembayaran',
@@ -133,6 +169,11 @@ const META_KEY_LABELS: Record<string, string> = {
   role: 'Peran yang Diberikan',
   targetEmail: 'Email Akun Terkait',
   newStatus: 'Status Akun Baru',
+  channel: 'Saluran Notifikasi',
+  recipient: 'Tujuan Pengiriman',
+  reservationCode: 'Kode Reservasi',
+  contractEndDate: 'Tanggal Akhir Kontrak',
+  userRoleUpdated: 'Peran Akun Baru',
 };
 
 const ROLE_DISPLAY_LABELS: Record<string, string> = {
@@ -147,7 +188,11 @@ function formatMetaValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return '-';
 
   if (
-    (key === 'amount' || key === 'oldPrice' || key === 'newPrice' || key === 'lateFeeDailyAmount') &&
+    (key === 'amount' ||
+      key === 'oldPrice' ||
+      key === 'newPrice' ||
+      key === 'lateFeeDailyAmount' ||
+      key === 'semesterPrice') &&
     typeof value === 'number'
   ) {
     return formatRupiah(value);
@@ -223,17 +268,37 @@ function getEntityLabel(entity: string) {
 }
 
 export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs }) => {
-  const [logs] = useState<AuditLogRecord[]>(initialLogs);
+  const [logs, setLogs] = useState<AuditLogRecord[]>(initialLogs);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
   const [selectedMetaLog, setSelectedMetaLog] = useState<AuditLogRecord | null>(null);
+
+  useEffect(() => {
+    setLogs(initialLogs);
+  }, [initialLogs]);
 
   const filteredLogs = logs.filter((log) => {
     const matchesAction =
       actionFilter === 'ALL' ||
       log.action === actionFilter ||
-      (actionFilter === 'CHECKIN_PROCESSED' && log.action === 'CHECKIN_COMPLETED') ||
-      (actionFilter === 'RESERVATION_APPROVED' && log.action === 'APPROVE_RESERVATION');
+      (actionFilter === 'CHECKIN_PROCESSED' &&
+        (log.action === 'CHECKIN_COMPLETED' || log.action === 'CHECK_IN_TENANT')) ||
+      (actionFilter === 'CHECKOUT_COMPLETED' && log.action === 'CHECK_OUT_TENANT') ||
+      (actionFilter === 'RESERVATION_APPROVED' &&
+        (log.action === 'APPROVE_RESERVATION' ||
+          log.action === 'CREATE_RESERVATION' ||
+          log.action === 'REJECT_RESERVATION' ||
+          log.action === 'CANCEL_RESERVATION_BY_USER')) ||
+      (actionFilter === 'PAYMENT_RECONCILED' &&
+        (log.action === 'SETTLE_PAYMENT' ||
+          log.action === 'SUBMIT_PAYMENT_CONFIRMATION' ||
+          log.action === 'REPORT_EXPORTED')) ||
+      (actionFilter === 'ROOM_PRICE_UPDATED' &&
+        (log.action === 'ROOM_DETAIL_UPDATED' || log.action === 'ROOM_STATUS_UPDATED')) ||
+      (actionFilter === 'STAFF_USER_CREATED' &&
+        (log.action === 'USER_STATUS_TOGGLED' ||
+          log.action === 'USER_DELETED' ||
+          log.action === 'USER_ROLE_UPDATED'));
     const q = search.toLowerCase().trim();
     const actionLabel = getActionInfo(log.action).label.toLowerCase();
     const entityLabel = getEntityLabel(log.entity).toLowerCase();
@@ -307,12 +372,13 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
             className="px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 bg-white focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 cursor-pointer"
           >
             <option value="ALL">Semua Aktivitas</option>
+            <option value="RESERVATION_APPROVED">Reservasi Kamar</option>
+            <option value="PAYMENT_RECONCILED">Pembayaran & Laporan Keuangan</option>
             <option value="CHECKIN_PROCESSED">Proses Check-in Penghuni</option>
-            <option value="PAYMENT_RECONCILED">Rekonsiliasi Pembayaran</option>
-            <option value="RESERVATION_APPROVED">Persetujuan Reservasi</option>
-            <option value="ROOM_PRICE_UPDATED">Perubahan Tarif Kamar</option>
+            <option value="CHECKOUT_COMPLETED">Proses Check-out Penghuni</option>
+            <option value="ROOM_PRICE_UPDATED">Perubahan Status & Tarif Kamar</option>
+            <option value="STAFF_USER_CREATED">Manajemen Akun Pengguna</option>
             <option value="SETTINGS_UPDATED">Pembaruan Pengaturan Kos</option>
-            <option value="STAFF_USER_CREATED">Penambahan Akun Staf</option>
           </select>
         </div>
       </div>
@@ -334,8 +400,11 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
             <tbody className="divide-y divide-zinc-100 font-medium text-zinc-700">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-zinc-400">
-                    Tidak ada catatan log aktivitas yang cocok dengan pencarian Anda.
+                  <td colSpan={5} className="px-5 py-14 text-center">
+                    <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-zinc-700">
+                      Belum ada catatan aktivitas yang tercatat untuk filter ini.
+                    </p>
                   </td>
                 </tr>
               ) : (
@@ -415,7 +484,15 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
 
         {/* Mobile Cards View (< 640px) */}
         <div className="sm:hidden divide-y divide-zinc-100 p-3 space-y-3">
-          {filteredLogs.map((log) => {
+          {filteredLogs.length === 0 ? (
+            <div className="py-12 px-4 text-center space-y-2">
+              <FileText className="w-8 h-8 text-zinc-300 mx-auto" />
+              <p className="text-xs font-bold text-zinc-700">
+                Belum ada catatan aktivitas yang tercatat untuk filter ini.
+              </p>
+            </div>
+          ) : (
+            filteredLogs.map((log) => {
             const actionInfo = getActionInfo(log.action);
             return (
               <div key={log.id} className="p-4 rounded-xl bg-zinc-50/70 border border-zinc-200/80 space-y-2.5">
@@ -476,7 +553,8 @@ export const AdminAuditClient: React.FC<AdminAuditClientProps> = ({ initialLogs 
                 </button>
               </div>
             );
-          })}
+          })
+          )}
         </div>
       </div>
 

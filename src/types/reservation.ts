@@ -19,6 +19,8 @@ export type ReservationStatus =
   | 'APPROVED'
   | 'REJECTED'
   | 'PAID'
+  | 'CHECKED_IN'
+  | 'CHECKED_OUT'
   | 'CANCELLED'
   | 'EXPIRED';
 

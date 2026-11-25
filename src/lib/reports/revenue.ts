@@ -121,136 +121,103 @@ export function getCurrentJakartaDate(): JakartaDateComponents {
   return getJakartaDateComponents(new Date())!;
 }
 
-// Data transaksi awal sebagai fallback periode September–November 2026 agar grafik tahun berjalan (2026) tidak kosong saat demo
-export const defaultFallbackTransactions: PaymentTransaction[] = [
-  {
-    id: 'tx-001',
-    orderId: 'KOS-202609-00012',
-    invoiceNumber: 'INV-202609-00045',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670001',
-    userName: 'Rina Wulandari',
-    userPhone: '081234567890',
-    userEmail: 'rina.wulandari@uinib.ac.id',
-    roomCode: '2',
-    category: 'SEWA_BULANAN',
-    paymentType: 'qris',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-09-05T10:15:22+07:00',
-    createdAt: '2026-09-05T10:12:00+07:00',
-  },
-  {
-    id: 'tx-004',
-    orderId: 'KOS-202609-00015',
-    invoiceNumber: 'INV-202609-00048',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670004',
-    userName: 'Siti Rahma Dani',
-    userPhone: '085712349988',
-    userEmail: 'siti.rahma@uinib.ac.id',
-    roomCode: '22',
-    category: 'BOOKING',
-    paymentType: 'bank_transfer',
-    bank: 'bca',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-09-18T14:20:15+07:00',
-    createdAt: '2026-09-18T14:05:00+07:00',
-    vaNumber: '8801234567890002',
-  },
-  {
-    id: 'tx-005',
-    orderId: 'KOS-202610-00016',
-    invoiceNumber: 'INV-202610-00049',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670005',
-    userName: 'Anisa Permata',
-    userPhone: '082188776655',
-    userEmail: 'anisa.permata@uinib.ac.id',
-    roomCode: '12',
-    category: 'BOOKING',
-    paymentType: 'qris',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-10-04T09:10:45+07:00',
-    createdAt: '2026-10-04T09:00:00+07:00',
-  },
-  {
-    id: 'tx-006',
-    orderId: 'KOS-202610-00017',
-    invoiceNumber: 'INV-202610-00050',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670006',
-    userName: 'Nabila Khairunnisa',
-    userPhone: '081223344556',
-    userEmail: 'nabila.khairunnisa@uinib.ac.id',
-    roomCode: '15',
-    category: 'SEWA_BULANAN',
-    paymentType: 'bank_transfer',
-    bank: 'mandiri',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-10-15T11:40:00+07:00',
-    createdAt: '2026-10-15T11:30:00+07:00',
-    vaNumber: '8901234567890003',
-  },
-  {
-    id: 'tx-007',
-    orderId: 'KOS-202611-00018',
-    invoiceNumber: 'INV-202611-00051',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670007',
-    userName: 'Dewi Lestari',
-    userPhone: '087811223344',
-    userEmail: 'dewi.lestari@uinib.ac.id',
-    roomCode: '45',
-    category: 'SEWA_BULANAN',
-    paymentType: 'shopeepay',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-11-03T16:25:00+07:00',
-    createdAt: '2026-11-03T16:20:00+07:00',
-  },
-  {
-    id: 'tx-009',
-    orderId: 'KOS-202611-00019',
-    invoiceNumber: 'INV-202611-00052',
-    midtransTransactionId: '98d5a231-50e8-48b4-8252-9bc54b670009',
-    userName: 'Putri Maharani',
-    userPhone: '081355667788',
-    userEmail: 'putri.maharani@uinib.ac.id',
-    roomCode: '34',
-    category: 'SEWA_BULANAN',
-    paymentType: 'gopay',
-    grossAmount: 5000000,
-    transactionStatus: 'settlement',
-    fraudStatus: 'accept',
-    settlementTime: '2026-11-06T13:10:00+07:00',
-    createdAt: '2026-11-06T13:05:00+07:00',
-  },
-];
+// Data transaksi fallback dikosongkan agar Keuangan 100% membaca langsung dari invoice/pembayaran PAID nyata di sistem
+export const defaultFallbackTransactions: PaymentTransaction[] = [];
 
 /**
- * Mengambil transaksi sukses:
- * Sesuai PRD Bab 5.G.2 & Task 2.10: Hanya status 'settlement' dan 'capture'
- * (dengan fraud_status !== 'deny' dan fraud_status !== 'challenge').
- * Transaksi 'pending', 'cancel', 'expire', dan 'deny' TIDAK PERNAH dihitung sebagai pemasukan.
+ * Mengambil seluruh transaksi gabungan (settled maupun pending) yang tersinkron langsung
+ * dari invoice reservasi (global.__kosOmiDbState.payments) dan tagihan sewa (global.__kosOmiBillingState.bills).
  */
-export function getSuccessfulTransactions(): PaymentTransaction[] {
+export function getSyncedTransactionsList(): PaymentTransaction[] {
   const globalTxs = global.__kosOmiTransactions || [];
-  // Gabungkan transaksi global dengan defaultFallbackTransactions (hindari duplikat orderId)
-  const seenOrders = new Set<string>();
-  const combined: PaymentTransaction[] = [];
+  const dbPayments = ((global as any).__kosOmiDbState?.payments as any[] | undefined) || [];
+  const dbReservations = ((global as any).__kosOmiDbState?.reservations as any[] | undefined) || [];
+  const billingBills = ((global as any).__kosOmiBillingState?.bills as any[] | undefined) || [];
 
-  for (const tx of [...globalTxs, ...defaultFallbackTransactions]) {
-    if (!seenOrders.has(tx.orderId)) {
-      seenOrders.add(tx.orderId);
-      combined.push(tx);
+  const byOrder = new Map<string, PaymentTransaction>();
+
+  for (const tx of globalTxs) {
+    byOrder.set(tx.orderId, { ...tx });
+  }
+
+  for (const pay of dbPayments) {
+    const resObj = dbReservations.find((r) => r.code === pay.reservationCode);
+    const isSettled = pay.status === 'SETTLEMENT';
+    const mappedStatus: PaymentTransaction['transactionStatus'] = isSettled
+      ? 'settlement'
+      : pay.status === 'EXPIRED' || pay.status === 'CANCELLED'
+      ? 'expire'
+      : 'pending';
+
+    const existing = byOrder.get(pay.invoiceCode);
+    const pMethod = (pay.paymentMethod || 'qris').toLowerCase();
+    const paymentType: PaymentTransaction['paymentType'] = pMethod.includes('va') ||
+      pMethod.includes('bank') ||
+      pMethod.includes('bca') ||
+      pMethod.includes('bri') ||
+      pMethod.includes('bni') ||
+      pMethod.includes('mandiri')
+      ? 'bank_transfer'
+      : pMethod.includes('gopay')
+      ? 'gopay'
+      : pMethod.includes('shopee')
+      ? 'shopeepay'
+      : 'qris';
+
+    byOrder.set(pay.invoiceCode, {
+      id: existing?.id || `tx-${pay.id}`,
+      orderId: pay.invoiceCode,
+      invoiceNumber: pay.invoiceCode,
+      midtransTransactionId: existing?.midtransTransactionId || pay.midtransTransactionId || `MID-${pay.invoiceCode}`,
+      userName: resObj?.userName || existing?.userName || 'Calon Penghuni',
+      userPhone: resObj?.userPhone || existing?.userPhone || '-',
+      userEmail: resObj?.userEmail || existing?.userEmail || '-',
+      roomCode: pay.roomCode,
+      category: 'BOOKING',
+      paymentType,
+      bank: pay.bank as any,
+      grossAmount: Number(pay.amount) || 5000000,
+      transactionStatus: mappedStatus,
+      fraudStatus: 'accept',
+      settlementTime: isSettled ? pay.paidAt || existing?.settlementTime || pay.createdAt : undefined,
+      createdAt: pay.createdAt,
+    });
+  }
+
+  for (const bill of billingBills) {
+    if (bill.status === 'LUNAS' && !byOrder.has(bill.invoiceCode)) {
+      byOrder.set(bill.invoiceCode, {
+        id: `tx-${bill.id}`,
+        orderId: bill.invoiceCode,
+        invoiceNumber: bill.invoiceCode,
+        midtransTransactionId: `MID-${bill.invoiceCode}`,
+        userName: bill.tenantName,
+        userPhone: bill.tenantPhone,
+        userEmail: bill.tenantEmail,
+        roomCode: bill.roomCode,
+        category: 'SEWA_BULANAN',
+        paymentType: 'qris',
+        grossAmount: Number(bill.totalAmount || bill.rentAmount) || 5000000,
+        transactionStatus: 'settlement',
+        fraudStatus: 'accept',
+        settlementTime: bill.paidAt || bill.createdAt,
+        createdAt: bill.createdAt,
+      });
     }
   }
 
-  return combined.filter((tx) => {
+  return Array.from(byOrder.values()).sort(
+    (a, b) =>
+      new Date(b.settlementTime || b.createdAt).getTime() -
+      new Date(a.settlementTime || a.createdAt).getTime()
+  );
+}
+
+/**
+ * Mengambil transaksi sukses (PAID / SETTLEMENT) dari sumber terpadu:
+ */
+export function getSuccessfulTransactions(): PaymentTransaction[] {
+  return getSyncedTransactionsList().filter((tx) => {
     if (tx.transactionStatus === 'settlement') return true;
     if (tx.transactionStatus === 'capture' && tx.fraudStatus === 'accept') return true;
     return false;

@@ -72,7 +72,7 @@ export const PenghuniNav: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <nav aria-label="Navigasi Penghuni" className="hidden lg:flex items-center gap-1">
+            <nav aria-label="Navigasi Penghuni" className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-none">
               {links.map((link) => {
                 const active = isLinkActive(link.href);
                 const Icon = link.icon;
@@ -93,49 +93,25 @@ export const PenghuniNav: React.FC = () => {
               })}
             </nav>
 
-            <div className="flex items-center gap-1.5 lg:pl-2 lg:border-l border-zinc-200 shrink-0">
+            {/* Tombol Beranda & Keluar disembunyikan di HP (< md) agar tidak menumpuk badge Penghuni Aktif */}
+            <div className="hidden md:inline-flex items-center gap-1.5 pl-2 border-l border-zinc-200 shrink-0">
               <LogoutButton showHomeLink label="Keluar" />
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen((prev) => !prev)}
-                aria-label="Toggle Menu Navigasi"
-                className="lg:hidden p-2 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
-              >
-                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle Menu Navigasi"
+              className="md:hidden p-2 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile/Tablet Horizontal Scrollable Bar */}
-        <nav
-          aria-label="Navigasi Cepat Penghuni"
-          className="lg:hidden flex items-center gap-1.5 w-full overflow-x-auto whitespace-nowrap py-2 pr-4 border-t border-zinc-100 scrollbar-none"
-        >
-          {links.map((link) => {
-            const active = isLinkActive(link.href);
-            const Icon = link.icon;
-            return (
-              <NextLink
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
-                  active
-                    ? 'bg-[hsl(186,72%,24%)] text-white'
-                    : 'text-zinc-600 bg-zinc-50 hover:text-zinc-900 hover:bg-zinc-100'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5 shrink-0" />
-                <span>{link.label}</span>
-              </NextLink>
-            );
-          })}
-        </nav>
-
-        {/* Mobile Hamburger Drawer */}
+        {/* Mobile Hamburger Drawer (☰) */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-2.5 border-t border-zinc-200 space-y-1">
+          <div className="md:hidden py-2.5 border-t border-zinc-200 space-y-1">
             {links.map((link) => {
               const active = isLinkActive(link.href);
               const Icon = link.icon;
@@ -155,6 +131,9 @@ export const PenghuniNav: React.FC = () => {
                 </NextLink>
               );
             })}
+            <div className="pt-2 mt-1 border-t border-zinc-100 flex items-center justify-end">
+              <LogoutButton showHomeLink label="Keluar" />
+            </div>
           </div>
         )}
       </div>

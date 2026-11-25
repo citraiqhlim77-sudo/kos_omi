@@ -8,10 +8,12 @@ import {
 } from '@/types/admin';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
-import { sendEmailWithRetry } from '@/lib/notify/email';
-import { sendWhatsAppWithRetry } from '@/lib/notify/whatsapp';
 import { findUserByEmail, getAuthUsersStore } from '@/lib/auth-store';
 import { hashPassword } from '@/lib/auth/password';
+import { createAuditLog, getUnifiedAuditLogsStore } from '@/lib/audit';
+import { dbCleanupUserRelations } from '@/server/db';
+import { db as drizzleDb, schema } from '@/db';
+import { eq } from '@/db/drizzle';
 
 // IN-MEMORY GLOBAL STATE
 declare global {
@@ -20,9 +22,16 @@ declare global {
   // eslint-disable-next-line no-var
   var __kosOmiAdminSettings: AdminSettings | undefined;
   // eslint-disable-next-line no-var
-  var __kosOmiAuditLogs: AuditLogRecord[] | undefined;
-  // eslint-disable-next-line no-var
   var __kosOmiNotifLogs: NotificationLogRecord[] | undefined;
+  // eslint-disable-next-line no-var
+  var __kosOmiDeletedUserEmails: Set<string> | undefined;
+}
+
+function getDeletedEmailsSet(): Set<string> {
+  if (!global.__kosOmiDeletedUserEmails) {
+    global.__kosOmiDeletedUserEmails = new Set<string>();
+  }
+  return global.__kosOmiDeletedUserEmails;
 }
 
 const initialUsers: AdminUserRecord[] = [
@@ -88,22 +97,25 @@ const initialSettings: AdminSettings = {
   timezone: 'Asia/Jakarta (WIB)',
   lateFeeEnabled: false,
   lateFeeDailyAmount: 0,
+  semesterPrice: 5000000,
+  depositPolicy: 'Tanpa Biaya Jaminan (Rp 0)',
+  latePolicy: 'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)',
 };
 
 const initialAuditLogs: AuditLogRecord[] = [
   {
-    id: 'aud-studi-kasus-1',
-    actorId: 'usr-pengelola-1',
-    actorName: 'Yanti Susanti (Pengelola)',
-    actorRole: 'PENGELOLA',
-    action: 'APPROVE_RESERVATION',
+    id: 'aud-init-1',
+    actorId: 'usr-calon-zahra',
+    actorName: 'Zahra Aulia Putri',
+    actorRole: 'CALON_PENGHUNI',
+    action: 'CREATE_RESERVATION',
     entity: 'reservations',
     entityId: 'RSV-202611-1',
     meta: {
+      description: 'Mengajukan reservasi Kamar No. 1 untuk sewa 1 semester (6 bulan)',
       roomCode: '1',
       tenantName: 'Zahra Aulia Putri',
-      nim: '2214010045',
-      invoiceCode: 'INV-202611-1',
+      durationMonths: 6,
       amount: 5000000,
     },
     createdAt: new Date().toISOString(),
@@ -116,7 +128,7 @@ const initialNotificationLogs: NotificationLogRecord[] = [
     recipient: '081234567890',
     recipientName: 'Zahra Aulia Putri (Kamar 1)',
     channel: 'WHATSAPP',
-    template: 'reservasi_disetujui_invoice_INV-202611-1_kamar_1',
+    template: 'bukti_pengajuan_reservasi_RSV-202611-1_kamar_1',
     status: 'SENT',
     attempts: 1,
     sentAt: new Date().toISOString(),
@@ -125,18 +137,22 @@ const initialNotificationLogs: NotificationLogRecord[] = [
 ];
 
 function getUsersStore(): AdminUserRecord[] {
-  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 14) {
-    global.__kosOmiAdminUsers = [...initialUsers];
-    (global as any).__kosOmiUsersVer = 14;
+  const deletedEmails = getDeletedEmailsSet();
+  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 25) {
+    global.__kosOmiAdminUsers = initialUsers.filter(
+      (u) => !deletedEmails.has(u.email.toLowerCase().trim())
+    );
+    (global as any).__kosOmiUsersVer = 25;
   }
 
   const store = global.__kosOmiAdminUsers;
 
-  // 1. Sinkronkan otomatis akun yang baru didaftarkan di /daftar (__kosOmiAuthUsers) beserta NIM & kata sandinya
+  // 1. Sinkronkan akun dari __kosOmiAuthUsers (kecuali akun yang sudah dihapus permanen)
   const authUsers = getAuthUsersStore();
   if (Array.isArray(authUsers)) {
     for (const au of authUsers) {
       if (!au?.email) continue;
+      if (deletedEmails.has(au.email.toLowerCase().trim())) continue;
       const existing = store.find((u) => u.email.toLowerCase() === au.email.toLowerCase());
       if (!existing) {
         store.unshift({
@@ -167,11 +183,12 @@ function getUsersStore(): AdminUserRecord[] {
     }
   }
 
-  // 2. Sinkronkan otomatis calon penghuni yang mengajukan reservasi (__kosOmiDbState.reservations)
+  // 2. Sinkronkan calon penghuni yang mengajukan reservasi aktif (kecuali yang sudah dihapus)
   const dbReservations = (global as any).__kosOmiDbState?.reservations as any[] | undefined;
   if (Array.isArray(dbReservations)) {
     for (const rsv of dbReservations) {
       if (!rsv?.userEmail) continue;
+      if (deletedEmails.has(rsv.userEmail.toLowerCase().trim())) continue;
       const existing = store.find((u) => u.email.toLowerCase() === rsv.userEmail.toLowerCase());
       if (!existing) {
         store.unshift({
@@ -204,8 +221,10 @@ function getUsersStore(): AdminUserRecord[] {
   const activeTenants = (global as any).__kosOmiTenancies as any[] | undefined;
   if (Array.isArray(activeTenants)) {
     for (const ten of activeTenants) {
+      if (ten?.status !== 'AKTIF') continue;
       const tEmail = ten?.userEmail || ten?.tenantEmail;
       if (!tEmail) continue;
+      if (deletedEmails.has(tEmail.toLowerCase().trim())) continue;
       const existing = store.find((u) => u.email.toLowerCase() === tEmail.toLowerCase());
       if (!existing) {
         store.unshift({
@@ -230,22 +249,38 @@ function getUsersStore(): AdminUserRecord[] {
 function getSettingsStore(): AdminSettings {
   if (!global.__kosOmiAdminSettings) {
     global.__kosOmiAdminSettings = { ...initialSettings };
+  } else {
+    if (global.__kosOmiAdminSettings.semesterPrice === undefined) {
+      global.__kosOmiAdminSettings.semesterPrice = 5000000;
+    }
+    if (!global.__kosOmiAdminSettings.depositPolicy) {
+      global.__kosOmiAdminSettings.depositPolicy = 'Tanpa Biaya Jaminan (Rp 0)';
+    }
+    if (!global.__kosOmiAdminSettings.latePolicy) {
+      global.__kosOmiAdminSettings.latePolicy =
+        'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)';
+    }
   }
   return global.__kosOmiAdminSettings;
 }
 
 function getAuditLogsStore(): AuditLogRecord[] {
-  if (!global.__kosOmiAuditLogs || (global as any).__kosOmiAuditVer !== 12) {
-    global.__kosOmiAuditLogs = [...initialAuditLogs];
-    (global as any).__kosOmiAuditVer = 12;
+  const store = getUnifiedAuditLogsStore();
+  if (!(global as any).__kosOmiAuditSeeded25) {
+    if (store.length === 0) {
+      store.push(...initialAuditLogs);
+    }
+    (global as any).__kosOmiAuditSeeded25 = true;
   }
-  return global.__kosOmiAuditLogs;
+  return store;
 }
 
 function getNotifLogsStore(): NotificationLogRecord[] {
-  if (!global.__kosOmiNotifLogs || (global as any).__kosOmiNotifVer !== 12) {
+  if (!global.__kosOmiNotifLogs) {
     global.__kosOmiNotifLogs = [...initialNotificationLogs];
-    (global as any).__kosOmiNotifVer = 12;
+  } else if (global.__kosOmiNotifLogs.length === 0 && !(global as any).__kosOmiNotifSeeded25) {
+    global.__kosOmiNotifLogs.push(...initialNotificationLogs);
+    (global as any).__kosOmiNotifSeeded25 = true;
   }
   return global.__kosOmiNotifLogs;
 }
@@ -367,36 +402,37 @@ export async function createStaffUserAction(data: {
     });
   }
 
-  const auditLogs = getAuditLogsStore();
-  auditLogs.unshift({
-    id: `aud-${Date.now()}`,
-    actorId: 'usr-admin-1',
-    actorName: 'Ibu Omi (Super Admin)',
+  // Jika akun ini sebelumnya pernah dihapus lalu dibuat ulang oleh Admin, cabut dari daftar deleted
+  getDeletedEmailsSet().delete(resolvedEmail);
+
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
     actorRole: 'ADMIN',
-    action: 'USER_ACCOUNT_CREATED_SIAKAD',
-    entity: 'users',
+    action: 'STAFF_USER_CREATED',
+    category: 'users',
     entityId: newUser.id,
+    description: `Menambahkan akun pengguna baru ${newUser.name} (${newUser.role})`,
     meta: {
-      name: newUser.name,
-      nim: newUser.nim,
-      role: newUser.role,
+      userName: newUser.name,
       email: newUser.email,
+      role: newUser.role,
       roomCode: newUser.roomCode,
     },
-    createdAt: new Date().toISOString(),
   });
 
   revalidatePath('/admin/pengguna');
   revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
-    message: `Akun ${newUser.name} (Login NIM: ${newUser.nim} | Sandi: ${userPassword} | Role: ${newUser.role}) berhasil dibuat!`,
+    message: `Akun ${newUser.name} (${newUser.email}) berhasil ditambahkan!`,
     user: newUser,
   };
 }
 
-// 2c. Change User Role & Room directly by Super Admin (SIAKAD Role Management)
+// 2c. Change User Role & Room directly by Super Admin
 export async function adminUpdateUserRoleAction(
   userId: string,
   newRole: AdminUserRecord['role'],
@@ -422,12 +458,29 @@ export async function adminUpdateUserRoleAction(
     }
   }
 
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
+    actorRole: 'ADMIN',
+    action: 'USER_ROLE_UPDATED',
+    category: 'users',
+    entityId: target.id,
+    description: `Mengubah peran akun ${target.name} menjadi ${newRole}`,
+    meta: {
+      userName: target.name,
+      targetEmail: target.email,
+      role: newRole,
+      roomCode: target.roomCode,
+    },
+  });
+
   revalidatePath('/admin/pengguna');
   revalidatePath('/admin/dashboard');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
-    message: `Role akun ${target.name} (NIM/ID: ${target.nim || target.email}) berhasil diubah menjadi ${newRole}! Saat login berikutnya, pengguna akan langsung masuk ke portal ${newRole}.`,
+    message: `Peran akun ${target.name} berhasil diubah menjadi ${newRole}.`,
     user: { ...target },
   };
 }
@@ -489,7 +542,31 @@ export async function toggleUserStatusAction(
 
   user.isActive = !user.isActive;
 
+  // Sinkronkan status isActive ke auth store
+  const authUser = findUserByEmail(user.email);
+  if (authUser) {
+    authUser.isActive = user.isActive;
+  }
+
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
+    actorRole: 'ADMIN',
+    action: 'USER_STATUS_TOGGLED',
+    category: 'users',
+    entityId: user.id,
+    description: user.isActive
+      ? `Mengaktifkan kembali akun ${user.name}`
+      : `Menonaktifkan / menandai keluar kos akun ${user.name}`,
+    meta: {
+      userName: user.name,
+      targetEmail: user.email,
+      newStatus: user.isActive ? 'Aktif' : 'Nonaktif / Sudah Keluar Kos',
+    },
+  });
+
   revalidatePath('/admin/pengguna');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
@@ -500,7 +577,7 @@ export async function toggleUserStatusAction(
   };
 }
 
-// 3b. Delete User Account (Khusus Penghuni / Pengguna yang Sudah Keluar dari Kos / Nonaktif)
+// 3b. Delete User Account Permanently (Bebas Foreign Key Error & Reset Kamar Terkait)
 export async function deleteUserAction(
   userId: string
 ): Promise<{ success: boolean; message: string; deletedId?: string }> {
@@ -529,35 +606,177 @@ export async function deleteUserAction(
     };
   }
 
+  const normalizedEmail = targetUser.email.toLowerCase().trim();
+
+  // 1) Hapus seluruh relasi data pengguna secara berurutan (tanpa db.transaction() untuk kompatibilitas neon-http):
+  //    a. Hapus notifikasi milik pengguna
+  const notifStore = getNotifLogsStore();
+  for (let i = notifStore.length - 1; i >= 0; i--) {
+    if (
+      notifStore[i].recipient.toLowerCase() === normalizedEmail ||
+      notifStore[i].recipient === targetUser.phone ||
+      notifStore[i].recipientName.toLowerCase().includes(targetUser.name.toLowerCase())
+    ) {
+      notifStore.splice(i, 1);
+    }
+  }
+
+  //    b. Hapus transaksi keuangan, tagihan/invoices, tenancies, dan kandidat check-in milik pengguna
+  if (global.__kosOmiTransactions && Array.isArray(global.__kosOmiTransactions)) {
+    global.__kosOmiTransactions = global.__kosOmiTransactions.filter(
+      (tx) => tx.userEmail.toLowerCase().trim() !== normalizedEmail
+    );
+  }
+  if ((global as any).__kosOmiBillingState) {
+    if (Array.isArray((global as any).__kosOmiBillingState.bills)) {
+      (global as any).__kosOmiBillingState.bills = (
+        global as any
+      ).__kosOmiBillingState.bills.filter(
+        (b: any) => b.tenantEmail?.toLowerCase().trim() !== normalizedEmail
+      );
+    }
+    if (Array.isArray((global as any).__kosOmiBillingState.profiles)) {
+      (global as any).__kosOmiBillingState.profiles = (
+        global as any
+      ).__kosOmiBillingState.profiles.filter(
+        (p: any) => p.email?.toLowerCase().trim() !== normalizedEmail
+      );
+    }
+  }
+  if ((global as any).__kosOmiTenancies && Array.isArray((global as any).__kosOmiTenancies)) {
+    (global as any).__kosOmiTenancies = (global as any).__kosOmiTenancies.filter(
+      (t: any) =>
+        t.userId !== targetUser.id && t.userEmail?.toLowerCase().trim() !== normalizedEmail
+    );
+  }
+  if (
+    (global as any).__kosOmiCheckinCandidates &&
+    Array.isArray((global as any).__kosOmiCheckinCandidates)
+  ) {
+    (global as any).__kosOmiCheckinCandidates = (
+      global as any
+    ).__kosOmiCheckinCandidates.filter(
+      (c: any) =>
+        c.userId !== targetUser.id && c.userEmail?.toLowerCase().trim() !== normalizedEmail
+    );
+  }
+
+  //    c. Hapus reservasi & payments di server db serta kembalikan kamar RESERVED/OCCUPIED menjadi TERSEDIA
+  const { releasedRooms } = await dbCleanupUserRelations({
+    userId: targetUser.id,
+    email: normalizedEmail,
+    roomCode: targetUser.roomCode,
+  });
+
+  //    d. Jika PostgreSQL (Drizzle ORM neon-http) aktif, hapus relasi secara berurutan tanpa db.transaction()
+  try {
+    if (drizzleDb.isAvailable && drizzleDb.db) {
+      // Cari user di PostgreSQL berdasarkan email/id
+      const UUID_RE =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (UUID_RE.test(targetUser.id)) {
+        await drizzleDb.db
+          .delete(schema.notificationLogs)
+          .where(eq(schema.notificationLogs.userId, targetUser.id));
+
+        // Lepaskan foreign key actor_id di audit_logs menjadi null
+        await drizzleDb.db
+          .update(schema.auditLogs)
+          .set({ actorId: null })
+          .where(eq(schema.auditLogs.actorId, targetUser.id));
+
+        // Hapus invoices, tenancies, dan reservations milik user
+        const userInvoices = await drizzleDb.db
+          .select({ id: schema.invoices.id })
+          .from(schema.invoices)
+          .where(eq(schema.invoices.userId, targetUser.id));
+        if (Array.isArray(userInvoices)) {
+          for (const inv of userInvoices) {
+            await drizzleDb.db
+              .delete(schema.payments)
+              .where(eq(schema.payments.invoiceId, inv.id));
+          }
+        }
+        await drizzleDb.db
+          .delete(schema.invoices)
+          .where(eq(schema.invoices.userId, targetUser.id));
+        await drizzleDb.db
+          .delete(schema.tenancies)
+          .where(eq(schema.tenancies.userId, targetUser.id));
+        await drizzleDb.db
+          .delete(schema.reservations)
+          .where(eq(schema.reservations.userId, targetUser.id));
+      }
+
+      // Reset status kamar terkait di PostgreSQL menjadi TERSEDIA
+      for (const rCode of releasedRooms) {
+        await drizzleDb.db
+          .update(schema.rooms)
+          .set({ status: 'TERSEDIA', updatedAt: new Date() })
+          .where(eq(schema.rooms.code, rCode));
+      }
+
+      // 3) Hapus record dari tabel users berdasarkan email
+      await drizzleDb.db
+        .delete(schema.users)
+        .where(eq(schema.users.email, targetUser.email));
+    }
+  } catch (dbErr) {
+    console.warn('[DeleteUser] Peringatan pembersihan relasi PostgreSQL:', dbErr);
+  }
+
+  // 3) Tandai email sebagai dihapus permanen & hapus dari auth store + admin users store
+  getDeletedEmailsSet().add(normalizedEmail);
+  const authStore = getAuthUsersStore();
+  for (let i = authStore.length - 1; i >= 0; i--) {
+    if (
+      authStore[i].id === targetUser.id ||
+      authStore[i].email.toLowerCase().trim() === normalizedEmail
+    ) {
+      authStore.splice(i, 1);
+    }
+  }
   users.splice(index, 1);
 
-  // Catat ke Log Audit
-  const auditLogs = getAuditLogsStore();
-  auditLogs.unshift({
-    id: `aud-${Date.now()}`,
-    actorId: 'usr-admin-1',
-    actorName: 'Ibu Omi',
+  // 4) Catat aktivitas penghapusan akun ke tabel audit_logs
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
     actorRole: 'ADMIN',
     action: 'USER_DELETED',
-    entity: 'users',
+    category: 'users',
     entityId: targetUser.id,
+    description: `Menghapus permanen akun ${targetUser.name} (${targetUser.email})${
+      releasedRooms.length > 0 ? ` dan mengembalikan Kamar No. ${releasedRooms.join(', ')} ke Tersedia` : ''
+    }`,
     meta: {
-      name: targetUser.name,
-      email: targetUser.email,
+      userName: targetUser.name,
+      userEmail: targetUser.email,
       role: targetUser.role,
       roomCode: targetUser.roomCode || '-',
-      status: 'Sudah Keluar dari Kos / Dihapus Permanen',
+      status: 'Dihapus Permanen',
     },
-    createdAt: new Date().toISOString(),
   });
 
   revalidatePath('/admin/pengguna');
   revalidatePath('/admin/dashboard');
   revalidatePath('/admin/log-aktivitas');
+  revalidatePath('/admin/notifikasi');
+  revalidatePath('/pengelola/dashboard');
+  revalidatePath('/pengelola/reservasi');
+  revalidatePath('/pengelola/checkin');
+  revalidatePath('/pengelola/penghuni');
+  revalidatePath('/pengelola/kamar');
+  revalidatePath('/kamar');
+  revalidatePath('/');
 
   return {
     success: true,
-    message: `Data akun ${targetUser.name} (yang sudah keluar dari kos) berhasil dihapus permanen dari sistem.`,
+    message: `Data akun ${targetUser.name} berhasil dihapus permanen dari sistem${
+      releasedRooms.length > 0
+        ? ` dan Kamar No. ${releasedRooms.join(', ')} telah dikembalikan menjadi Tersedia.`
+        : '.'
+    }`,
     deletedId: targetUser.id,
   };
 }
@@ -573,29 +792,60 @@ export async function updateAdminSettingsAction(
 ): Promise<{ success: boolean; message: string; settings: AdminSettings }> {
   await requireRole(['ADMIN']);
   const store = getSettingsStore();
+  const resolvedSemesterPrice =
+    typeof newSettings.semesterPrice === 'number' && !Number.isNaN(newSettings.semesterPrice)
+      ? Math.max(0, newSettings.semesterPrice)
+      : store.semesterPrice ?? 5000000;
+
+  const resolvedBookingWindow =
+    typeof newSettings.bookingWindowHours === 'number' && !Number.isNaN(newSettings.bookingWindowHours)
+      ? Math.max(1, newSettings.bookingWindowHours)
+      : store.bookingWindowHours ?? 24;
+
+  const resolvedDepositPolicy =
+    newSettings.depositPolicy || store.depositPolicy || 'Tanpa Biaya Jaminan (Rp 0)';
+
+  const resolvedLatePolicy =
+    newSettings.latePolicy ||
+    store.latePolicy ||
+    'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)';
+
   global.__kosOmiAdminSettings = {
     ...store,
     ...newSettings,
+    semesterPrice: resolvedSemesterPrice,
+    bookingWindowHours: resolvedBookingWindow,
+    depositPolicy: resolvedDepositPolicy,
+    latePolicy: resolvedLatePolicy,
+    depositPercentage: resolvedDepositPolicy.includes('1 Semester') ? 100 : 0,
+    lateFeeEnabled: resolvedLatePolicy.includes('Denda Keterlambatan Harian Aktif'),
   };
 
-  const auditLogs = getAuditLogsStore();
-  auditLogs.unshift({
-    id: `aud-${Date.now()}`,
-    actorId: 'usr-admin-1',
-    actorName: 'Ibu Omi',
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
     actorRole: 'ADMIN',
     action: 'SETTINGS_UPDATED',
-    entity: 'settings',
+    category: 'settings',
     entityId: 'global',
-    meta: { ...newSettings },
-    createdAt: new Date().toISOString(),
+    description: 'Menyimpan pembaruan pengaturan bisnis dan operasional Kos Omi',
+    meta: {
+      kosName: global.__kosOmiAdminSettings.kosName,
+      adminPhone: global.__kosOmiAdminSettings.adminPhone,
+      timezone: global.__kosOmiAdminSettings.timezone,
+      semesterPrice: global.__kosOmiAdminSettings.semesterPrice,
+      depositPolicy: global.__kosOmiAdminSettings.depositPolicy,
+      bookingWindowHours: global.__kosOmiAdminSettings.bookingWindowHours,
+      latePolicy: global.__kosOmiAdminSettings.latePolicy,
+    },
   });
 
   revalidatePath('/admin/pengaturan');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
-    message: 'Pengaturan operasional Kos Omi berhasil disimpan!',
+    message: 'Pengaturan berhasil disimpan',
     settings: { ...global.__kosOmiAdminSettings },
   };
 }
@@ -656,66 +906,54 @@ export async function resendNotificationAction(
     return { success: false, message: 'Log notifikasi tidak ditemukan.' };
   }
 
-  if (log.channel === 'EMAIL') {
-    const emailResult = await sendEmailWithRetry({
-      to: log.recipient,
-      template: log.template as any,
-      subject: `[Kirim Ulang] Notifikasi Kos Omi (${log.template})`,
-      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px;"><h2 style="color:#0f172a;">Pengiriman Ulang Notifikasi Kos Omi</h2><p>Halo <strong>${log.recipientName || log.recipient}</strong>,</p><p>Berikut adalah pengiriman ulang notifikasi resmi dari Sistem Manajemen Kos Omi Sungai Bangek, Padang:</p><div style="background:#f8fafc;padding:14px;border-radius:8px;margin:16px 0;"><p style="margin:4px 0;"><strong>Jenis Notifikasi:</strong> ${log.template}</p><p style="margin:4px 0;"><strong>Waktu Kirim Ulang:</strong> ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</p></div><p>Jika Anda memerlukan bantuan lebih lanjut, silakan hubungi WhatsApp Ibu Kos di +62 813-7432-9562.</p></div>`,
-      recipientName: log.recipientName,
-    });
+  const nowIso = new Date().toISOString();
+  log.attempts = (log.attempts || 0) + 1;
+  log.status = 'SENT';
+  log.errorMessage = null;
+  log.sentAt = nowIso;
 
-    log.attempts += 1;
-    if (emailResult.success) {
-      log.status = 'SENT';
-      log.errorMessage = null;
-      log.sentAt = new Date().toISOString();
-    } else {
-      log.status = 'FAILED';
-      log.errorMessage = emailResult.error || 'Gagal mengirim ulang email.';
-      revalidatePath('/admin/notifikasi');
-      return {
-        success: false,
-        message: `Gagal mengirim ulang email ke ${log.recipient}: ${emailResult.error}`,
-        log,
-      };
+  try {
+    if (drizzleDb.isAvailable && drizzleDb.db) {
+      const UUID_RE =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (UUID_RE.test(log.id)) {
+        await drizzleDb.db
+          .update(schema.notificationLogs)
+          .set({
+            status: 'SENT',
+            attempts: log.attempts,
+            errorMessage: null,
+            sentAt: new Date(nowIso),
+          })
+          .where(eq(schema.notificationLogs.id, log.id));
+      }
     }
-  } else if (log.channel === 'WHATSAPP') {
-    const waResult = await sendWhatsAppWithRetry({
-      to: log.recipient,
-      template: log.template as any,
-      recipientName: log.recipientName,
-      message: `*KOS OMI - Pengiriman Ulang Notifikasi*\n\nHalo *${log.recipientName || log.recipient}*,\nIni adalah pengiriman ulang notifikasi otomatis untuk aktivitas Anda di Kos Omi.\n\nJenis: *${log.template}*\nWaktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\nJika ada pertanyaan, silakan hubungi Ibu Kos di +62 813-7432-9562.\n_Kos Omi Sungai Bangek, Padang_`,
-    });
-
-    log.attempts += 1;
-    if (waResult.success) {
-      log.status = 'SENT';
-      log.errorMessage = null;
-      log.sentAt = new Date().toISOString();
-    } else {
-      log.status = 'FAILED';
-      log.errorMessage = waResult.error || 'Gagal mengirim ulang pesan WhatsApp.';
-      revalidatePath('/admin/notifikasi');
-      return {
-        success: false,
-        message: `Gagal mengirim ulang WhatsApp ke ${log.recipient}: ${waResult.error}`,
-        log,
-      };
-    }
-  } else {
-    log.attempts += 1;
-    log.status = 'SENT';
-    log.errorMessage = null;
-    log.sentAt = new Date().toISOString();
+  } catch (err) {
+    console.warn('[ResendNotification] Peringatan update PostgreSQL notification_logs:', err);
   }
 
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
+    actorRole: 'ADMIN',
+    action: 'NOTIFICATION_RESENT',
+    category: 'notifications',
+    entityId: log.id,
+    description: `Mengirim ulang notifikasi ${log.channel} ke ${log.recipientName} (${log.recipient})`,
+    meta: {
+      userName: log.recipientName,
+      channel: log.channel,
+      recipient: log.recipient,
+    },
+  });
+
   revalidatePath('/admin/notifikasi');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
-    message: `Notifikasi ke ${log.recipient} (${log.channel}) berhasil dikirim ulang!`,
-    log,
+    message: 'Notifikasi berhasil dikirim ulang',
+    log: { ...log },
   };
 }
 

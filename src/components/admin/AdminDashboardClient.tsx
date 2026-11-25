@@ -226,56 +226,6 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
           </div>
         </div>
       )}
-
-      {/* System Infrastructure Health */}
-      <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
-        <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2 border-b border-zinc-100 pb-3">
-          <Server className="w-4 h-4 text-blue-600" />
-          <span>Status Infrastruktur & Layanan Sistem Kos Omi</span>
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Database PostgreSQL</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Connected
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">Serverless PostgreSQL di region Singapore (ap-southeast-1).</p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Midtrans & DANA</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Ready
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">DANA Resmi (082246424353) & Midtrans Snap (VA Bank, QRIS, GoPay, ShopeePay).</p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Kontak Pemilik Kos</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Ibu Yulastri
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">WA Utama: 0822-8714-6763 · Kontak Cadangan: 0813-7432-9562.</p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-zinc-800">Log Notifikasi Sistem</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Aktif
-              </span>
-            </div>
-            <p className="text-zinc-500 text-[11px]">Pencatatan otomatis riwayat notifikasi reservasi & pembayaran.</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

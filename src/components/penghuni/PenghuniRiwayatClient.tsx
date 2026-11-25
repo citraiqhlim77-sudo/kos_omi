@@ -69,7 +69,7 @@ export const PenghuniRiwayatClient: React.FC<PenghuniRiwayatClientProps> = ({
             Riwayat Pembayaran Sewa
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Daftar lengkap seluruh transaksi pembayaran lunas sewa Kamar 1 Kos Omi Padang.
+            Daftar lengkap seluruh transaksi pembayaran lunas sewa kamar Kos Omi Sungai Bangek, Padang.
           </p>
         </div>
 
