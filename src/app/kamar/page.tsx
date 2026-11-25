@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Katalog 67 Kamar Kos Omi Sungai Bangek, Padang (${availableCount} Tersedia)`,
-    description: `Daftar lengkap 67 kamar kos 2 lantai (Kamar No. 1 - 67) di Sungai Bangek Padang dekat Kampus III UIN Imam Bonjol. Tarif Rp 5.000.000 / semester per kamar untuk maksimal 2 orang (boleh 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit).`,
+    description: `Daftar lengkap 67 kamar kos 2 lantai (Kamar No. 1 - 67) di Sungai Bangek Padang dekat Kampus III UIN Imam Bonjol. Tarif Rp 5.000.000 / semester per kamar untuk maksimal 2 orang (boleh 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang, tanpa biaya deposit).`,
     alternates: {
       canonical: 'https://kosomi.id/kamar',
     },

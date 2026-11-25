@@ -32,7 +32,7 @@ export const PublicFooter: React.FC = () => {
               </span>
             </div>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Hunian kos nyaman di Sungai Bangek, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit).
+              Hunian kos nyaman di Sungai Bangek, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang, tanpa deposit).
             </p>
             <div className="pt-2 flex items-center gap-2 text-xs text-emerald-400 font-medium">
               <ShieldCheck size={16} />

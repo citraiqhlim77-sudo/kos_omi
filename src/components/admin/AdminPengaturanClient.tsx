@@ -152,7 +152,7 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
                 Sewa Semesteran (6 Bulan) — Rp 5.000.000 / Kamar
               </div>
               <span className="text-[10px] text-zinc-500 mt-1 block">
-                Maksimal 2 orang/kamar (boleh 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang).
+                Maksimal 2 orang/kamar (boleh 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang).
               </span>
             </div>
 

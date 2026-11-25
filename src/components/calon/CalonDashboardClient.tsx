@@ -516,20 +516,9 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     <span>Verifikasi Berkas Sedang Berjalan (Maksimal 2x24 Jam)</span>
                   </div>
                   <p className="text-xs text-amber-800 max-w-xl">
-                    Tim Pengelola Kos Omi sedang mencocokkan data KTP dan identitas Anda. Notifikasi akan dikirimkan otomatis segera setelah disetujui.
+                    Pengelola Kos Omi sedang memeriksa data dan dokumen identitas Anda. Tagihan pembayaran akan otomatis muncul di halaman ini setelah reservasi disetujui.
                   </p>
                 </div>
-
-                {/* Tombol Demo Simulator Persetujuan */}
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => handleApproveDemo(current.code)}
-                  className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shrink-0 disabled:opacity-50"
-                >
-                  <Sparkles size={14} />
-                  {isPending ? 'Memproses Persetujuan...' : 'Simulasikan Persetujuan Admin (Demo)'}
-                </button>
               </div>
             )}
 
@@ -538,10 +527,10 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
                     <CheckCircle2 size={18} className="text-emerald-700" />
-                    <span>Pembayaran Terverifikasi Lunas di Server Kos Omi</span>
+                    <span>Pembayaran Terverifikasi Lunas</span>
                   </div>
                   <p className="text-xs text-emerald-800 max-w-xl">
-                    Kamar <strong>{current.roomCode}</strong> telah resmi berstatus DIPESAN/TERISI atas nama Anda. Tanggal rencana masuk Anda adalah <strong>{current.checkInDate}</strong>.
+                    Kamar <strong>{current.roomCode}</strong> telah resmi dipesan atas nama Anda. Tanggal rencana masuk Anda adalah <strong>{current.checkInDate}</strong>.
                   </p>
                 </div>
 
@@ -568,21 +557,12 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     <span>Masuk ke Portal Penghuni Aktif</span>
                     <ArrowRight size={14} />
                   </button>
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => handleResetToUnpaid(current.payment!.invoiceCode)}
-                    className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs px-3.5 py-2.5 rounded-lg transition-all cursor-pointer"
-                  >
-                    <RefreshCw size={13} className={isPending ? 'animate-spin' : ''} />
-                    <span>Kembalikan ke Belum Dibayar (Uji Ulang Bayar)</span>
-                  </button>
                   <NextLink
                     href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
                     className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all"
                   >
                     <FileText size={14} />
-                    Lihat Kuitansi Resmi Server
+                    Lihat Bukti Pembayaran
                   </NextLink>
                 </div>
               </div>

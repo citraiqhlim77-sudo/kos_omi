@@ -134,7 +134,7 @@ export default function TentangPage() {
                 <p className="text-lg font-extrabold text-emerald-600 font-heading mt-0.5">
                   Maks. 2 Orang
                 </p>
-                <p className="text-[11px] text-zinc-600 font-medium">Sendiri Rp 5 Jt / Patungan @2,5 Jt</p>
+                <p className="text-[11px] text-zinc-600 font-medium">Sendiri atau Berdua (Rp 2,5 Jt/orang)</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-zinc-200">
                 <p className="text-xs text-zinc-500 font-medium">Pemilik Kos (Ibu Yulastri)</p>
@@ -209,7 +209,7 @@ export default function TentangPage() {
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-zinc-500 max-w-md">
-              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit). Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans.
+              Tarif sewa berlaku sama untuk Lantai 1 maupun Lantai 2 yaitu <strong>Rp 5.000.000 per semester per kamar</strong> untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang, tanpa biaya deposit).
             </p>
           </div>
 
@@ -312,7 +312,7 @@ export default function TentangPage() {
                   <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-1">
                     <p className="font-bold text-zinc-800">Tarif & Kapasitas Kamar:</p>
                     <p className="leading-relaxed">
-                      <strong>Rp 5.000.000 / Semester</strong> per kamar (Lantai 1 & Lantai 2) • Maksimal 2 orang (1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, <strong>tanpa biaya deposit</strong>).
+                      <strong>Rp 5.000.000 / Semester</strong> per kamar (Lantai 1 & Lantai 2) • Maksimal 2 orang (1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang, tanpa deposit).
                     </p>
                   </div>
                 </div>

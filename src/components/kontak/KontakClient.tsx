@@ -51,7 +51,7 @@ export function KontakClient() {
             Hubungi Ibu Yulastri — Kos Omi Sungai Bangek, Padang
           </h1>
           <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
-            Ingin menanyakan ketersediaan kamar Lantai 1 & Lantai 2 (Rp 5.000.000/semester per kamar, maksimal 2 orang: sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit) atau menjadwalkan survei langsung? Hubungi Ibu Yulastri melalui WhatsApp di bawah ini.
+            Ingin menanyakan ketersediaan kamar Lantai 1 & Lantai 2 (Rp 5.000.000/semester per kamar, maksimal 2 orang) atau menjadwalkan survei langsung? Hubungi Ibu Yulastri melalui WhatsApp di bawah ini.
           </p>
         </div>
 

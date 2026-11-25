@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Kos Omi Sungai Bangek, Padang - ${availableCount} Kamar Kosong Siap Huni`,
-    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau patungan 2 orang @ Rp 2.500.000/orang, tanpa biaya deposit). Hubungi Ibu Yulastri: 0822-8714-6763 (Cadangan: 0813-7432-9562).`,
+    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000/orang, tanpa biaya deposit). Hubungi Ibu Yulastri: 0822-8714-6763.`,
     alternates: {
       canonical: 'https://kosomi.id',
     },
@@ -280,7 +280,7 @@ export default async function HomePage() {
             Pilihan Lantai Kamar
           </h2>
           <p className="text-zinc-600 text-sm sm:text-base">
-            Tarif seragam <strong>Rp 5.000.000 / semester per kamar</strong> untuk <strong>maksimal 2 orang</strong> (boleh diisi <strong>1 orang sendiri</strong> Rp 5.000.000 atau <strong>patungan 2 orang</strong> @ Rp 2.500.000/orang, <strong>tanpa biaya deposit</strong>).
+            Tarif seragam <strong>Rp 5.000.000 / semester per kamar</strong> untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000 per orang, tanpa deposit).
           </p>
         </div>
 

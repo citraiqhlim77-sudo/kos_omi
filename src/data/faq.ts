@@ -10,7 +10,7 @@ export const FAQ_DATA: FAQItem[] = [
     id: 'faq-1',
     category: 'reservasi',
     question: 'Berapa harga sewa kamar dan kapasitas per kamar di Kos Omi?',
-    answer: 'Tarif sewa kamar di Kos Omi adalah Rp 5.000.000 / semester per kamar untuk Lantai 1 maupun Lantai 2 dengan kapasitas maksimal 2 orang (boleh diisi 1 orang sendiri seharga Rp 5.000.000, atau patungan 2 orang @ Rp 2.500.000/orang), tanpa biaya deposit. Setiap kamar sudah dilengkapi Kasur, Lemari, dan Kamar Mandi Dalam.',
+    answer: 'Tarif sewa kamar di Kos Omi adalah Rp 5.000.000 / semester per kamar untuk Lantai 1 maupun Lantai 2 dengan kapasitas maksimal 2 orang (boleh diisi 1 orang sendiri seharga Rp 5.000.000, atau berdua dengan biaya Rp 2.500.000 per orang), tanpa biaya deposit. Setiap kamar sudah dilengkapi Kasur, Lemari, dan Kamar Mandi Dalam.',
   },
   {
     id: 'faq-2',

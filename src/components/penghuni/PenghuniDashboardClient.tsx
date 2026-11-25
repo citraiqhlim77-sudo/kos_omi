@@ -512,7 +512,7 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
 
               <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center gap-2 text-xs text-zinc-600">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Simulasi pelunasan instan dan pencatatan riwayat transaksi sewa</span>
+                <span>Pembayaran tercatat otomatis pada riwayat transaksi sewa kamar Anda</span>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
