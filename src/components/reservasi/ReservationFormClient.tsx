@@ -196,8 +196,8 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-left text-xs text-zinc-600 space-y-1.5 max-w-lg mx-auto">
           <div className="font-bold text-zinc-900">Alur Pemesanan Kamar Baru:</div>
           <div>1. Buat akun baru (Nama Lengkap, Email, No. WhatsApp, & Kata Sandi).</div>
-          <div>2. Otomatis kembali ke halaman ini untuk mengisi NIM & unggah KTM/KRS.</div>
-          <div>3. Pantau persetujuan pengelola & selesaikan pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.</div>
+          <div>2. Otomatis kembali ke halaman ini untuk mengisi data diri & unggah foto identitas.</div>
+          <div>3. Pantau persetujuan pengelola & selesaikan pembayaran sewa kamar.</div>
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
@@ -398,12 +398,12 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         <Card className="p-6 space-y-4">
           <h2 className="font-heading font-bold text-base text-zinc-900 pb-2 border-b border-zinc-100 flex items-center gap-2">
             <User size={18} className="text-[hsl(186,72%,24%)]" />
-            Identitas Calon Penghuni (Data Mahasiswi / KTM)
+            Identitas Calon Penghuni
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="sm:col-span-2">
-              <label className="block font-semibold text-zinc-700 mb-1">Nama Lengkap Mahasiswi</label>
+            <div>
+              <label className="block font-semibold text-zinc-700 mb-1">Nama Lengkap</label>
               <input
                 type="text"
                 name="fullName"
@@ -416,28 +416,14 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
             </div>
 
             <div>
-              <label className="block font-semibold text-zinc-700 mb-1">NIM (Nomor Induk Mahasiswa) / No. Pendaftaran</label>
-              <input
-                type="text"
-                name="nik"
-                maxLength={20}
-                value={formData.nik}
-                onChange={handleChange}
-                required
-                placeholder="Contoh: 2214010045"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 focus:outline-none focus:border-[hsl(186,72%,24%)]"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-zinc-700 mb-1">Fakultas / Jurusan / Kampus</label>
+              <label className="block font-semibold text-zinc-700 mb-1">Pekerjaan / Kampus / Instansi</label>
               <input
                 type="text"
                 name="occupation"
                 value={formData.occupation}
                 onChange={handleChange}
                 required
-                placeholder="Contoh: FEBI - UIN Imam Bonjol Padang"
+                placeholder="Contoh: Mahasiswi UIN Imam Bonjol Padang"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-300 focus:outline-none focus:border-[hsl(186,72%,24%)]"
               />
             </div>

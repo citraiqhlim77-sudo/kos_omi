@@ -186,7 +186,7 @@ export default async function HomePage() {
               </h1>
 
               <p className="text-base sm:text-lg text-[hsl(240,4%,46%)] leading-relaxed max-w-xl">
-                Hunian kos nyaman di Sungai Bangek, dekat Kampus III UIN Imam Bonjol Padang. Tarif <strong>Rp 5.000.000 / semester per kamar</strong> untuk <strong>maksimal 2 orang</strong> (boleh diisi <strong>1 orang sendiri</strong> seharga Rp 5.000.000, atau <strong>patungan 2 orang</strong> @ Rp 2.500.000/orang), <strong>tanpa biaya deposit</strong>.
+                Hunian kos nyaman di Sungai Bangek, dekat Kampus III UIN Imam Bonjol Padang. Tersedia 67 kamar siap huni di Lantai 1 & Lantai 2 dengan fasilitas lengkap.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -211,15 +211,15 @@ export default async function HomePage() {
               <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-zinc-600 font-medium border-t border-zinc-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-emerald-600" />
-                  <span>Maks. 2 Orang / Kamar (Sendiri Rp 5 Jt atau Patungan @ Rp 2,5 Jt/orang · Tanpa Deposit)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-600" />
                   <span>Kamar Mandi Dalam</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+                  <span>Kasur & Lemari</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <Lock size={16} className="text-sky-600" />
-                  <span>Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</span>
+                  <span>Keamanan 24 Jam & CCTV</span>
                 </div>
               </div>
             </div>
@@ -464,9 +464,9 @@ export default async function HomePage() {
 
             <div className="bg-zinc-800/80 p-6 rounded-xl border border-zinc-700 space-y-3">
               <span className="text-xs font-bold text-sky-400">Langkah 2</span>
-              <h3 className="font-heading font-bold text-lg text-white">Pilih Kamar & Unggah KTM/KRS</h3>
+              <h3 className="font-heading font-bold text-lg text-white">Pilih Kamar & Isi Data Diri</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Setelah masuk akun, pilih nomor kamar, isi NIM, dan unggah foto KTM atau KRS untuk diverifikasi pengelola.
+                Setelah masuk akun, pilih nomor kamar, isi data identitas diri, dan unggah foto identitas untuk diverifikasi pengelola.
               </p>
             </div>
 

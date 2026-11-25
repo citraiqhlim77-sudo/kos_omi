@@ -641,14 +641,10 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   Data Diri Calon Penghuni
                 </h3>
 
-                <div className="grid grid-cols-2 gap-3 text-xs text-zinc-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-zinc-600">
                   <div>
                     <span className="text-zinc-400 block">Nama Lengkap</span>
                     <span className="font-bold text-zinc-800">{current.userName}</span>
-                  </div>
-                  <div>
-                    <span className="text-zinc-400 block">Nomor NIK KTP</span>
-                    <span className="font-bold text-zinc-800">{current.userNik}</span>
                   </div>
                   <div>
                     <span className="text-zinc-400 block">Nomor WhatsApp</span>
@@ -662,7 +658,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     <span className="text-zinc-400 block">Pekerjaan / Instansi</span>
                     <span className="font-bold text-zinc-800">{current.userOccupation}</span>
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <span className="text-zinc-400 block">Kontak Darurat</span>
                     <span className="font-bold text-zinc-800">
                       {current.emergencyContactName} ({current.emergencyContactRelation}) -{' '}

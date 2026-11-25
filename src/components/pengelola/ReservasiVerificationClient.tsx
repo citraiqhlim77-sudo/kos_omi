@@ -298,18 +298,18 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
               </div>
             </div>
 
-            {/* NIM and identity match strip */}
+            {/* Identity match strip */}
             <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-zinc-500 block text-[11px]">NIM / No. Pendaftaran Terdaftar:</span>
-                <span className="tabular-nums font-bold text-zinc-900 text-sm">
-                  {reservation.userNik}
+                <span className="text-zinc-500 block text-[11px]">Nama Lengkap Calon Penghuni:</span>
+                <span className="font-bold text-zinc-900 text-sm">
+                  {reservation.userName}
                 </span>
               </div>
               <div>
-                <span className="text-zinc-500 block text-[11px]">Nama Lengkap Mahasiswi:</span>
+                <span className="text-zinc-500 block text-[11px]">Email Terdaftar:</span>
                 <span className="font-bold text-zinc-900 text-sm">
-                  {reservation.userName}
+                  {reservation.userEmail}
                 </span>
               </div>
             </div>

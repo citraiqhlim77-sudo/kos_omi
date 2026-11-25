@@ -21,7 +21,7 @@ export const AdminNav: React.FC = () => {
 
   const links = [
     { href: '/admin/dashboard', label: 'Dasbor Pemilik', icon: LayoutDashboard },
-    { href: '/admin/pengguna', label: 'Kelola Akun (SIAKAD)', icon: Users },
+    { href: '/admin/pengguna', label: 'Kelola Akun', icon: Users },
     { href: '/keuangan/laporan', label: 'Laporan Keuangan', icon: FileSpreadsheet },
     { href: '/keuangan/transaksi', label: 'Transaksi Kas', icon: Receipt },
     { href: '/pengelola/kamar', label: 'Kamar (1–67)', icon: Building2 },

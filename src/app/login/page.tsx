@@ -21,13 +21,13 @@ import {
 import { DEMO_ACCOUNTS, getRoleDashboardPath } from '@/data/auth-demo';
 import { loginAction } from '@/actions/auth';
 import { loginWithCredentials, loginWithDemoAccount, setClientSession } from '@/lib/auth-client';
-import { validateLoginIdentifier, validatePassword } from '@/lib/validations/auth';
+import { validateEmail, validatePassword } from '@/lib/validations/auth';
 import { UserRole } from '@/types/auth';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  // Form State (Kosong di awal agar dapat diketik manual atau dipilih dari tombol simulasi)
+  // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -40,8 +40,8 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successRedirect, setSuccessRedirect] = useState<string | null>(null);
 
-  // Field errors (Mendukung NIM maupun Email)
-  const emailError = touched.email ? validateLoginIdentifier(email) : null;
+  // Field errors (Email & Kata Sandi)
+  const emailError = touched.email ? validateEmail(email) : null;
   const passwordError = touched.password ? validatePassword(password, 6) : null;
 
   // Handle Demo Account Click
@@ -60,7 +60,7 @@ export default function LoginPage() {
     e.preventDefault();
     setTouched({ email: true, password: true });
 
-    const eErr = validateLoginIdentifier(email);
+    const eErr = validateEmail(email);
     const pErr = validatePassword(password, 6);
 
     if (eErr || pErr) {
@@ -154,7 +154,7 @@ export default function LoginPage() {
             Masuk ke Portal Kos Omi
           </h1>
           <p className="text-sm text-zinc-600 max-w-md mx-auto">
-            Masukkan <strong>NIM / ID Pengguna</strong> atau <strong>Email</strong> beserta kata sandi akun Anda. Sistem otomatis mengarahkan ke portal sesuai peran yang ditetapkan Super Admin.
+            Masukkan email dan kata sandi akun Anda untuk melanjutkan.
           </p>
         </div>
 
@@ -184,10 +184,10 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* NIM / Email Field (SIAKAD Style) */}
+            {/* Email Field */}
             <div className="space-y-1.5">
               <label htmlFor="email" className="block text-xs font-bold text-zinc-700">
-                NIM / Username / Alamat Email
+                Alamat Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
@@ -195,7 +195,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="email"
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={(e) => {
                     const nextVal = e.target.value;
@@ -206,7 +206,7 @@ export default function LoginPage() {
                     setSelectedRole(matched ? matched.role : null);
                   }}
                   onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-                  placeholder="Masukkan NIM (contoh: 2317020041) atau Email"
+                  placeholder="nama@email.com"
                   className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm text-zinc-900 transition-colors focus:outline-none ${
                     emailError
                       ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-200'

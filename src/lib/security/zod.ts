@@ -255,7 +255,6 @@ export const resetPasswordSchema = z.object({
 export const reservationInputSchema = z.object({
   roomCode: z.string().min(1, 'Kode kamar wajib dipilih'),
   fullName: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
-  nik: z.string().min(3, 'Nomor NIM / Identitas Mahasiswa wajib diisi'),
   phone: z.string().min(6, 'Nomor telepon/WhatsApp wajib diisi'),
   email: z.string().email('Format email tidak valid'),
   checkInDate: z.string().min(8, 'Tanggal masuk wajib diisi'),
