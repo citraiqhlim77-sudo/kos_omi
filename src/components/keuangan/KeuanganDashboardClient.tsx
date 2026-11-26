@@ -3,7 +3,7 @@
 import React from 'react';
 import NextLink from 'next/link';
 import { FinanceDashboardStats, PaymentTransaction } from '@/types/finance';
-import { formatPaymentCategoryLabel } from '@/lib/reports/revenue';
+import { formatPaymentCategoryLabel } from '@/lib/reports/labels';
 import { formatRupiah } from '@/data/rooms';
 import { OperationalDecisionAnalyticsPanel } from '@/components/keuangan/OperationalDecisionAnalyticsPanel';
 import dynamic from 'next/dynamic';

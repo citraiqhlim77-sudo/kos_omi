@@ -285,9 +285,10 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
               className="relative aspect-[16/10] max-h-80 w-full rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100 cursor-zoom-in group"
             >
               <Image
-                src={reservation.ktpUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80'}
+                src={reservation.ktpUrl || '/rooms/kamar-1.png'}
                 alt={`KTM / KRS ${reservation.userName}`}
                 fill
+                unoptimized={(reservation.ktpUrl || '').startsWith('data:')}
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover group-hover:scale-[1.02] transition-transform duration-200"
               />

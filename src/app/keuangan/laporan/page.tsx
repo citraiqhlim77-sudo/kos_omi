@@ -8,6 +8,8 @@ import {
   fetchOperationalAnalyticsAction,
 } from '@/actions/finance';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Rekap Laporan Keuangan | Kos Omi',
   description: 'Rekapitulasi pemasukan harian dan bulanan Kos Omi dengan ekspor CSV format akuntansi.',

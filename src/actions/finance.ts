@@ -22,6 +22,7 @@ import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { dispatchBillingOverdue } from '@/lib/notify/dispatch';
 import { createAuditLog } from '@/lib/audit';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 
 // Global state in-memory
 declare global {
@@ -44,18 +45,12 @@ const monthlyTrendMock: MonthlyTrendData[] = [
 ];
 
 function getTransactionsStore(): PaymentTransaction[] {
-  if (!global.__kosOmiTransactions) {
-    global.__kosOmiTransactions = [...initialTransactions];
-  }
+  loadPersistentStore();
   return getSyncedTransactionsList();
 }
 
 function getOverdueBillsStore(): OverdueBill[] {
-  if (!global.__kosOmiOverdueBills || (global as any).__kosOmiOverdueVer !== 10) {
-    global.__kosOmiOverdueBills = [...initialOverdueBills];
-    (global as any).__kosOmiOverdueVer = 10;
-  }
-  return global.__kosOmiOverdueBills;
+  return loadPersistentStore().overdueBills;
 }
 
 // 1. Fetch Finance Dashboard Stats (100% Sinkron dari Satu Sumber Transaksi Terverifikasi)

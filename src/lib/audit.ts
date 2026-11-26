@@ -1,16 +1,10 @@
 import type { AuditLogRecord, UserRole } from '@/types/admin';
 import { db as drizzleDb, schema } from '@/db';
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __kosOmiAuditLogs: AuditLogRecord[] | undefined;
-}
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 
 export function getUnifiedAuditLogsStore(): AuditLogRecord[] {
-  if (!global.__kosOmiAuditLogs) {
-    global.__kosOmiAuditLogs = [];
-  }
-  return global.__kosOmiAuditLogs;
+  const store = loadPersistentStore();
+  return store.auditLogs;
 }
 
 export interface CreateAuditLogInput {
@@ -29,10 +23,10 @@ const UUID_REGEX =
 
 /**
  * Helper terpusat pencatatan Log Aktivitas & Audit di seluruh 5 role Kos Omi.
- * Menyimpan ke store memori terpadu dan ke tabel `audit_logs` PostgreSQL (jika aktif).
+ * Menyimpan ke persistent store terpadu dan ke tabel `audit_logs` PostgreSQL (jika aktif).
  */
 export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditLogRecord> {
-  const store = getUnifiedAuditLogsStore();
+  const persistent = loadPersistentStore();
   const createdAt = new Date().toISOString();
   const metaPayload: Record<string, unknown> = {
     description: input.description,
@@ -51,7 +45,8 @@ export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditL
     createdAt,
   };
 
-  store.unshift(record);
+  persistent.auditLogs.unshift(record);
+  savePersistentStore(persistent);
 
   try {
     if (drizzleDb.isAvailable && drizzleDb.db) {

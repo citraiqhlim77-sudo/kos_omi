@@ -8,6 +8,8 @@ import { ReservationFormClient } from '@/components/reservasi/ReservationFormCli
 import { getCurrentUser } from '@/lib/auth-server';
 import { ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface ReservationPageProps {
   params: Promise<{ kodeKamar: string }>;
 }

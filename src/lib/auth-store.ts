@@ -1,76 +1,49 @@
 import type { UserRole } from '@/types/auth';
-import { SEED_USERS, DEFAULT_PASSWORD_HASH, type SeedUser } from '@/db/seed';
+import { DEFAULT_PASSWORD_HASH, type SeedUser } from '@/db/seed';
 import { hashPassword } from '@/lib/auth/password';
+import {
+  loadPersistentStore,
+  savePersistentStore,
+  SEED_DEFAULT_PASSWORD,
+  type UserAuthRecord,
+  type ResetTokenRecord,
+} from '@/server/persistence';
 
-// State in-memory pengguna & proteksi brute force login.
-// Field `failedLoginCount` / `lockedUntil` dipetakan 1:1 ke kolom
-// `failed_login_count` / `locked_until` pada tabel users (PRD Bab 10).
-// Sengaja dipisah dari src/actions/auth.ts karena file 'use server'
-// hanya boleh mengekspor fungsi async.
-export interface UserAuthState extends SeedUser {
-  failedLoginCount: number;
-  lockedUntil?: string | null;
-  plainPassword?: string;
-}
-
-export interface ResetTokenRecord {
-  /** SHA-256 dari token mentah. Token mentah tidak pernah disimpan. */
-  tokenHash: string;
-  email: string;
-  expiresAt: string;
-  usedAt: string | null;
-}
-
-/** Kata sandi akun seed untuk pengembangan lokal. */
-export const SEED_DEFAULT_PASSWORD = 'Password123!';
+export { SEED_DEFAULT_PASSWORD };
+export type { ResetTokenRecord };
+export type UserAuthState = UserAuthRecord;
 
 declare global {
-  // eslint-disable-next-line no-var
-  var __kosOmiAuthUsers: UserAuthState[] | undefined;
-  // eslint-disable-next-line no-var
-  var __kosOmiResetTokens: ResetTokenRecord[] | undefined;
   // eslint-disable-next-line no-var
   var __kosOmiSeedHashReady: Promise<void> | undefined;
 }
 
 export function getAuthUsersStore(): UserAuthState[] {
-  if (!global.__kosOmiAuthUsers || (global as any).__kosOmiAuthVer !== 11) {
-    global.__kosOmiAuthUsers = SEED_USERS.map((u) => ({
-      ...u,
-      failedLoginCount: 0,
-      lockedUntil: null,
-      plainPassword: SEED_DEFAULT_PASSWORD,
-    }));
-    (global as any).__kosOmiAuthVer = 11;
-    global.__kosOmiSeedHashReady = undefined;
-  }
-  return global.__kosOmiAuthUsers;
+  return loadPersistentStore().authUsers;
 }
 
 /**
- * Akun seed membawa placeholder hash. Saat pertama dibutuhkan, placeholder
- * diganti hash bcrypt cost 12 yang asli dari SEED_DEFAULT_PASSWORD.
- * Dijalankan sekali per proses server.
+ * Akun seed atau akun yang baru dibuat Admin membawa placeholder hash.
+ * Saat dibutuhkan untuk verifikasi login, placeholder diganti hash bcrypt asli
+ * dari plainPassword pengguna (atau SEED_DEFAULT_PASSWORD) lalu disimpan ke disk.
  */
-export function ensureSeedPasswordHashes(): Promise<void> {
-  if (!global.__kosOmiSeedHashReady) {
-    global.__kosOmiSeedHashReady = (async () => {
-      const realHash = await hashPassword(SEED_DEFAULT_PASSWORD);
-      for (const user of getAuthUsersStore()) {
-        if (user.passwordHash === DEFAULT_PASSWORD_HASH) {
-          user.passwordHash = realHash;
-        }
-      }
-    })();
+export async function ensureSeedPasswordHashes(): Promise<void> {
+  const data = loadPersistentStore();
+  let changed = false;
+  for (const user of data.authUsers) {
+    if (user.passwordHash === DEFAULT_PASSWORD_HASH || !user.passwordHash.startsWith('$2')) {
+      const targetPass = user.plainPassword || SEED_DEFAULT_PASSWORD;
+      user.passwordHash = await hashPassword(targetPass);
+      changed = true;
+    }
   }
-  return global.__kosOmiSeedHashReady;
+  if (changed) {
+    savePersistentStore(data);
+  }
 }
 
 export function getResetTokensStore(): ResetTokenRecord[] {
-  if (!global.__kosOmiResetTokens) {
-    global.__kosOmiResetTokens = [];
-  }
-  return global.__kosOmiResetTokens;
+  return loadPersistentStore().resetTokens;
 }
 
 // Helper penentu rute dasbor berdasarkan peran pengguna (PRD Bab 3 & Bab 5)

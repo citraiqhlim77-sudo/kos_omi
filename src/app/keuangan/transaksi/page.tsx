@@ -4,6 +4,8 @@ import { KeuanganNav } from '@/components/keuangan/KeuanganNav';
 import { KeuanganTransaksiClient } from '@/components/keuangan/KeuanganTransaksiClient';
 import { fetchFinanceTransactionsAction } from '@/actions/finance';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Monitoring Gateway Midtrans | Keuangan Kos Omi',
   description: 'Daftar transaksi payment gateway Midtrans Snap, status settlement, dan rekonsiliasi tagihan.',

@@ -107,9 +107,9 @@ export default function RegisterPage() {
       }
 
       const clientUser: AuthUser = {
-        id: `usr-calon-${Date.now()}`,
-        name: fullName.trim(),
-        email: email.trim().toLowerCase(),
+        id: res.user?.id || `usr-calon-${Date.now()}`,
+        name: res.user?.name || fullName.trim(),
+        email: res.user?.email || email.trim().toLowerCase(),
         role: 'CALON_PENGHUNI',
         roleLabel: 'Calon Penghuni',
         dashboardPath: '/calon/dashboard',
@@ -124,12 +124,12 @@ export default function RegisterPage() {
       const targetUrl =
         customRedirect && customRedirect.startsWith('/')
           ? customRedirect
-          : '/kamar';
+          : res.redirectUrl || '/calon/dashboard';
 
       setTimeout(() => {
         router.push(targetUrl);
         router.refresh();
-      }, 1000);
+      }, 800);
     } catch {
       setErrorMessage('Terjadi kendala saat mendaftarkan akun. Silakan coba kembali.');
       setIsLoading(false);

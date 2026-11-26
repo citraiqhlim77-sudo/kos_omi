@@ -3,6 +3,8 @@ import { fetchAdminSettingsAction } from '@/actions/admin';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { AdminPengaturanClient } from '@/components/admin/AdminPengaturanClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Pengaturan Sistem - Administrator Kos Omi',
   description: 'Konfigurasi parameter operasional dan bisnis Kos Omi.',

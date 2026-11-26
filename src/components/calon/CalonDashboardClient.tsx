@@ -514,36 +514,50 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
                     <CheckCircle2 size={18} className="text-emerald-700" />
-                    <span>Pembayaran Terverifikasi Lunas</span>
+                    <span>
+                      {current.status === 'CHECKED_IN'
+                        ? 'Check-in Selesai — Anda Resmi Menjadi Penghuni Aktif'
+                        : 'Pembayaran Terverifikasi Lunas — Siap Check-in'}
+                    </span>
                   </div>
                   <p className="text-xs text-emerald-800 max-w-xl">
-                    Kamar <strong>{current.roomCode}</strong> telah resmi dipesan atas nama Anda. Tanggal rencana masuk Anda adalah <strong>{current.checkInDate}</strong>.
+                    {current.status === 'CHECKED_IN' ? (
+                      <>
+                        Kamar <strong>{current.roomCode}</strong> telah aktif atas nama Anda. Anda kini dapat mengakses penuh Portal Penghuni Aktif.
+                      </>
+                    ) : (
+                      <>
+                        Kamar <strong>{current.roomCode}</strong> telah resmi dipesan atas nama Anda (rencana masuk: <strong>{current.checkInDate}</strong>). Silakan temui Pengelola Kos Omi untuk serah terima kunci (Check-in) agar akses Portal Penghuni Aktif terbuka.
+                      </>
+                    )}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const clientUser = getClientSession();
-                      setClientSession({
-                        id: clientUser?.id || current.userId || `usr-penghuni-${Date.now()}`,
-                        name: displayUserName || current.userName,
-                        email: displayUserEmail || current.userEmail,
-                        role: 'PENGHUNI',
-                        roleLabel: 'Penghuni Aktif',
-                        dashboardPath: '/penghuni/dashboard',
-                        roomCode: current.roomCode,
-                        token: clientUser?.token || `jwt-penghuni-${Date.now()}`,
-                      });
-                      router.push('/penghuni/dashboard');
-                    }}
-                    className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer"
-                  >
-                    <Building size={14} />
-                    <span>Masuk ke Portal Penghuni Aktif</span>
-                    <ArrowRight size={14} />
-                  </button>
+                  {current.status === 'CHECKED_IN' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const clientUser = getClientSession();
+                        setClientSession({
+                          id: clientUser?.id || current.userId || `usr-penghuni-${Date.now()}`,
+                          name: displayUserName || current.userName,
+                          email: displayUserEmail || current.userEmail,
+                          role: 'PENGHUNI',
+                          roleLabel: 'Penghuni Aktif',
+                          dashboardPath: '/penghuni/dashboard',
+                          roomCode: current.roomCode,
+                          token: clientUser?.token || `jwt-penghuni-${Date.now()}`,
+                        });
+                        router.push('/penghuni/dashboard');
+                      }}
+                      className="inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer"
+                    >
+                      <Building size={14} />
+                      <span>Masuk ke Portal Penghuni Aktif</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  )}
                   <NextLink
                     href={`/pembayaran/selesai?order_id=${current.payment.invoiceCode}`}
                     className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all"

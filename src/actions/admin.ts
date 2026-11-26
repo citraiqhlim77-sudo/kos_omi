@@ -12,6 +12,7 @@ import { findUserByEmail, getAuthUsersStore } from '@/lib/auth-store';
 import { hashPassword } from '@/lib/auth/password';
 import { createAuditLog, getUnifiedAuditLogsStore } from '@/lib/audit';
 import { dbCleanupUserRelations } from '@/server/db';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 import { db as drizzleDb, schema } from '@/db';
 import { eq } from '@/db/drizzle';
 
@@ -28,8 +29,9 @@ declare global {
 }
 
 function getDeletedEmailsSet(): Set<string> {
+  const store = loadPersistentStore();
   if (!global.__kosOmiDeletedUserEmails) {
-    global.__kosOmiDeletedUserEmails = new Set<string>();
+    global.__kosOmiDeletedUserEmails = new Set<string>(store.deletedEmails);
   }
   return global.__kosOmiDeletedUserEmails;
 }
@@ -137,152 +139,19 @@ const initialNotificationLogs: NotificationLogRecord[] = [
 ];
 
 function getUsersStore(): AdminUserRecord[] {
-  const deletedEmails = getDeletedEmailsSet();
-  if (!global.__kosOmiAdminUsers || (global as any).__kosOmiUsersVer !== 25) {
-    global.__kosOmiAdminUsers = initialUsers.filter(
-      (u) => !deletedEmails.has(u.email.toLowerCase().trim())
-    );
-    (global as any).__kosOmiUsersVer = 25;
-  }
-
-  const store = global.__kosOmiAdminUsers;
-
-  // 1. Sinkronkan akun dari __kosOmiAuthUsers (kecuali akun yang sudah dihapus permanen)
-  const authUsers = getAuthUsersStore();
-  if (Array.isArray(authUsers)) {
-    for (const au of authUsers) {
-      if (!au?.email) continue;
-      if (deletedEmails.has(au.email.toLowerCase().trim())) continue;
-      const existing = store.find((u) => u.email.toLowerCase() === au.email.toLowerCase());
-      if (!existing) {
-        store.unshift({
-          id: au.id || `usr-${Date.now()}`,
-          name: au.name || au.email.split('@')[0],
-          nim: au.nim || au.email.split('@')[0],
-          email: au.email,
-          phone: au.phone || '-',
-          role: au.role || 'CALON_PENGHUNI',
-          roomCode: au.roomCode,
-          plainPassword: au.plainPassword || 'Password123!',
-          isActive: au.isActive !== false,
-          createdAt: new Date().toISOString(),
-        });
-      } else {
-        if (au.plainPassword) {
-          existing.plainPassword = au.plainPassword;
-        } else if (!existing.plainPassword) {
-          existing.plainPassword = 'Password123!';
-        }
-        if (au.nim && !existing.nim) {
-          existing.nim = au.nim;
-        }
-        if (au.role) {
-          existing.role = au.role;
-        }
-      }
-    }
-  }
-
-  // 2. Sinkronkan calon penghuni yang mengajukan reservasi aktif (kecuali yang sudah dihapus)
-  const dbReservations = (global as any).__kosOmiDbState?.reservations as any[] | undefined;
-  if (Array.isArray(dbReservations)) {
-    for (const rsv of dbReservations) {
-      if (!rsv?.userEmail) continue;
-      if (deletedEmails.has(rsv.userEmail.toLowerCase().trim())) continue;
-      const existing = store.find((u) => u.email.toLowerCase() === rsv.userEmail.toLowerCase());
-      if (!existing) {
-        store.unshift({
-          id: rsv.userId || `usr-rsv-${Date.now()}`,
-          name: rsv.userName || rsv.userEmail,
-          nim: rsv.userNik || rsv.userEmail.split('@')[0],
-          email: rsv.userEmail,
-          phone: rsv.userPhone || '-',
-          role: 'CALON_PENGHUNI',
-          roomCode: rsv.roomCode,
-          plainPassword: 'Password123!',
-          isActive: true,
-          createdAt: rsv.createdAt || new Date().toISOString(),
-        });
-      } else {
-        if (!existing.roomCode && rsv.roomCode) {
-          existing.roomCode = rsv.roomCode;
-        }
-        if (rsv.userNik && !existing.nim) {
-          existing.nim = rsv.userNik;
-        }
-        if (rsv.userName && existing.name.startsWith('Akun Demo')) {
-          existing.name = rsv.userName;
-        }
-      }
-    }
-  }
-
-  // 3. Sinkronkan otomatis penghuni aktif yang sudah check-in (__kosOmiTenancies)
-  const activeTenants = (global as any).__kosOmiTenancies as any[] | undefined;
-  if (Array.isArray(activeTenants)) {
-    for (const ten of activeTenants) {
-      if (ten?.status !== 'AKTIF') continue;
-      const tEmail = ten?.userEmail || ten?.tenantEmail;
-      if (!tEmail) continue;
-      if (deletedEmails.has(tEmail.toLowerCase().trim())) continue;
-      const existing = store.find((u) => u.email.toLowerCase() === tEmail.toLowerCase());
-      if (!existing) {
-        store.unshift({
-          id: ten.id || `usr-ten-${Date.now()}`,
-          name: ten.userName || ten.tenantName || tEmail,
-          email: tEmail,
-          phone: ten.userPhone || ten.tenantPhone || '-',
-          role: 'PENGHUNI',
-          roomCode: ten.roomCode,
-          isActive: true,
-          createdAt: ten.checkInDate || ten.createdAt || new Date().toISOString(),
-        });
-      } else if (ten.status === 'AKTIF' && existing.role !== 'CALON_PENGHUNI') {
-        existing.roomCode = ten.roomCode;
-      }
-    }
-  }
-
-  return store;
+  return loadPersistentStore().adminUsers;
 }
 
 function getSettingsStore(): AdminSettings {
-  if (!global.__kosOmiAdminSettings) {
-    global.__kosOmiAdminSettings = { ...initialSettings };
-  } else {
-    if (global.__kosOmiAdminSettings.semesterPrice === undefined) {
-      global.__kosOmiAdminSettings.semesterPrice = 5000000;
-    }
-    if (!global.__kosOmiAdminSettings.depositPolicy) {
-      global.__kosOmiAdminSettings.depositPolicy = 'Tanpa Biaya Jaminan (Rp 0)';
-    }
-    if (!global.__kosOmiAdminSettings.latePolicy) {
-      global.__kosOmiAdminSettings.latePolicy =
-        'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)';
-    }
-  }
-  return global.__kosOmiAdminSettings;
+  return loadPersistentStore().settings;
 }
 
 function getAuditLogsStore(): AuditLogRecord[] {
-  const store = getUnifiedAuditLogsStore();
-  if (!(global as any).__kosOmiAuditSeeded25) {
-    if (store.length === 0) {
-      store.push(...initialAuditLogs);
-    }
-    (global as any).__kosOmiAuditSeeded25 = true;
-  }
-  return store;
+  return getUnifiedAuditLogsStore();
 }
 
 function getNotifLogsStore(): NotificationLogRecord[] {
-  if (!global.__kosOmiNotifLogs) {
-    global.__kosOmiNotifLogs = [...initialNotificationLogs];
-  } else if (global.__kosOmiNotifLogs.length === 0 && !(global as any).__kosOmiNotifSeeded25) {
-    global.__kosOmiNotifLogs.push(...initialNotificationLogs);
-    (global as any).__kosOmiNotifSeeded25 = true;
-  }
-  return global.__kosOmiNotifLogs;
+  return loadPersistentStore().notificationLogs;
 }
 
 // 1. Fetch Users
@@ -403,7 +272,12 @@ export async function createStaffUserAction(data: {
   }
 
   // Jika akun ini sebelumnya pernah dihapus lalu dibuat ulang oleh Admin, cabut dari daftar deleted
+  const persistent = loadPersistentStore();
+  persistent.deletedEmails = persistent.deletedEmails.filter(
+    (e) => e.toLowerCase().trim() !== resolvedEmail
+  );
   getDeletedEmailsSet().delete(resolvedEmail);
+  savePersistentStore(persistent);
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -424,6 +298,8 @@ export async function createStaffUserAction(data: {
   revalidatePath('/admin/pengguna');
   revalidatePath('/admin/dashboard');
   revalidatePath('/admin/log-aktivitas');
+  revalidatePath('/pengelola/penghuni');
+  revalidatePath('/pengelola/dashboard');
 
   return {
     success: true,
@@ -457,6 +333,7 @@ export async function adminUpdateUserRoleAction(
       authUser.roomCode = target.roomCode;
     }
   }
+  savePersistentStore();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -511,6 +388,7 @@ export async function adminUpdateUserPasswordAction(
     authUser.failedLoginCount = 0;
     authUser.lockedUntil = null;
   }
+  savePersistentStore();
 
   revalidatePath('/admin/pengguna');
 
@@ -547,6 +425,7 @@ export async function toggleUserStatusAction(
   if (authUser) {
     authUser.isActive = user.isActive;
   }
+  savePersistentStore();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -726,6 +605,10 @@ export async function deleteUserAction(
   }
 
   // 3) Tandai email sebagai dihapus permanen & hapus dari auth store + admin users store
+  const persistent = loadPersistentStore();
+  if (!persistent.deletedEmails.includes(normalizedEmail)) {
+    persistent.deletedEmails.push(normalizedEmail);
+  }
   getDeletedEmailsSet().add(normalizedEmail);
   const authStore = getAuthUsersStore();
   for (let i = authStore.length - 1; i >= 0; i--) {
@@ -737,6 +620,7 @@ export async function deleteUserAction(
     }
   }
   users.splice(index, 1);
+  savePersistentStore(persistent);
 
   // 4) Catat aktivitas penghapusan akun ke tabel audit_logs
   await createAuditLog({
@@ -810,7 +694,8 @@ export async function updateAdminSettingsAction(
     store.latePolicy ||
     'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)';
 
-  global.__kosOmiAdminSettings = {
+  const persistent = loadPersistentStore();
+  persistent.settings = {
     ...store,
     ...newSettings,
     semesterPrice: resolvedSemesterPrice,
@@ -820,6 +705,15 @@ export async function updateAdminSettingsAction(
     depositPercentage: resolvedDepositPolicy.includes('1 Semester') ? 100 : 0,
     lateFeeEnabled: resolvedLatePolicy.includes('Denda Keterlambatan Harian Aktif'),
   };
+  global.__kosOmiAdminSettings = persistent.settings;
+
+  // Selaraskan tarif sewa semesteran terbaru ke kamar yang berstatus TERSEDIA
+  for (const room of persistent.rooms) {
+    if (room.status === 'TERSEDIA') {
+      room.monthlyPrice = resolvedSemesterPrice;
+    }
+  }
+  savePersistentStore(persistent);
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -911,6 +805,7 @@ export async function resendNotificationAction(
   log.status = 'SENT';
   log.errorMessage = null;
   log.sentAt = nowIso;
+  savePersistentStore();
 
   try {
     if (drizzleDb.isAvailable && drizzleDb.db) {

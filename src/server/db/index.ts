@@ -3,6 +3,7 @@ import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } f
 import type { PaymentMethodType } from '@/types/finance';
 import { ALL_ROOMS } from '@/data/rooms';
 import { createAuditLog } from '@/lib/audit';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 
 function toPaymentMethodType(methodOrType?: string): PaymentMethodType {
   const lower = (methodOrType || 'qris').toLowerCase();
@@ -123,13 +124,17 @@ function initializeState(): DatabaseState {
   };
 }
 
-// Dapatkan instance global (tanpa auto-reset berulang di runtime)
+// Dapatkan instance database terpadu yang tersimpan secara persisten di disk
 function getDb(): DatabaseState {
-  if (!global.__kosOmiDbState || (global as any).__kosOmiDbVer !== 25) {
-    global.__kosOmiDbState = initializeState();
-    (global as any).__kosOmiDbVer = 25;
-  }
-  return global.__kosOmiDbState;
+  const store = loadPersistentStore();
+  return {
+    rooms: store.rooms,
+    users: store.calonUsers,
+    reservations: store.reservations,
+    payments: store.payments,
+    auditLogs: [],
+    isInitialized: true,
+  };
 }
 
 // ==========================================
@@ -217,6 +222,7 @@ export async function dbUpdateRoomStatus(codeOrId: string, status: RoomStatus): 
   const index = db.rooms.findIndex((r) => r.code === normalized || r.id === codeOrId);
   if (index === -1) return false;
   db.rooms[index].status = status;
+  savePersistentStore();
   return true;
 }
 
@@ -240,6 +246,7 @@ export async function dbUpdateRoomDetail(
     ...db.rooms[index],
     ...data,
   };
+  savePersistentStore();
   return { ...db.rooms[index] };
 }
 
@@ -389,8 +396,15 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
   const countSameRoom = db.reservations.filter((r) => r.roomCode === room.code).length + 1;
   const reservationCode = `RSV-${dateStr}-${cleanCode}${countSameRoom > 1 ? `-${countSameRoom}` : ''}`;
 
+  const store = loadPersistentStore();
+  const normalizedEmail = input.email.toLowerCase().trim();
+  const registeredUser =
+    store.authUsers.find((u) => u.email.toLowerCase().trim() === normalizedEmail) ||
+    store.adminUsers.find((u) => u.email.toLowerCase().trim() === normalizedEmail);
+
   const isSingleSlotBooking = (input.occupation ?? '').includes('1 Slot Sendiri');
-  const monthlyPrice = isSingleSlotBooking ? Math.round(room.monthlyPrice / 2) : room.monthlyPrice;
+  const baseRoomPrice = store.settings?.semesterPrice || room.monthlyPrice;
+  const monthlyPrice = isSingleSlotBooking ? Math.round(baseRoomPrice / 2) : baseRoomPrice;
   const depositAmount = 0;
   const totalInitialPayment = monthlyPrice;
 
@@ -399,16 +413,16 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
     code: reservationCode,
     roomId: room.id,
     roomCode: room.code,
-    userId: `usr-${Date.now()}`,
+    userId: registeredUser?.id || `usr-${Date.now()}`,
     userName: input.fullName,
-    userEmail: input.email.toLowerCase().trim(),
+    userEmail: normalizedEmail,
     userPhone: input.phone.trim(),
     userNik: input.nik.trim(),
     userOccupation: (input.occupation ?? '').trim(),
     emergencyContactName: (input.emergencyName ?? '').trim(),
     emergencyContactPhone: (input.emergencyPhone ?? '').trim(),
     emergencyContactRelation: (input.emergencyRelation ?? '').trim(),
-    ktpUrl: input.ktpUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+    ktpUrl: input.ktpUrl || '/rooms/kamar-1.png',
     checkInDate: input.checkInDate,
     durationMonths: input.durationMonths,
     monthlyPrice,
@@ -424,33 +438,51 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
   // Kunci kamar menjadi DIPESAN segera setelah reservasi diajukan (Menunggu Verifikasi)
   await dbUpdateRoomStatus(room.code, 'DIPESAN');
 
-  // Sinkronkan pemohon reservasi ke daftar pengguna Admin Kos (__kosOmiAdminUsers)
-  if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
-    const existingAdminUser = (global as any).__kosOmiAdminUsers.find(
-      (u: any) => u.email?.toLowerCase() === newReservation.userEmail.toLowerCase()
-    );
-    if (!existingAdminUser) {
-      (global as any).__kosOmiAdminUsers.unshift({
-        id: newReservation.userId,
-        name: newReservation.userName,
-        email: newReservation.userEmail,
-        phone: newReservation.userPhone,
-        role: 'CALON_PENGHUNI',
-        roomCode: room.code,
-        isActive: true,
-        createdAt: newReservation.createdAt,
-      });
-    } else {
-      existingAdminUser.roomCode = room.code;
-      if (newReservation.userName) existingAdminUser.name = newReservation.userName;
-      if (newReservation.userPhone) existingAdminUser.phone = newReservation.userPhone;
-    }
+  // Sinkronkan pemohon reservasi ke daftar pengguna Admin & Calon Penghuni
+  const existingAdminUser = store.adminUsers.find(
+    (u) => u.email.toLowerCase().trim() === normalizedEmail
+  );
+  if (!existingAdminUser) {
+    store.adminUsers.unshift({
+      id: newReservation.userId,
+      name: newReservation.userName,
+      nim: newReservation.userNik || normalizedEmail.split('@')[0],
+      email: newReservation.userEmail,
+      phone: newReservation.userPhone,
+      role: 'CALON_PENGHUNI',
+      roomCode: room.code,
+      isActive: true,
+      createdAt: newReservation.createdAt,
+    });
+  } else {
+    existingAdminUser.roomCode = room.code;
+    if (newReservation.userNik) existingAdminUser.nim = newReservation.userNik;
+    if (newReservation.userPhone) existingAdminUser.phone = newReservation.userPhone;
   }
 
-  if (!(global as any).__kosOmiNotifLogs) {
-    (global as any).__kosOmiNotifLogs = [];
+  const existingCalonIdx = store.calonUsers.findIndex(
+    (c) => c.email.toLowerCase().trim() === normalizedEmail
+  );
+  const calonData: CalonUser = {
+    id: newReservation.userId,
+    name: newReservation.userName,
+    email: newReservation.userEmail,
+    phone: newReservation.userPhone,
+    nik: newReservation.userNik,
+    occupation: newReservation.userOccupation || '-',
+    emergencyContactName: newReservation.emergencyContactName || '-',
+    emergencyContactPhone: newReservation.emergencyContactPhone || newReservation.userPhone,
+    emergencyContactRelation: newReservation.emergencyContactRelation || 'Keluarga',
+    ktpUrl: newReservation.ktpUrl || '/rooms/kamar-1.png',
+    createdAt: newReservation.createdAt,
+  };
+  if (existingCalonIdx === -1) {
+    store.calonUsers.unshift(calonData);
+  } else {
+    store.calonUsers[existingCalonIdx] = calonData;
   }
-  (global as any).__kosOmiNotifLogs.unshift(
+
+  store.notificationLogs.unshift(
     {
       id: `ntf-wa-pengelola-${Date.now()}`,
       recipient: '+62 813-7432-9562',
@@ -475,6 +507,7 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
     }
   );
 
+  savePersistentStore(store);
   return { ...newReservation, room };
 }
 
@@ -486,26 +519,16 @@ export async function dbApproveReservation(reservationCode: string, adminNotes?:
   const index = db.reservations.findIndex((r) => r.code === res.code);
   if (index === -1) return null;
 
-  const expiresAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString(); // 24 jam batas bayar
+  const store = loadPersistentStore();
+  const windowHours = store.settings?.bookingWindowHours || 24;
+  const expiresAt = new Date(Date.now() + windowHours * 3600 * 1000).toISOString();
 
   db.reservations[index].status = 'APPROVED';
   db.reservations[index].expiresAt = expiresAt;
   db.reservations[index].adminNotes = adminNotes || 'Reservasi telah disetujui. Silakan selesaikan pembayaran invoice.';
   db.reservations[index].updatedAt = new Date().toISOString();
 
-  // Kunci status kamar menjadi DIPESAN jika kuota kamar sudah penuh (atau sewa 1 kamar penuh)
-  const activeInRoom = db.reservations.filter(
-    (r) =>
-      r.roomCode === res.roomCode &&
-      (r.status === 'APPROVED' || r.status === 'PAID')
-  );
-  const occupiedSlots = activeInRoom.reduce((sum, r) => {
-    const isOneSlot = (r.userOccupation ?? '').includes('1 Slot Sendiri');
-    return sum + (isOneSlot ? 1 : 2);
-  }, 0);
-  if (occupiedSlots >= 2) {
-    await dbUpdateRoomStatus(res.roomCode, 'DIPESAN');
-  }
+  await dbUpdateRoomStatus(res.roomCode, 'DIPESAN');
 
   // Terbitkan invoice jika belum ada
   const existingInvoice = db.payments.find((p) => p.reservationCode === res.code);
@@ -527,10 +550,7 @@ export async function dbApproveReservation(reservationCode: string, adminNotes?:
     };
     db.payments.unshift(newInvoice);
 
-    if (!(global as any).__kosOmiNotifLogs) {
-      (global as any).__kosOmiNotifLogs = [];
-    }
-    (global as any).__kosOmiNotifLogs.unshift({
+    store.notificationLogs.unshift({
       id: `ntf-approve-${Date.now()}`,
       recipient: res.userPhone,
       recipientName: res.userName,
@@ -543,6 +563,7 @@ export async function dbApproveReservation(reservationCode: string, adminNotes?:
     });
   }
 
+  savePersistentStore(store);
   return await dbGetReservationByCode(reservationCode);
 }
 
@@ -557,16 +578,32 @@ export async function dbRejectReservation(
   const index = db.reservations.findIndex((r) => r.code === res.code);
   if (index === -1) return null;
 
+  const store = loadPersistentStore();
   db.reservations[index].status = 'REJECTED';
   db.reservations[index].rejectionReason = rejectionReason;
   db.reservations[index].updatedAt = new Date().toISOString();
 
-  // Pastikan status kamar tetap atau kembali TERSEDIA jika sebelumnya dikunci
-  const room = await dbGetRoomByCode(res.roomCode);
-  if (room && room.status === 'DIPESAN') {
-    await dbUpdateRoomStatus(res.roomCode, 'TERSEDIA');
+  // Kembalikan status kamar ke TERSEDIA apabila tidak ada reservasi/hunian aktif lain di kamar tersebut
+  const otherActive =
+    db.reservations.some(
+      (r) =>
+        r.code !== res.code &&
+        r.roomCode === res.roomCode &&
+        (r.status === 'PENDING_REVIEW' ||
+          r.status === 'APPROVED' ||
+          r.status === 'PAID' ||
+          r.status === 'CHECKED_IN')
+    ) ||
+    store.tenancies.some((t) => t.roomCode === res.roomCode && t.status === 'AKTIF');
+
+  if (!otherActive) {
+    const room = await dbGetRoomByCode(res.roomCode);
+    if (room && room.status === 'DIPESAN') {
+      await dbUpdateRoomStatus(res.roomCode, 'TERSEDIA');
+    }
   }
 
+  savePersistentStore(store);
   return await dbGetReservationByCode(reservationCode);
 }
 
@@ -616,9 +653,25 @@ export async function dbCancelReservationByUser(
     db.payments[pIndex].status = 'EXPIRED';
   }
 
-  // Kembalikan status kamar dari DIPESAN menjadi TERSEDIA agar bisa langsung dipesan kembali
-  await dbUpdateRoomStatus(res.roomCode, 'TERSEDIA');
+  const store = loadPersistentStore();
+  // Kembalikan status kamar dari DIPESAN menjadi TERSEDIA apabila tidak ada reservasi/hunian aktif lain
+  const otherActive =
+    db.reservations.some(
+      (r) =>
+        r.code !== res.code &&
+        r.roomCode === res.roomCode &&
+        (r.status === 'PENDING_REVIEW' ||
+          r.status === 'APPROVED' ||
+          r.status === 'PAID' ||
+          r.status === 'CHECKED_IN')
+    ) ||
+    store.tenancies.some((t) => t.roomCode === res.roomCode && t.status === 'AKTIF');
 
+  if (!otherActive) {
+    await dbUpdateRoomStatus(res.roomCode, 'TERSEDIA');
+  }
+
+  savePersistentStore(store);
   const updated = await dbGetReservationByCode(res.code);
   return {
     success: true,
@@ -658,6 +711,9 @@ export async function dbCancelExpiredReservations(): Promise<{ cancelledCount: n
     }
   }
 
+  if (cancelledCodes.length > 0) {
+    savePersistentStore();
+  }
   return { cancelledCount: cancelledCodes.length, codes: cancelledCodes };
 }
 
@@ -703,6 +759,7 @@ export async function dbUpdateInvoiceSnap(
 
   db.payments[pIndex].snapToken = snapToken;
   db.payments[pIndex].snapRedirectUrl = snapRedirectUrl;
+  savePersistentStore();
   return { ...db.payments[pIndex] };
 }
 
@@ -883,6 +940,7 @@ export async function dbSettlePayment(
     console.warn('Gagal sinkronisasi transaksi keuangan:', txErr);
   }
 
+  savePersistentStore();
   const updatedReservation = await dbGetReservationByCode(payment.reservationCode);
 
   return {
@@ -949,6 +1007,7 @@ export async function dbSubmitPaymentConfirmation(
     createdAt: nowIso,
   });
 
+  savePersistentStore();
   return {
     success: true,
     message: `Konfirmasi pembayaran via ${(method || 'QRIS').toUpperCase()} berhasil dikirim ke Pengelola! Status akan menjadi LUNAS setelah Pengelola memastikan dana sudah masuk ke rekening/DANA.`,
@@ -991,6 +1050,7 @@ export async function dbResetPaymentToUnpaid(
     }
   }
 
+  savePersistentStore();
   const updatedReservation = await dbGetReservationByCode(payment.reservationCode);
   return {
     success: true,
@@ -1188,6 +1248,7 @@ export async function dbProcessMidtransWebhookResult(
       processedMidtransTransactionIds.add(input.transactionId);
     }
 
+    savePersistentStore();
     const updatedRes = await dbGetReservationByCode(payment.reservationCode);
     return {
       success: true,
@@ -1378,6 +1439,7 @@ export async function dbCleanupUserRelations(params: {
     }
   }
 
+  savePersistentStore();
   return { releasedRooms };
 }
 

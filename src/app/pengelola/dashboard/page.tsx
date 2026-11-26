@@ -3,7 +3,10 @@ import { Metadata } from 'next';
 import NextLink from 'next/link';
 import { fetchRoomStatsAction, fetchRoomsAction } from '@/actions/rooms';
 import { fetchAllReservationsAction } from '@/actions/reservations';
-import { fetchCheckinCandidatesAction } from '@/actions/tenancy';
+import {
+  fetchCheckinCandidatesAction,
+  fetchRegisteredCalonAccountsAction,
+} from '@/actions/tenancy';
 import { getOccupancyAnalytics } from '@/lib/reports/revenue';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import {
@@ -34,12 +37,18 @@ export const metadata: Metadata = {
 };
 
 export default async function PengelolaDashboardPage() {
-  const [stats, rooms, reservations, checkinRes] = await Promise.all([
+  const [stats, rooms, reservations, checkinRes, calonRes] = await Promise.all([
     fetchRoomStatsAction(),
     fetchRoomsAction(),
     fetchAllReservationsAction(),
     fetchCheckinCandidatesAction(),
+    fetchRegisteredCalonAccountsAction(),
   ]);
+
+  const registeredCalonCount = calonRes.accounts.length;
+  const unbookedCalonCount = calonRes.accounts.filter(
+    (a) => a.reservationStatus === 'BELUM_RESERVASI'
+  ).length;
 
   const pendingReservationsCount = reservations.filter(
     (r) => r.status === 'PENDING_REVIEW'
@@ -89,7 +98,17 @@ export default async function PengelolaDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <NextLink
+              href="/pengelola/penghuni?tab=calon"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              <span>
+                Calon Terdaftar ({registeredCalonCount}
+                {unbookedCalonCount > 0 ? ` · ${unbookedCalonCount} Baru` : ''})
+              </span>
+            </NextLink>
             <NextLink
               href="/pengelola/kamar"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-colors"

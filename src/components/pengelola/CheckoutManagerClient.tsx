@@ -33,6 +33,10 @@ export const CheckoutManagerClient: React.FC<CheckoutManagerClientProps> = ({
   const [tenants, setTenants] = useState<TenancyRecord[]>(
     initialTenants.filter((t) => t.status === 'AKTIF')
   );
+
+  React.useEffect(() => {
+    setTenants(initialTenants.filter((t) => t.status === 'AKTIF'));
+  }, [initialTenants]);
   const [selectedTenant, setSelectedTenant] = useState<TenancyRecord | null>(null);
 
   // Modal States

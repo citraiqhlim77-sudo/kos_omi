@@ -4,6 +4,8 @@ import { fetchRoomsAction } from '@/actions/rooms';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { KamarManagerClient } from '@/components/pengelola/KamarManagerClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Kelola 67 Kamar - Operasional Pengelola | Kos Omi',
   description:

@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { RoomPhotoGallery } from '@/components/kamar/RoomPhotoGallery';
 import { RoomBookingCta } from '@/components/kamar/RoomBookingCta';
 import { getCurrentUser } from '@/lib/auth-server';
+
+export const dynamic = 'force-dynamic';
 import {
   Maximize2,
   Bed,

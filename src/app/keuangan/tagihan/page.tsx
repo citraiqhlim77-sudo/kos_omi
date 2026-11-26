@@ -4,6 +4,8 @@ import { KeuanganNav } from '@/components/keuangan/KeuanganNav';
 import { KeuanganTagihanClient } from '@/components/keuangan/KeuanganTagihanClient';
 import { fetchOverdueBillsAction } from '@/actions/finance';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Monitoring Tagihan Terlambat | Keuangan Kos Omi Sungai Bangek',
   description: 'Monitoring piutang sewa bulanan dan pengiriman pengingat tagihan penghuni Kos Omi Sungai Bangek, Padang.',

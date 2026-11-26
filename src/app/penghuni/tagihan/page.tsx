@@ -4,6 +4,8 @@ import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniTagihanClient } from '@/components/penghuni/PenghuniTagihanClient';
 import { fetchMonthlyBillsAction } from '@/actions/billing';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Daftar Tagihan Sewa | Kos Omi',
   description: 'Daftar lengkap tagihan sewa bulanan, status pelunasan, jatuh tempo tanggal 5, dan kuitansi resmi Kos Omi.',

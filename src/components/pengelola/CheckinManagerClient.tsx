@@ -34,6 +34,10 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
 }) => {
   const router = useRouter();
   const [candidates, setCandidates] = useState<CheckinCandidate[]>(initialCandidates);
+
+  React.useEffect(() => {
+    setCandidates(initialCandidates);
+  }, [initialCandidates]);
   const [selectedCandidate, setSelectedCandidate] = useState<CheckinCandidate | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -374,6 +378,7 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
                   src={previewKtpUrl}
                   alt="KTP Calon Penghuni"
                   fill
+                  unoptimized={previewKtpUrl.startsWith('data:')}
                   className="object-cover"
                 />
               </div>

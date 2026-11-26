@@ -11,6 +11,7 @@
 
 import { MonthlyBill } from '@/types/billing';
 import { dbAddAuditLog } from '@/server/db';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 import { revalidatePath } from 'next/cache';
 import { db as drizzleDb, schema } from '@/db';
 import { eq } from '@/db/drizzle';
@@ -124,30 +125,22 @@ declare global {
 }
 
 export function getActiveTenanciesStore(): BillingTenancy[] {
-  // 1. Cek global tenancies dari actions/tenancy jika ada
-  if (global.__kosOmiTenancies && global.__kosOmiTenancies.length > 0) {
-    return global.__kosOmiTenancies
-      .filter((t: any) => t.status === 'AKTIF')
-      .map((t: any) => ({
-        id: t.id,
-        userId: t.userId,
-        tenantName: t.userName,
-        tenantEmail: t.userEmail,
-        tenantPhone: t.userPhone,
-        roomCode: t.roomCode,
-        monthlyPrice: t.monthlyPrice,
-        dueDay: t.dueDay || 5,
-        status: t.status,
-        startDate: t.checkInDate,
-        contractEndDate: t.contractEndDate,
-      }));
-  }
-
-  // 2. Fallback global memory
-  if (!global.__kosOmiActiveTenancies) {
-    global.__kosOmiActiveTenancies = [...DEFAULT_TENANCIES];
-  }
-  return global.__kosOmiActiveTenancies.filter((t) => t.status === 'AKTIF');
+  const store = loadPersistentStore();
+  return store.tenancies
+    .filter((t) => t.status === 'AKTIF')
+    .map((t) => ({
+      id: t.id,
+      userId: t.userId,
+      tenantName: t.userName,
+      tenantEmail: t.userEmail,
+      tenantPhone: t.userPhone,
+      roomCode: t.roomCode,
+      monthlyPrice: t.monthlyPrice,
+      dueDay: t.dueDay || 5,
+      status: t.status,
+      startDate: t.checkInDate,
+      contractEndDate: t.contractEndDate,
+    }));
 }
 
 /**
@@ -174,19 +167,10 @@ export async function generateMonthlyBills(
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
-  // Akses global storage tagihan bulanan (inisialisasi otomatis jika belum ada)
-  if (!global.__kosOmiBillingState) {
-    global.__kosOmiBillingState = {
-      bills: [],
-      profiles: [],
-    };
-  }
-  const globalState = global.__kosOmiBillingState;
-  const existingBills = globalState.bills;
-
-  // Akses database pembayaran server
-  const serverDb = (global as any).__kosOmiServerDb;
-  const serverPayments = serverDb ? serverDb.payments : [];
+  // Akses penyimpanan persisten terpadu untuk tagihan, pembayaran, dan hunian aktif
+  const store = loadPersistentStore();
+  const existingBills = store.bills;
+  const serverPayments = store.payments;
 
   const activeTenancies = getActiveTenanciesStore();
 
@@ -279,10 +263,8 @@ export async function generateMonthlyBills(
       notes: `Tagihan sewa kamar ${tenancy.roomCode} periode ${getMonthName(targetMonth)} ${targetYear}. Jatuh tempo ${dueDateFormatted}.`,
     };
 
-    // A. Simpan ke Global State Tagihan Penghuni
-    if (globalState) {
-      globalState.bills.unshift(newBill);
-    }
+    // A. Simpan ke Store Tagihan Penghuni
+    existingBills.unshift(newBill);
 
     // B. Simpan ke Server Payments Database (agar dapat dibayar via Midtrans Snap)
     if (serverPayments) {
@@ -363,8 +345,8 @@ export async function generateMonthlyBills(
   const overdueInvoices: OverdueInvoiceSummary[] = [];
   let markedOverdueCount = 0;
 
-  if (globalState && globalState.bills) {
-    for (const bill of globalState.bills) {
+  if (existingBills) {
+    for (const bill of existingBills) {
       if (bill.status === 'BELUM_BAYAR') {
         const dueDate = parseDueDate(bill.dueDate);
         if (dueDate) {
@@ -465,6 +447,8 @@ export async function generateMonthlyBills(
       }
     }
   }
+
+  savePersistentStore(store);
 
   // 4. Catat ke Audit Log
   await dbAddAuditLog({

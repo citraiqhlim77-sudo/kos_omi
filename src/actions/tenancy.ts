@@ -10,6 +10,7 @@ import {
 } from '@/server/db';
 import { findUserById, findUserByEmail } from '@/lib/auth-store';
 import { requireRole } from '@/lib/auth-server';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 import { db as drizzleDb, schema } from '@/db';
 import { eq } from '@/db/drizzle';
 import {
@@ -30,19 +31,87 @@ const initialTenancies: TenancyRecord[] = [];
 const initialCheckinCandidates: CheckinCandidate[] = [];
 
 function getTenanciesStore(): TenancyRecord[] {
-  if (!global.__kosOmiTenancies || (global as any).__kosOmiTenanciesVer !== 20) {
-    global.__kosOmiTenancies = [...initialTenancies];
-    (global as any).__kosOmiTenanciesVer = 20;
-  }
-  return global.__kosOmiTenancies;
+  return loadPersistentStore().tenancies;
 }
 
 function getCheckinCandidatesStore(): CheckinCandidate[] {
-  if (!global.__kosOmiCheckinCandidates || (global as any).__kosOmiCandidatesVer !== 20) {
-    global.__kosOmiCheckinCandidates = [...initialCheckinCandidates];
-    (global as any).__kosOmiCandidatesVer = 20;
-  }
-  return global.__kosOmiCheckinCandidates;
+  return loadPersistentStore().checkinCandidates;
+}
+
+export interface RegisteredCalonAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  nim?: string;
+  createdAt: string;
+  isActive: boolean;
+  roomCode?: string;
+  reservationCode?: string;
+  reservationStatus:
+    | 'BELUM_RESERVASI'
+    | 'PENDING_REVIEW'
+    | 'APPROVED'
+    | 'PAID'
+    | 'REJECTED'
+    | 'CANCELLED';
+  paymentStatus?: string;
+}
+
+// 1b. Ambil seluruh akun Calon Penghuni yang sudah mendaftar di sistem (agar Pengelola langsung melihat setiap akun baru)
+export async function fetchRegisteredCalonAccountsAction(): Promise<{
+  success: boolean;
+  accounts: RegisteredCalonAccount[];
+}> {
+  const store = loadPersistentStore();
+  const calonUsers = store.adminUsers.filter((u) => u.role === 'CALON_PENGHUNI' && u.isActive);
+
+  const accounts: RegisteredCalonAccount[] = calonUsers.map((u) => {
+    const emailNorm = u.email.toLowerCase().trim();
+    const userResList = store.reservations.filter(
+      (r) => r.userEmail.toLowerCase().trim() === emailNorm
+    );
+    const activeRes =
+      userResList.find(
+        (r) => r.status === 'PENDING_REVIEW' || r.status === 'APPROVED' || r.status === 'PAID'
+      ) || userResList[0];
+
+    const payment = activeRes
+      ? store.payments.find((p) => p.reservationCode === activeRes.code)
+      : undefined;
+
+    let reservationStatus: RegisteredCalonAccount['reservationStatus'] = 'BELUM_RESERVASI';
+    if (activeRes) {
+      if (activeRes.status === 'PENDING_REVIEW') reservationStatus = 'PENDING_REVIEW';
+      else if (activeRes.status === 'APPROVED') reservationStatus = 'APPROVED';
+      else if (activeRes.status === 'PAID') reservationStatus = 'PAID';
+      else if (activeRes.status === 'REJECTED') reservationStatus = 'REJECTED';
+      else if (activeRes.status === 'CANCELLED' || activeRes.status === 'EXPIRED') {
+        reservationStatus = 'CANCELLED';
+      }
+    }
+
+    return {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      nim: u.nim,
+      createdAt: u.createdAt,
+      isActive: u.isActive,
+      roomCode:
+        reservationStatus === 'PENDING_REVIEW' ||
+        reservationStatus === 'APPROVED' ||
+        reservationStatus === 'PAID'
+          ? activeRes?.roomCode || u.roomCode
+          : undefined,
+      reservationCode: activeRes?.code,
+      reservationStatus,
+      paymentStatus: payment?.status,
+    };
+  });
+
+  return { success: true, accounts };
 }
 
 // 1. Fetch All Active Tenants (Hanya penghuni dengan status AKTIF agar penghuni yang sudah Check-Out hilang permanen)
@@ -149,6 +218,7 @@ export async function fetchCheckinCandidatesAction(): Promise<{
     console.warn('Gagal menyinkronkan kandidat check-in dari database reservasi:', err);
   }
 
+  savePersistentStore();
   return {
     success: true,
     candidates: store.filter((c) => c.status === 'LUNAS'),
@@ -390,7 +460,7 @@ export async function checkInTenant(
   // F. 3) Ubah status kamar menjadi TERISI (OCCUPIED)
   await dbUpdateRoomStatus(candidate.roomCode, 'TERISI');
 
-  // G. 4) Ubah peran pengguna (CALON_PENGHUNI -> PENGHUNI) di seluruh store
+  // G. 4) Ubah peran pengguna (CALON_PENGHUNI -> PENGHUNI) di seluruh store & simpan ke disk
   const user = findUserById(candidate.userId) || findUserByEmail(candidate.userEmail);
   if (user) {
     user.role = 'PENGHUNI';
@@ -407,6 +477,7 @@ export async function checkInTenant(
       adminUser.roomCode = candidate.roomCode;
     }
   }
+  savePersistentStore();
 
   // H. Catat ke database Neon PostgreSQL Drizzle ORM secara berurutan (tanpa db.transaction) jika terhubung
   try {
@@ -605,6 +676,26 @@ export async function checkOutTenant(
   if (remainingActiveInRoom.length === 0) {
     await dbUpdateRoomStatus(tenant.roomCode, 'TERSEDIA');
   }
+
+  // Kembalikan peran user ke CALON_PENGHUNI tanpa kamar aktif agar sinkron di Admin & Login
+  const authMatch = findUserById(tenant.userId) || findUserByEmail(tenant.userEmail);
+  if (authMatch && authMatch.role === 'PENGHUNI') {
+    authMatch.role = 'CALON_PENGHUNI';
+    authMatch.roomCode = undefined;
+  }
+  if ((global as any).__kosOmiAdminUsers && Array.isArray((global as any).__kosOmiAdminUsers)) {
+    const admMatch = (global as any).__kosOmiAdminUsers.find(
+      (u: any) =>
+        u.id === tenant.userId ||
+        u.email?.toLowerCase().trim() === tenant.userEmail.toLowerCase().trim()
+    );
+    if (admMatch && admMatch.role === 'PENGHUNI') {
+      admMatch.role = 'CALON_PENGHUNI';
+      admMatch.roomCode = undefined;
+    }
+  }
+
+  savePersistentStore();
 
   // Jika Neon Postgres Drizzle DB aktif:
   try {

@@ -7,6 +7,7 @@ vi.mock('next/cache', () => ({
 }));
 
 import { generateMonthlyBills } from '@/lib/billing/generate';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 
 /**
  * Task 3.7: Unit Test Perhitungan & Generator Tagihan Bulanan
@@ -18,13 +19,46 @@ import { generateMonthlyBills } from '@/lib/billing/generate';
  */
 describe('Billing Calculation & Generator Logic', () => {
   beforeEach(() => {
-    // Reset global billing state untuk isolasi test
-    if (global.__kosOmiBillingState) {
-      global.__kosOmiBillingState = {
-        bills: [],
-        lastGeneratedMonth: null,
-      };
-    }
+    const store = loadPersistentStore();
+    store.bills = [];
+    store.payments = [];
+    store.tenancies = [
+      {
+        id: 'ten-test-1',
+        userId: 'usr-test-1',
+        userName: 'Zahra Aulia Putri',
+        userEmail: 'zahra.aulia@uinib.ac.id',
+        userPhone: '081234567890',
+        userNik: '2214010045',
+        idCardUrl: '/rooms/kamar-1.png',
+        roomId: 'room-1',
+        roomCode: '1',
+        roomFloor: 1,
+        roomType: 'STANDAR_AC',
+        monthlyPrice: 5000000,
+        depositAmount: 0,
+        checkInDate: '2026-01-10',
+        contractEndDate: '2026-12-10',
+        checkOutDate: null,
+        dueDay: 5,
+        status: 'AKTIF',
+        depositRefunded: false,
+        unpaidBillsCount: 0,
+        totalUnpaidAmount: 0,
+        unpaidInvoices: [],
+        pastInvoices: [],
+        emergencyContact: {
+          name: 'Hj. Rahmawati',
+          relation: 'Orang Tua',
+          phone: '081363459988',
+        },
+      },
+    ];
+    savePersistentStore(store);
+    (global as any).__kosOmiBillingStore = {
+      bills: [],
+      lastGeneratedMonth: null,
+    };
   });
 
   it('harus menghasilkan nomor invoice dengan format INV-[YYYYMM]-[5 digit urut]', async () => {

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { TenantProfile } from '@/types/billing';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { updateTenantProfileAction } from '@/actions/billing';
+import { changeUserPasswordAction } from '@/actions/auth';
 import {
   User,
   Mail,
@@ -63,6 +64,22 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
         setFeedback({
           type: 'error',
           message: 'Konfirmasi kata sandi baru tidak cocok.',
+        });
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    if (newPassword) {
+      const pwRes = await changeUserPasswordAction({
+        email,
+        currentPassword,
+        newPassword,
+      });
+      if (!pwRes.success) {
+        setFeedback({
+          type: 'error',
+          message: pwRes.message,
         });
         setIsSaving(false);
         return;

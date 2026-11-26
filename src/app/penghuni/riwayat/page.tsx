@@ -4,6 +4,8 @@ import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniRiwayatClient } from '@/components/penghuni/PenghuniRiwayatClient';
 import { fetchPaymentHistoryAction } from '@/actions/billing';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Riwayat Pembayaran Sewa | Kos Omi Sungai Bangek',
   description: 'Arsip riwayat pembayaran sewa bulanan dan kuitansi lunas Kos Omi Sungai Bangek, Padang (dekat UIN Imam Bonjol).',

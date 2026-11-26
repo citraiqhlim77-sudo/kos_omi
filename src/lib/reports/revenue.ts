@@ -7,6 +7,7 @@ import {
   OperationalDecisionAnalytics,
 } from '@/types/finance';
 import { ALL_ROOMS } from '@/data/rooms';
+import { loadPersistentStore } from '@/server/persistence';
 
 /**
  * Label tampilan UI untuk kategori transaksi tanpa mengubah enum database ('SEWA_BULANAN' | 'BOOKING' | 'DEPOSIT' | 'DENDA')
@@ -129,10 +130,11 @@ export const defaultFallbackTransactions: PaymentTransaction[] = [];
  * dari invoice reservasi (global.__kosOmiDbState.payments) dan tagihan sewa (global.__kosOmiBillingState.bills).
  */
 export function getSyncedTransactionsList(): PaymentTransaction[] {
-  const globalTxs = global.__kosOmiTransactions || [];
-  const dbPayments = ((global as any).__kosOmiDbState?.payments as any[] | undefined) || [];
-  const dbReservations = ((global as any).__kosOmiDbState?.reservations as any[] | undefined) || [];
-  const billingBills = ((global as any).__kosOmiBillingState?.bills as any[] | undefined) || [];
+  const store = loadPersistentStore();
+  const globalTxs = store.transactions || [];
+  const dbPayments = store.payments || [];
+  const dbReservations = store.reservations || [];
+  const billingBills = store.bills || [];
 
   const byOrder = new Map<string, PaymentTransaction>();
 
@@ -486,8 +488,8 @@ export function generateRevenueCsv(
  * Lantai 1 (kamar 1–33) vs Lantai 2 (kamar 34–67).
  */
 export function getOccupancyAnalytics(): OccupancyAnalytics {
-  const dbRooms = (global as any).__kosOmiDbState?.rooms as typeof ALL_ROOMS | undefined;
-  const rooms = Array.isArray(dbRooms) && dbRooms.length > 0 ? dbRooms : ALL_ROOMS;
+  const store = loadPersistentStore();
+  const rooms = Array.isArray(store.rooms) && store.rooms.length > 0 ? store.rooms : ALL_ROOMS;
 
   // Gunakan satu sumber status kamar (db.rooms) yang sama persis dengan kartu ringkasan atas dan tabel bawah di /pengelola/dashboard
   const computeFloor = (floorNum: number, label: string) => {

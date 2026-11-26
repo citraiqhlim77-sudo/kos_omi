@@ -119,11 +119,46 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
   const handleSimulateKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Buat URL object lokal untuk pratinjau instan
-      const objectUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, ktpUrl: objectUrl }));
+    if (!file) return;
+
+    if (file.type === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setFormData((prev) => ({ ...prev, ktpUrl: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
     }
+
+    // Kompres gambar KTM/KTP ke Data URI JPEG ringan agar tersimpan permanen di server dan dapat dibuka Pengelola
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!dataUrl) return;
+      const img = new window.Image();
+      img.onload = () => {
+        const maxWidth = 1000;
+        const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.8);
+          setFormData((prev) => ({ ...prev, ktpUrl: compressed }));
+        } else {
+          setFormData((prev) => ({ ...prev, ktpUrl: dataUrl }));
+        }
+      };
+      img.onerror = () => {
+        setFormData((prev) => ({ ...prev, ktpUrl: dataUrl }));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

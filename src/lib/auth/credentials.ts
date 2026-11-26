@@ -1,6 +1,7 @@
 import type { UserRole } from '@/types/auth';
 import { verifyPassword } from '@/lib/auth/password';
 import { ensureSeedPasswordHashes, findUserByEmail } from '@/lib/auth-store';
+import { savePersistentStore } from '@/server/persistence';
 
 // PRD Task 2.2: maksimal 5 kali gagal, lalu akun dikunci 15 menit.
 export const MAX_FAILED_LOGIN = 5;
@@ -24,8 +25,6 @@ export async function verifyCredentials(email: string, password: string): Promis
 
   const user = findUserByEmail(email);
 
-  // Email tidak terdaftar: tetap jalankan bcrypt agar waktu respons setara
-  // dan keberadaan akun tidak bisa ditebak dari lamanya proses.
   if (!user) {
     await verifyPassword(password, '$2a$12$' + 'x'.repeat(53));
     return { ok: false, reason: 'INVALID', remainingAttempts: null };
@@ -41,19 +40,22 @@ export async function verifyCredentials(email: string, password: string): Promis
     if (now < lockEnd) {
       return { ok: false, reason: 'LOCKED', minutesLeft: Math.ceil((lockEnd - now) / 60000) };
     }
-    // Masa kunci habis: mulai hitungan baru.
     user.lockedUntil = null;
     user.failedLoginCount = 0;
   }
 
-  const isMatch = await verifyPassword(password, user.passwordHash);
+  const isMatch =
+    (user.plainPassword && user.plainPassword === password) ||
+    (await verifyPassword(password, user.passwordHash));
 
   if (!isMatch) {
     user.failedLoginCount += 1;
     if (user.failedLoginCount >= MAX_FAILED_LOGIN) {
       user.lockedUntil = new Date(now + LOCK_DURATION_MS).toISOString();
+      savePersistentStore();
       return { ok: false, reason: 'LOCKED', minutesLeft: LOCK_DURATION_MS / 60000 };
     }
+    savePersistentStore();
     return {
       ok: false,
       reason: 'INVALID',
@@ -63,6 +65,8 @@ export async function verifyCredentials(email: string, password: string): Promis
 
   user.failedLoginCount = 0;
   user.lockedUntil = null;
+  user.lastLoginAt = new Date().toISOString();
+  savePersistentStore();
 
   return {
     ok: true,

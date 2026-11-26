@@ -31,6 +31,10 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
 }) => {
   const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+
+  React.useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [approvingCode, setApprovingCode] = useState<string | null>(null);

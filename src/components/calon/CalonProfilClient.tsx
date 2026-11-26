@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { getClientSession } from '@/lib/auth-client';
+import { getClientSession, setClientSession } from '@/lib/auth-client';
+import { updateCalonProfileAction, changeUserPasswordAction } from '@/actions/auth';
 import { User, Phone, Mail, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface CalonProfilClientProps {
@@ -15,6 +17,7 @@ interface CalonProfilClientProps {
 }
 
 export const CalonProfilClient: React.FC<CalonProfilClientProps> = ({ initialUser }) => {
+  const router = useRouter();
   const [profileData, setProfileData] = useState({
     name: initialUser.name,
     email: initialUser.email,
@@ -49,11 +52,25 @@ export const CalonProfilClient: React.FC<CalonProfilClientProps> = ({ initialUse
     setProfileSuccess(false);
 
     startTransition(async () => {
-      // Simulasi update data profil di server
-      setTimeout(() => {
-        setProfileSuccess(true);
-        setTimeout(() => setProfileSuccess(false), 4000);
-      }, 500);
+      const res = await updateCalonProfileAction({
+        email: profileData.email,
+        name: profileData.name,
+        phone: profileData.phone,
+      });
+      if (!res.success) {
+        setErrorMessage(res.message);
+        return;
+      }
+      const clientUser = getClientSession();
+      if (clientUser) {
+        setClientSession({
+          ...clientUser,
+          name: profileData.name.trim(),
+        });
+      }
+      setProfileSuccess(true);
+      router.refresh();
+      setTimeout(() => setProfileSuccess(false), 4000);
     });
   };
 
@@ -73,16 +90,22 @@ export const CalonProfilClient: React.FC<CalonProfilClientProps> = ({ initialUse
     }
 
     startTransition(async () => {
-      // Simulasi ganti password di server
-      setTimeout(() => {
-        setPasswordSuccess(true);
-        setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-        setTimeout(() => setPasswordSuccess(false), 4000);
-      }, 600);
+      const res = await changeUserPasswordAction({
+        email: profileData.email,
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      if (!res.success) {
+        setErrorMessage(res.message);
+        return;
+      }
+      setPasswordSuccess(true);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      setTimeout(() => setPasswordSuccess(false), 4000);
     });
   };
 

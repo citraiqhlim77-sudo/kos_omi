@@ -4,6 +4,8 @@ import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniProfilClient } from '@/components/penghuni/PenghuniProfilClient';
 import { fetchTenantProfileAction } from '@/actions/billing';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Profil Penghuni | Kos Omi',
   description: 'Kelola data diri, kontak WhatsApp, nomor darurat, dan kata sandi akun penghuni Kos Omi.',

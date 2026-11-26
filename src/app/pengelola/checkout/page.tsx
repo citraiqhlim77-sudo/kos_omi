@@ -4,6 +4,8 @@ import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { CheckoutManagerClient } from '@/components/pengelola/CheckoutManagerClient';
 import { fetchAllTenantsAction } from '@/actions/tenancy';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Check-out Penghuni | Pengelola Kos Omi',
   description: 'Pemeriksaan tagihan sewa bulanan dan proses check-out kamar Kos Omi Sungai Bangek, Padang.',

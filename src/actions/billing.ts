@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentUser, requireRole } from '@/lib/auth-server';
 import { dispatchPaymentSuccess } from '@/lib/notify/dispatch';
 import { dbGetReservationsByUserEmail } from '@/server/db';
+import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
 
 // In-Memory Global Storage untuk Tagihan & Profil Penghuni
 interface BillingState {
@@ -25,11 +26,11 @@ function initBillingState(): BillingState {
 }
 
 function getBillingDb(): BillingState {
-  if (!global.__kosOmiBillingState || (global as any).__kosOmiBillingVer !== 20) {
-    global.__kosOmiBillingState = initBillingState();
-    (global as any).__kosOmiBillingVer = 20;
-  }
-  return global.__kosOmiBillingState;
+  const store = loadPersistentStore();
+  return {
+    bills: store.bills,
+    profiles: store.profiles,
+  };
 }
 
 /**
@@ -92,6 +93,7 @@ async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
         ...tenancyProfile,
       };
     }
+    savePersistentStore();
     return resolvedEmail;
   }
 
@@ -175,6 +177,7 @@ async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
         ...syncedBill,
       };
     }
+    savePersistentStore();
   }
 
   return resolvedEmail;
@@ -356,8 +359,35 @@ export async function updateTenantProfileAction(
       ...data,
     };
 
+    // Sinkronkan juga perubahan Nama / No. WA / NIK ke authUsers, adminUsers, dan tenancies
+    const store = loadPersistentStore();
+    const updatedProfile = db.profiles[pIndex];
+    const targetEmail = (updatedProfile.email || effectiveEmail).toLowerCase().trim();
+    const authUser = store.authUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+    if (authUser) {
+      if (data.name) authUser.name = data.name;
+      if (data.phone) authUser.phone = data.phone.replace(/^0/, '62').replace(/^\+/, '');
+      if (data.nik) authUser.nim = data.nik;
+    }
+    const adminUser = store.adminUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+    if (adminUser) {
+      if (data.name) adminUser.name = data.name;
+      if (data.phone) adminUser.phone = data.phone;
+      if (data.nik) adminUser.nim = data.nik;
+    }
+    for (const ten of store.tenancies) {
+      if (ten.userEmail.toLowerCase().trim() === targetEmail && ten.status === 'AKTIF') {
+        if (data.name) ten.userName = data.name;
+        if (data.phone) ten.userPhone = data.phone;
+        if (data.nik) ten.userNik = data.nik;
+      }
+    }
+    savePersistentStore(store);
+
     revalidatePath('/penghuni/profil');
     revalidatePath('/penghuni/dashboard');
+    revalidatePath('/admin/pengguna');
+    revalidatePath('/pengelola/penghuni');
 
     return {
       success: true,
@@ -390,6 +420,7 @@ export async function payMonthlyBillAction(
   db.bills[index].status = 'LUNAS';
   db.bills[index].paymentMethod = method;
   db.bills[index].paidAt = new Date().toISOString();
+  savePersistentStore();
 
   revalidatePath('/penghuni/dashboard');
   revalidatePath('/penghuni/tagihan');
