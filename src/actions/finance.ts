@@ -50,7 +50,48 @@ function getTransactionsStore(): PaymentTransaction[] {
 }
 
 function getOverdueBillsStore(): OverdueBill[] {
-  return loadPersistentStore().overdueBills;
+  const persistent = loadPersistentStore();
+  let changed = false;
+
+  // Hapus dari overdueBills jika tagihan aslinya sudah dilunasi
+  const settledInvoices = new Set(
+    persistent.bills.filter((b) => b.status === 'LUNAS').map((b) => b.invoiceCode)
+  );
+  if (settledInvoices.size > 0) {
+    const beforeLen = persistent.overdueBills.length;
+    persistent.overdueBills = persistent.overdueBills.filter(
+      (ob) => !settledInvoices.has(ob.invoiceNumber)
+    );
+    if (persistent.overdueBills.length !== beforeLen) changed = true;
+  }
+
+  // Sinkronkan tagihan berstatus TERLAMBAT dari store.bills ke overdueBills
+  for (const b of persistent.bills) {
+    if (b.status === 'TERLAMBAT') {
+      const exists = persistent.overdueBills.some((ob) => ob.invoiceNumber === b.invoiceCode);
+      if (!exists) {
+        persistent.overdueBills.unshift({
+          id: b.id,
+          invoiceNumber: b.invoiceCode,
+          tenantName: b.tenantName,
+          roomCode: b.roomCode,
+          tenantPhone: b.tenantPhone,
+          amount: b.totalAmount || b.rentAmount,
+          dueDate: b.dueDate,
+          daysOverdue: 4,
+          periodMonth: b.periodMonth,
+          status: 'TERLAMBAT',
+          reminderCount: 0,
+        });
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    savePersistentStore(persistent);
+  }
+  return persistent.overdueBills;
 }
 
 // 1. Fetch Finance Dashboard Stats (100% Sinkron dari Satu Sumber Transaksi Terverifikasi)
@@ -254,8 +295,38 @@ export async function sendPaymentReminderAction(
     return { success: false, message: 'Data tagihan tidak ditemukan' };
   }
 
+  const nowIso = new Date().toISOString();
   bill.reminderCount += 1;
-  bill.lastReminderSentAt = new Date().toISOString();
+  bill.lastReminderSentAt = nowIso;
+
+  const persistent = loadPersistentStore();
+  persistent.notificationLogs.unshift({
+    id: `ntf-rem-${Date.now()}`,
+    recipient: bill.tenantPhone,
+    recipientName: bill.tenantName,
+    channel: 'WHATSAPP',
+    template: `pengingat_tagihan_terlambat_${bill.invoiceNumber}_kamar_${bill.roomCode}`,
+    status: 'SENT',
+    attempts: 1,
+    sentAt: nowIso,
+    createdAt: nowIso,
+  });
+  savePersistentStore(persistent);
+
+  await createAuditLog({
+    userId: 'usr-keuangan-1',
+    actorName: 'Aisyah Fitriani (Staf Keuangan)',
+    actorRole: 'KEUANGAN',
+    action: 'OVERDUE_REMINDER_SENT',
+    category: 'notifications',
+    entityId: bill.invoiceNumber,
+    description: `Mengirim pengingat tagihan terlambat ke ${bill.tenantName} (Kamar ${bill.roomCode})`,
+    meta: {
+      invoiceCode: bill.invoiceNumber,
+      roomCode: bill.roomCode,
+      amount: bill.amount,
+    },
+  });
 
   // Trigger Notifikasi Otomatis Tagihan Terlambat via Email & WhatsApp (Task 3.3)
   try {

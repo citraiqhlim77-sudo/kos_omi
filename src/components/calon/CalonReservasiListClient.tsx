@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NextLink from 'next/link';
 import { Reservation, ReservationStatus } from '@/types/reservation';
+import { fetchMyReservationsAction } from '@/actions/reservations';
+import { getClientSession } from '@/lib/auth-client';
 import { formatRupiah } from '@/data/rooms';
 import {
   Calendar,
@@ -25,10 +27,25 @@ interface CalonReservasiListClientProps {
 export const CalonReservasiListClient: React.FC<CalonReservasiListClientProps> = ({
   initialReservations,
 }) => {
+  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
-  const filtered = initialReservations.filter((r) => {
+  useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
+
+  useEffect(() => {
+    const clientUser = getClientSession();
+    if (clientUser?.email) {
+      fetchMyReservationsAction(clientUser.email).then((list) => {
+        setReservations(list);
+      });
+    }
+  }, []);
+
+  const filtered = reservations.filter((r) => {
     if (filterStatus === 'ALL') return true;
+    if (filterStatus === 'PAID') return r.status === 'PAID' || r.status === 'CHECKED_IN';
     return r.status === filterStatus;
   });
 
@@ -52,7 +69,21 @@ export const CalonReservasiListClient: React.FC<CalonReservasiListClientProps> =
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Lunas Terverifikasi
+            Lunas · Siap Check-in
+          </span>
+        );
+      case 'CHECKED_IN':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-600"></span>
+            Sudah Check-in · Aktif
+          </span>
+        );
+      case 'CHECKED_OUT':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+            Selesai Sewa (Check-out)
           </span>
         );
       case 'REJECTED':
@@ -62,8 +93,14 @@ export const CalonReservasiListClient: React.FC<CalonReservasiListClientProps> =
             Ditolak
           </span>
         );
-      case 'EXPIRED':
       case 'CANCELLED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+            Dibatalkan
+          </span>
+        );
+      case 'EXPIRED':
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">

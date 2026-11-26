@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export default async function CalonReservasiListPage() {
   const user = await getCurrentUser();
-  const email = user?.email || 'calon@example.com';
-  const reservations = await fetchMyReservationsAction(email);
+  const email = user?.email || '';
+  const reservations = email ? await fetchMyReservationsAction(email) : [];
 
   return (
     <div className="bg-zinc-50 min-h-screen py-8 md:py-12">

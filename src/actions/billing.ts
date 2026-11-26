@@ -6,6 +6,7 @@ import { getCurrentUser, requireRole } from '@/lib/auth-server';
 import { dispatchPaymentSuccess } from '@/lib/notify/dispatch';
 import { dbGetReservationsByUserEmail } from '@/server/db';
 import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import { createAuditLog } from '@/lib/audit';
 
 // In-Memory Global Storage untuk Tagihan & Profil Penghuni
 interface BillingState {
@@ -417,18 +418,66 @@ export async function payMonthlyBillAction(
     return { success: false, message: 'Tagihan tidak ditemukan' };
   }
 
+  const paidAtIso = new Date().toISOString();
   db.bills[index].status = 'LUNAS';
   db.bills[index].paymentMethod = method;
-  db.bills[index].paidAt = new Date().toISOString();
-  savePersistentStore();
+  db.bills[index].paidAt = paidAtIso;
+
+  // Sinkronkan pelunasan ke data Tenancy Pengelola, Piutang Keuangan, dan Log Audit
+  const store = loadPersistentStore();
+  const paidBill = db.bills[index];
+  for (const ten of store.tenancies) {
+    if (ten.roomCode === paidBill.roomCode && ten.status === 'AKTIF') {
+      ten.unpaidInvoices = (ten.unpaidInvoices || []).filter(
+        (inv) => inv.invoiceNumber.toUpperCase() !== normalized
+      );
+      ten.unpaidBillsCount = ten.unpaidInvoices.length;
+      ten.totalUnpaidAmount = ten.unpaidInvoices.reduce((s, inv) => s + inv.amount, 0);
+      ten.pastInvoices = ten.pastInvoices || [];
+      if (!ten.pastInvoices.some((inv) => inv.invoiceNumber.toUpperCase() === normalized)) {
+        ten.pastInvoices.unshift({
+          id: `past-${normalized}`,
+          invoiceNumber: paidBill.invoiceCode,
+          periodMonth: paidBill.periodMonth,
+          amount: paidBill.totalAmount || paidBill.rentAmount,
+          paidAt: paidAtIso,
+          paymentMethod: method,
+          status: 'LUNAS',
+        });
+      }
+    }
+  }
+  store.overdueBills = store.overdueBills.filter(
+    (ob) => ob.invoiceNumber.toUpperCase() !== normalized
+  );
+  savePersistentStore(store);
+
+  await createAuditLog({
+    userId: paidBill.tenantEmail,
+    actorName: paidBill.tenantName,
+    actorRole: 'PENGHUNI',
+    action: 'PAY_MONTHLY_BILL',
+    category: 'payments',
+    entityId: paidBill.invoiceCode,
+    description: `Melunasi tagihan sewa ${paidBill.periodMonth} (Kamar ${paidBill.roomCode}) via ${method}`,
+    meta: {
+      invoiceCode: paidBill.invoiceCode,
+      roomCode: paidBill.roomCode,
+      amount: paidBill.totalAmount || paidBill.rentAmount,
+    },
+  });
 
   revalidatePath('/penghuni/dashboard');
   revalidatePath('/penghuni/tagihan');
   revalidatePath(`/penghuni/tagihan/${normalized}`);
   revalidatePath('/penghuni/riwayat');
-
-  // Trigger Notifikasi Otomatis Kuitansi Lunas via Email & WhatsApp (Task 3.3)
-  const paidBill = db.bills[index];
+  revalidatePath('/pengelola/penghuni');
+  revalidatePath('/pengelola/checkout');
+  revalidatePath('/keuangan/dashboard');
+  revalidatePath('/keuangan/tagihan');
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/keuangan/laporan');
+  revalidatePath('/admin/log-aktivitas');
   try {
     await dispatchPaymentSuccess({
       userName: paidBill.tenantName,
