@@ -5,6 +5,10 @@ import NextLink from 'next/link';
 import { MonthlyBill } from '@/types/billing';
 import { formatRupiah } from '@/data/rooms';
 import { payMonthlyBillAction } from '@/actions/billing';
+import {
+  type RoomRentScheduleItem,
+  requestRentExtensionAction,
+} from '@/actions/rent-schedule';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
   Receipt,
@@ -14,16 +18,23 @@ import {
   ArrowRight,
   ShieldCheck,
   X,
+  CalendarClock,
+  AlertTriangle,
+  MessageCircle,
+  Clock,
 } from 'lucide-react';
 
 interface PenghuniTagihanClientProps {
   initialBills: MonthlyBill[];
+  initialSchedule?: RoomRentScheduleItem | null;
 }
 
 export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
   initialBills,
+  initialSchedule = null,
 }) => {
   const [bills, setBills] = useState<MonthlyBill[]>(initialBills);
+  const [schedule, setSchedule] = useState<RoomRentScheduleItem | null>(initialSchedule);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [yearFilter, setYearFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -35,6 +46,38 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Perpanjangan waktu (maks 7 hari) modal state
+  const [isExtModalOpen, setIsExtModalOpen] = useState(false);
+  const [extDays, setExtDays] = useState<number>(3);
+  const [extReason, setExtReason] = useState<string>('');
+  const [extError, setExtError] = useState<string | null>(null);
+  const [isSubmittingExt, setIsSubmittingExt] = useState(false);
+
+  const handleExtensionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setExtError(null);
+    setIsSubmittingExt(true);
+    try {
+      const res = await requestRentExtensionAction({
+        extraDays: extDays,
+        reason: extReason,
+      });
+      if (res.success) {
+        if (res.schedule) {
+          setSchedule(res.schedule);
+        }
+        setIsExtModalOpen(false);
+        setExtReason('');
+        setToastMessage(res.message);
+        setTimeout(() => setToastMessage(null), 6000);
+      } else {
+        setExtError(res.message);
+      }
+    } finally {
+      setIsSubmittingExt(false);
+    }
+  };
 
   const filteredBills = bills.filter((b) => {
     if (statusFilter !== 'ALL' && b.status !== statusFilter) {
@@ -124,6 +167,133 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Kartu Jadwal Sewa 3-Bulanan Kamar + Pengajuan Tempo (Maks 7 Hari) + Eskalasi Ibu Kos */}
+      {schedule && (
+        <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-teal-50 text-[hsl(186,72%,24%)] border border-teal-200 flex items-center justify-center shrink-0">
+                <CalendarClock className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-base font-heading font-extrabold text-zinc-900">
+                    Jadwal Sewa 3-Bulanan — Kamar No. {schedule.roomCode}
+                  </h2>
+                  {schedule.status === 'WAJIB_KONFIRMASI_IBU_KOS' ? (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">
+                      Wajib Konfirmasi ke Ibu Kos (&gt;7 Hari)
+                    </span>
+                  ) : schedule.status === 'MINTA_TEMPO' ? (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                      Perpanjangan Waktu Aktif
+                    </span>
+                  ) : schedule.status === 'TERLAMBAT' ? (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                      Terlambat ({schedule.daysOverdue} Hari)
+                    </span>
+                  ) : schedule.status === 'SEGERA_JATUH_TEMPO' ? (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                      Segera Jatuh Tempo ({schedule.daysUntilDue} Hari Lagi)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Jadwal Aman
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-600">
+                  Jatuh tempo dihitung otomatis setiap <strong>3 bulan sekali</strong> sesuai tanggal masuk kamar Anda.
+                </p>
+              </div>
+            </div>
+
+            {schedule.status !== 'WAJIB_KONFIRMASI_IBU_KOS' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExtError(null);
+                  setIsExtModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-teal-300 bg-teal-50 hover:bg-teal-100 text-[hsl(186,72%,24%)] text-xs font-bold transition-colors cursor-pointer shrink-0"
+              >
+                <Clock className="w-4 h-4" />
+                <span>
+                  {schedule.extension
+                    ? 'Ubah Pengajuan Tempo (Maks. 7 Hari)'
+                    : 'Ajukan Perpanjangan Waktu (Maks. 7 Hari)'}
+                </span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
+              <span className="text-zinc-500 block text-[11px]">Tanggal Masuk</span>
+              <strong className="text-zinc-900 font-bold tabular-nums">{schedule.checkInDate}</strong>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
+              <span className="text-zinc-500 block text-[11px]">Jatuh Tempo (+3 Bulan)</span>
+              <strong className="text-zinc-900 font-bold tabular-nums">{schedule.nextDueDate}</strong>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
+              <span className="text-zinc-500 block text-[11px]">Batas Akhir Bayar</span>
+              <strong className="text-[hsl(186,72%,24%)] font-bold tabular-nums">
+                {schedule.effectiveDueDate}
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
+              <span className="text-zinc-500 block text-[11px]">Tarif Siklus 3 Bulan</span>
+              <strong className="text-zinc-900 font-extrabold tabular-nums">
+                {formatRupiah(schedule.cycleAmount)}
+              </strong>
+            </div>
+          </div>
+
+          {schedule.extension && (
+            <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <strong className="block">
+                  Pengajuan Tempo Aktif: +{schedule.extension.extraDays} Hari (Janji Bayar s/d{' '}
+                  {schedule.extension.promisedDate})
+                </strong>
+                <span className="text-blue-800/90">Alasan: &ldquo;{schedule.extension.reason}&rdquo;</span>
+              </div>
+              <span className="text-[11px] font-semibold text-blue-700 shrink-0">
+                Maks. toleransi 7 hari (1 minggu)
+              </span>
+            </div>
+          )}
+
+          {schedule.status === 'WAJIB_KONFIRMASI_IBU_KOS' && (
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5 text-xs text-rose-900">
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <strong className="block text-sm text-rose-950">
+                    Wajib Konfirmasi Kendala Langsung ke Ibu Kos
+                  </strong>
+                  <p className="text-rose-800 leading-relaxed">
+                    Batas waktu toleransi tunggakan maksimal <strong>7 hari (1 minggu)</strong> telah terlewati. Mohon segera hubungi Ibu Yulastri secara langsung untuk menjelaskan kendala pembayaran Anda.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`https://wa.me/6282287146763?text=${encodeURIComponent(
+                  `Assalamu'alaikum Ibu Yulastri (Ibu Kos Omi). Saya penghuni Kamar No. ${schedule.roomCode} ingin mengonfirmasi kendala pembayaran sewa 3-bulanan (jatuh tempo ${schedule.nextDueDate}) yang telah melewati batas 7 hari. Kendala saya: `
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors shrink-0"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Hubungi Ibu Kos via WA</span>
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -357,6 +527,101 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                   className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-colors cursor-pointer"
                 >
                   {isPaying ? 'Memproses Pelunasan...' : `Konfirmasi Pelunasan (${selectedMethod})`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Ajukan Perpanjangan Waktu (Maksimal 7 Hari) */}
+      {isExtModalOpen && schedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-[hsl(186,72%,24%)]">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-heading font-extrabold text-zinc-900">
+                    Ajukan Perpanjangan Waktu Bayar
+                  </h3>
+                  <p className="text-[11px] text-zinc-500">
+                    Kamar No. {schedule.roomCode} · Jatuh Tempo: {schedule.nextDueDate}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExtModalOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleExtensionSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-zinc-800 block mb-1.5">
+                  Pilih Tambahan Waktu (Maksimal 7 Hari / 1 Minggu)
+                </label>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setExtDays(day)}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                        extDays === day
+                          ? 'bg-[hsl(186,72%,24%)] text-white border-[hsl(186,72%,24%)]'
+                          : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                      }`}
+                    >
+                      +{day}h
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-1.5">
+                  Anda memilih tambahan <strong>{extDays} hari</strong>. Jika melewati 7 hari tetap belum lunas, status otomatis berubah menjadi <strong>Wajib Konfirmasi Langsung ke Ibu Kos</strong>.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-zinc-800 block mb-1">
+                  Alasan / Keterangan Singkat *
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={extReason}
+                  onChange={(e) => setExtReason(e.target.value)}
+                  placeholder="Contoh: Menunggu kiriman uang bulanan dari orang tua pada hari Jumat..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                />
+              </div>
+
+              {extError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                  {extError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setIsExtModalOpen(false)}
+                  disabled={isSubmittingExt}
+                  className="px-4 py-2 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingExt}
+                  className="px-4 py-2 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmittingExt ? 'Mengirim...' : `Ajukan Tempo +${extDays} Hari`}
                 </button>
               </div>
             </form>

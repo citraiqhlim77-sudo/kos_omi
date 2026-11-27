@@ -4,27 +4,29 @@ import React, { useState } from 'react';
 import NextLink from 'next/link';
 import { PaymentTransaction, GatewayReconciliationResult } from '@/types/finance';
 import { reconcileGatewayTransactionsAction } from '@/actions/finance';
+import {
+  type SocialDonationRecord,
+  addSocialDonationAction,
+  deleteSocialDonationAction,
+} from '@/actions/rent-schedule';
 import { formatRupiah } from '@/data/rooms';
 import {
   Receipt,
   Search,
-  CreditCard,
-  Building2,
-  QrCode,
-  ShieldCheck,
-  Clock,
   ArrowRight,
-  Filter,
   CheckCircle2,
   AlertTriangle,
-  XCircle,
   RefreshCw,
   X,
   FileCheck2,
+  HeartHandshake,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 interface KeuanganTransaksiClientProps {
   initialTransactions: PaymentTransaction[];
+  initialDonations?: SocialDonationRecord[];
 }
 
 function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
@@ -54,8 +56,11 @@ function formatTxStatusLabel(status: string): string {
 
 export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = ({
   initialTransactions,
+  initialDonations = [],
 }) => {
+  const [activeTab, setActiveTab] = useState<'SEWA' | 'DUKA_CITA'>('SEWA');
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
+  const [donations, setDonations] = useState<SocialDonationRecord[]>(initialDonations);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [methodFilter, setMethodFilter] = useState('ALL');
@@ -65,6 +70,81 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
   const [reconcileResult, setReconcileResult] = useState<GatewayReconciliationResult | null>(null);
   const [isReconcileModalOpen, setIsReconcileModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Iuran Sosial / Duka Cita (Seikhlasnya) state
+  const [donationSearch, setDonationSearch] = useState('');
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
+  const [donTitle, setDonTitle] = useState('');
+  const [donDonorName, setDonDonorName] = useState('');
+  const [donRoomCode, setDonRoomCode] = useState('');
+  const [donAmount, setDonAmount] = useState('');
+  const [donMethod, setDonMethod] = useState<'TUNAI' | 'TRANSFER' | 'DANA'>('TUNAI');
+  const [donDate, setDonDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [donNotes, setDonNotes] = useState('');
+  const [isSavingDonation, setIsSavingDonation] = useState(false);
+  const [donationError, setDonationError] = useState<string | null>(null);
+  const [deletingDonationId, setDeletingDonationId] = useState<string | null>(null);
+
+  const handleAddDonation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDonationError(null);
+    setIsSavingDonation(true);
+    try {
+      const numericAmount = Number(donAmount.replace(/[^0-9]/g, ''));
+      const res = await addSocialDonationAction({
+        title: donTitle,
+        donorName: donDonorName,
+        roomCode: donRoomCode || '-',
+        amount: numericAmount,
+        method: donMethod,
+        notes: donNotes,
+        date: donDate,
+      });
+      if (res.success && res.record) {
+        setDonations((prev) => [res.record!, ...prev]);
+        setIsDonationModalOpen(false);
+        setDonTitle('');
+        setDonDonorName('');
+        setDonRoomCode('');
+        setDonAmount('');
+        setDonMethod('TUNAI');
+        setDonNotes('');
+        setToastMessage(res.message);
+        setTimeout(() => setToastMessage(null), 5000);
+      } else {
+        setDonationError(res.message);
+      }
+    } finally {
+      setIsSavingDonation(false);
+    }
+  };
+
+  const handleDeleteDonation = async (id: string) => {
+    setDeletingDonationId(id);
+    try {
+      const res = await deleteSocialDonationAction(id);
+      if (res.success) {
+        setDonations((prev) => prev.filter((d) => d.id !== id));
+        setToastMessage(res.message);
+        setTimeout(() => setToastMessage(null), 4000);
+      }
+    } finally {
+      setDeletingDonationId(null);
+    }
+  };
+
+  const filteredDonations = donations.filter((d) => {
+    if (!donationSearch.trim()) return true;
+    const q = donationSearch.toLowerCase();
+    return (
+      d.title.toLowerCase().includes(q) ||
+      d.donorName.toLowerCase().includes(q) ||
+      d.roomCode.toLowerCase().includes(q) ||
+      d.notes.toLowerCase().includes(q)
+    );
+  });
+
+  const totalDonationAmount = donations.reduce((acc, d) => acc + d.amount, 0);
 
   const handleReconcile = async () => {
     setIsReconciling(true);
@@ -147,46 +227,201 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
-              Gateway Logs & Monitoring
+            <span className="text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200">
+              Riwayat Pembayaran Sewa & Iuran Sosial
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Monitoring Transaksi Midtrans Snap
+            Riwayat Pembayaran &amp; Iuran Duka Cita
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Daftar seluruh transaksi yang diteruskan ke Midtrans Snap API beserta status verifikasi webhook gateway.
+            Catatan pembayaran sewa kamar penghuni serta pencatatan terpisah untuk iuran sosial / duka cita (seikhlasnya) jika ada keluarga penghuni kos yang berduka.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Terverifikasi Lunas</span>
-              <span className="font-bold text-emerald-700">{settlementCount} Transaksi</span>
-            </div>
-            <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Menunggu</span>
-              <span className="font-bold text-amber-600">{pendingCount} Transaksi</span>
-            </div>
-            <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-400 block text-[10px]">Kedaluwarsa</span>
-              <span className="font-bold text-rose-600">{expireCount} Transaksi</span>
-            </div>
-          </div>
+          {activeTab === 'SEWA' ? (
+            <>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-zinc-400 block text-[10px]">Terverifikasi Lunas</span>
+                  <span className="font-bold text-emerald-700">{settlementCount} Transaksi</span>
+                </div>
+                <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-zinc-400 block text-[10px]">Menunggu</span>
+                  <span className="font-bold text-amber-600">{pendingCount} Transaksi</span>
+                </div>
+                <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
+                  <span className="text-zinc-400 block text-[10px]">Kedaluwarsa</span>
+                  <span className="font-bold text-rose-600">{expireCount} Transaksi</span>
+                </div>
+              </div>
 
-          <button
-            type="button"
-            onClick={handleReconcile}
-            disabled={isReconciling}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isReconciling ? 'animate-spin' : ''}`} />
-            <span>{isReconciling ? 'Mencocokkan...' : 'Rekonsiliasi Gateway'}</span>
-          </button>
+              <button
+                type="button"
+                onClick={handleReconcile}
+                disabled={isReconciling}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isReconciling ? 'animate-spin' : ''}`} />
+                <span>{isReconciling ? 'Mencocokkan...' : 'Rekonsiliasi Gateway'}</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setDonationError(null);
+                setIsDonationModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Catat Iuran Duka Cita</span>
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Tab Switcher */}
+      <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-zinc-200">
+        <button
+          type="button"
+          onClick={() => setActiveTab('SEWA')}
+          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === 'SEWA'
+              ? 'bg-[hsl(186,72%,24%)] text-white'
+              : 'text-zinc-600 hover:bg-zinc-100'
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          <span>Riwayat Pembayaran Sewa ({transactions.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('DUKA_CITA')}
+          className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === 'DUKA_CITA'
+              ? 'bg-[hsl(186,72%,24%)] text-white'
+              : 'text-zinc-600 hover:bg-zinc-100'
+          }`}
+        >
+          <HeartHandshake className="w-4 h-4" />
+          <span>Iuran Sosial / Duka Cita (Seikhlasnya) ({donations.length})</span>
+        </button>
+      </div>
+
+      {activeTab === 'DUKA_CITA' ? (
+        <div className="space-y-5">
+          {/* Info Banner + KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1 p-5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-1.5">
+              <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider">
+                Total Dana Sosial Terkumpul
+              </span>
+              <p className="text-2xl font-heading font-extrabold text-[hsl(186,72%,24%)] tabular-nums">
+                {formatRupiah(totalDonationAmount)}
+              </p>
+              <p className="text-[11px] text-teal-900/80">
+                Dari {donations.length} catatan sumbangan sukarela (seikhlasnya).
+              </p>
+            </div>
+
+            <div className="md:col-span-2 p-5 rounded-2xl bg-white border border-zinc-200 flex flex-col justify-between gap-3">
+              <div className="space-y-1">
+                <h2 className="text-sm font-heading font-extrabold text-zinc-900 flex items-center gap-2">
+                  <HeartHandshake className="w-4 h-4 text-[hsl(186,72%,24%)]" />
+                  <span>Pencatatan Terpisah — Bukan Uang Kas Wajib</span>
+                </h2>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Kos Omi tidak memungut iuran kas bulanan. Tab ini khusus untuk mencatat partisipasi sukarela/seikhlasnya dari anak kos saat ada musibah atau keluarga penghuni yang meninggal dunia. Dana ini <strong>tidak dicampur</strong> dengan pendapatan sewa kamar.
+                </p>
+              </div>
+              <div className="relative">
+                <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={donationSearch}
+                  onChange={(e) => setDonationSearch(e.target.value)}
+                  placeholder="Cari nama penyumbang, nomor kamar, atau kegiatan duka cita..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-200 text-xs focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Donations Table */}
+          <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
+            {filteredDonations.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <HeartHandshake className="w-9 h-9 text-zinc-300 mx-auto" />
+                <p className="text-sm font-bold text-zinc-700">
+                  Belum ada catatan iuran duka cita / sosial
+                </p>
+                <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                  Klik tombol &ldquo;Catat Iuran Duka Cita&rdquo; di kanan atas untuk mencatat sumbangan seikhlasnya dari penghuni kamar.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
+                    <tr>
+                      <th className="p-3.5">Tanggal</th>
+                      <th className="p-3.5">Kegiatan / Tujuan Duka Cita</th>
+                      <th className="p-3.5">Penyumbang &amp; Kamar</th>
+                      <th className="p-3.5">Metode</th>
+                      <th className="p-3.5 text-right">Nominal (Seikhlasnya)</th>
+                      <th className="p-3.5 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 text-zinc-700">
+                    {filteredDonations.map((don) => (
+                      <tr key={don.id} className="hover:bg-zinc-50/60 transition-colors">
+                        <td className="p-3.5 whitespace-nowrap font-semibold text-zinc-800 tabular-nums">
+                          {don.date}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="font-bold text-zinc-900 block">{don.title}</span>
+                          {don.notes && (
+                            <span className="text-[11px] text-zinc-500 block">{don.notes}</span>
+                          )}
+                        </td>
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="font-bold text-zinc-900 block">{don.donorName}</span>
+                          <span className="text-[11px] text-zinc-500">Kamar {don.roomCode}</span>
+                        </td>
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+                            {don.method}
+                          </span>
+                        </td>
+                        <td className="p-3.5 whitespace-nowrap text-right font-heading font-extrabold text-emerald-700 tabular-nums">
+                          {formatRupiah(don.amount)}
+                        </td>
+                        <td className="p-3.5 whitespace-nowrap text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDonation(don.id)}
+                            disabled={deletingDonationId === don.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-[11px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                            title="Hapus catatan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Filter Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search Input */}
@@ -404,6 +639,164 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
           </>
         )}
       </div>
+        </>
+      )}
+
+      {/* Modal Tambah Iuran Sosial / Duka Cita */}
+      {isDonationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/55 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-zinc-200 max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-[hsl(186,72%,24%)]">
+                  <HeartHandshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-heading font-extrabold text-zinc-900">
+                    Catat Iuran Duka Cita (Seikhlasnya)
+                  </h3>
+                  <p className="text-[11px] text-zinc-500">
+                    Tersimpan terpisah dari pendapatan sewa kos
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDonationModalOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddDonation} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-bold text-zinc-800 block mb-1">
+                  Kegiatan / Tujuan Duka Cita *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={donTitle}
+                  onChange={(e) => setDonTitle(e.target.value)}
+                  placeholder="Contoh: Duka Cita Orang Tua Penghuni Kamar 12"
+                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    Nama Penyumbang *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={donDonorName}
+                    onChange={(e) => setDonDonorName(e.target.value)}
+                    placeholder="Contoh: Aisyah"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    No. Kamar
+                  </label>
+                  <input
+                    type="text"
+                    value={donRoomCode}
+                    onChange={(e) => setDonRoomCode(e.target.value)}
+                    placeholder="Contoh: 14"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    Nominal (Rp) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1000}
+                    step={1000}
+                    value={donAmount}
+                    onChange={(e) => setDonAmount(e.target.value)}
+                    placeholder="20000"
+                    className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs font-bold tabular-nums focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    Metode Penyerahan
+                  </label>
+                  <select
+                    value={donMethod}
+                    onChange={(e) => setDonMethod(e.target.value as 'TUNAI' | 'TRANSFER' | 'DANA')}
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 text-xs font-semibold bg-white focus:outline-hidden"
+                  >
+                    <option value="TUNAI">Tunai / Cash</option>
+                    <option value="TRANSFER">Transfer Bank</option>
+                    <option value="DANA">DANA / E-Wallet</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    Tanggal
+                  </label>
+                  <input
+                    type="date"
+                    value={donDate}
+                    onChange={(e) => setDonDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 text-xs focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-zinc-800 block mb-1">
+                    Catatan (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={donNotes}
+                    onChange={(e) => setDonNotes(e.target.value)}
+                    placeholder="Dititip via..."
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 text-xs focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {donationError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                  {donationError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setIsDonationModalOpen(false)}
+                  disabled={isSavingDonation}
+                  className="px-4 py-2 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingDonation}
+                  className="px-4 py-2 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingDonation ? 'Menyimpan...' : 'Simpan Sumbangan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal Dialog Rekonsiliasi Gateway */}
       {isReconcileModalOpen && reconcileResult && (

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TenancyRecord } from '@/types/tenancy';
 import type { RegisteredCalonAccount } from '@/actions/tenancy';
+import { updateRoomCheckInDateAction } from '@/actions/rent-schedule';
 import { formatRupiah } from '@/data/rooms';
 import {
   Users,
@@ -15,6 +17,9 @@ import {
   UserCheck,
   Clock,
   Mail,
+  Calendar,
+  Pencil,
+  X,
 } from 'lucide-react';
 
 interface PenghuniManagerClientProps {
@@ -28,6 +33,7 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
   initialCalonAccounts = [],
   initialTab = 'AKTIF',
 }) => {
+  const router = useRouter();
   const [tenants, setTenants] = useState<TenancyRecord[]>(initialTenants);
   const [calonAccounts, setCalonAccounts] =
     useState<RegisteredCalonAccount[]>(initialCalonAccounts);
@@ -35,6 +41,44 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [floorFilter, setFloorFilter] = useState('ALL');
+
+  // Edit Tanggal Masuk modal state
+  const [editingRoom, setEditingRoom] = useState<{ roomCode: string; userName: string } | null>(null);
+  const [editDate, setEditDate] = useState('');
+  const [isSavingDate, setIsSavingDate] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const openEditDateModal = (tenant: TenancyRecord) => {
+    setEditingRoom({ roomCode: tenant.roomCode, userName: tenant.userName });
+    setEditDate((tenant.checkInDate || '').slice(0, 10));
+    setDateError(null);
+  };
+
+  const handleSaveCheckInDate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRoom || !editDate) return;
+    setIsSavingDate(true);
+    setDateError(null);
+    try {
+      const res = await updateRoomCheckInDateAction(editingRoom.roomCode, editDate);
+      if (res.success) {
+        setTenants((prev) =>
+          prev.map((t) =>
+            t.roomCode === editingRoom.roomCode ? { ...t, checkInDate: editDate } : t
+          )
+        );
+        setEditingRoom(null);
+        setToastMessage(res.message);
+        setTimeout(() => setToastMessage(null), 6000);
+        router.refresh();
+      } else {
+        setDateError(res.message);
+      }
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
 
   useEffect(() => {
     setTenants(initialTenants);
@@ -130,6 +174,22 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-emerald-700 hover:text-emerald-950 font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -333,12 +393,23 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                             {tenant.roomFloor})
                           </span>
                           <span>•</span>
-                          <span>
-                            Check-in: <strong>{tenant.checkInDate}</strong>
+                          <span className="inline-flex items-center gap-1.5">
+                            <span>
+                              Tgl Masuk: <strong className="text-zinc-900">{tenant.checkInDate}</strong>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => openEditDateModal(tenant)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 hover:bg-teal-100 text-[hsl(186,72%,24%)] border border-teal-200 text-[10px] font-bold transition-colors cursor-pointer"
+                              title="Ubah tanggal masuk kamar (otomatis memperbarui jadwal tagihan 3-bulanan di Keuangan)"
+                            >
+                              <Pencil className="w-2.5 h-2.5" />
+                              <span>Edit Tgl Masuk</span>
+                            </button>
                           </span>
                           <span>•</span>
                           <span>
-                            Skema: <strong>Sewa Semesteran (6 Bulan)</strong>
+                            Skema: <strong>Siklus 3-Bulanan / Semester</strong>
                           </span>
                         </div>
 
@@ -488,6 +559,78 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal Edit Tanggal Masuk Kamar */}
+      {editingRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/55 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-zinc-200 max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-[hsl(186,72%,24%)]">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-heading font-extrabold text-zinc-900">
+                    Edit Tanggal Masuk — Kamar No. {editingRoom.roomCode}
+                  </h3>
+                  <p className="text-[11px] text-zinc-500">
+                    Penghuni: {editingRoom.userName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingRoom(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCheckInDate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-800 block">
+                  Tanggal Masuk Sebenarnya (Kamar {editingRoom.roomCode})
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-semibold text-zinc-900 focus:outline-hidden focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)]"
+                />
+                <p className="text-[11px] text-zinc-500 leading-relaxed">
+                  Mengubah tanggal masuk kamar akan <strong>otomatis menghitung ulang jadwal jatuh tempo 3-bulanan</strong> dan pengingat di halaman <strong>Keuangan → Tagihan Sewa</strong> serta <strong>Portal Penghuni</strong> untuk semua penghuni di Kamar {editingRoom.roomCode}.
+                </p>
+              </div>
+
+              {dateError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                  {dateError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingRoom(null)}
+                  disabled={isSavingDate}
+                  className="px-4 py-2 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingDate}
+                  className="px-4 py-2 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingDate ? 'Menyimpan...' : 'Simpan & Sinkronkan'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

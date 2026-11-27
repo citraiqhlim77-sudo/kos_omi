@@ -21,7 +21,7 @@ export const KeuanganNav: React.FC = () => {
   const links = [
     { href: '/keuangan/dashboard', label: 'Dasbor Keuangan', icon: LayoutDashboard },
     { href: '/keuangan/laporan', label: 'Laporan Keuangan', icon: FileSpreadsheet },
-    { href: '/keuangan/transaksi', label: 'Transaksi Kas', icon: Receipt },
+    { href: '/keuangan/transaksi', label: 'Riwayat Pembayaran', icon: Receipt },
     { href: '/keuangan/tagihan', label: 'Tagihan Sewa', icon: Building2 },
   ];
 

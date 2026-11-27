@@ -3,23 +3,31 @@ import { Metadata } from 'next';
 import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniTagihanClient } from '@/components/penghuni/PenghuniTagihanClient';
 import { fetchMonthlyBillsAction } from '@/actions/billing';
+import { fetchMyRoomRentScheduleAction } from '@/actions/rent-schedule';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Daftar Tagihan Sewa | Kos Omi',
-  description: 'Daftar lengkap tagihan sewa bulanan, status pelunasan, jatuh tempo tanggal 5, dan kuitansi resmi Kos Omi.',
+  title: 'Tagihan Sewa & Jadwal 3 Bulanan | Kos Omi',
+  description:
+    'Jadwal jatuh tempo sewa 3 bulanan per kamar, pengajuan perpanjangan waktu bayar maksimal 7 hari, dan riwayat tagihan Kos Omi.',
 };
 
 export default async function PenghuniTagihanPage() {
-  const bills = await fetchMonthlyBillsAction();
+  const [bills, roomSchedule] = await Promise.all([
+    fetchMonthlyBillsAction(),
+    fetchMyRoomRentScheduleAction(),
+  ]);
 
   return (
     <div className="min-h-screen bg-zinc-50/50 pb-16">
       <PenghuniNav />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-        <PenghuniTagihanClient initialBills={Array.isArray(bills) ? bills : []} />
+        <PenghuniTagihanClient
+          initialBills={Array.isArray(bills) ? bills : []}
+          initialSchedule={roomSchedule}
+        />
       </main>
     </div>
   );
