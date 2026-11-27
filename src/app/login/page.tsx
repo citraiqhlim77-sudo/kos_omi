@@ -111,10 +111,14 @@ export default function LoginPage() {
 
       const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const customRedirect = searchParams?.get('redirect');
+      const defaultRoleTarget = res.redirectUrl || '/calon/dashboard';
+      const rolePrefix = `/${defaultRoleTarget.split('/')[1]}`;
       const target =
-        customRedirect && customRedirect.startsWith('/')
+        customRedirect &&
+        customRedirect.startsWith('/') &&
+        customRedirect.startsWith(rolePrefix)
           ? customRedirect
-          : res.redirectUrl || '/calon/dashboard';
+          : defaultRoleTarget;
       setSuccessRedirect(target);
 
       // Redirect ke dashboard role yang bersangkutan

@@ -1,31 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
+import NextAuth from 'next-auth';
+import { NextResponse } from 'next/server';
+import { authConfig } from './auth.config';
 import type { UserRole } from './types/auth';
 import { applySecurityHeaders } from './lib/security/headers';
 
-// Peta otorisasi prefiks rute terhadap peran pengguna (Pemisahan tegas RBAC 5 Role)
+const { auth } = NextAuth(authConfig);
+
+// Peta otorisasi ketat prefiks rute terhadap peran pengguna (RBAC 5 Role)
 export const ROUTE_ROLE_MAP: Record<string, UserRole[]> = {
   '/admin': ['ADMIN'],
   '/pengelola': ['PENGELOLA'],
   '/keuangan': ['KEUANGAN'],
-  '/penghuni': ['PENGHUNI'],
   '/calon': ['CALON_PENGHUNI'],
+  // Izinkan token CALON_PENGHUNI melewati Edge agar layout server /penghuni memeriksa promosi role terbaru di PostgreSQL;
+  // jika belum resmi PENGHUNI di DB, layout server /penghuni tetap menolak ke /403.
+  '/penghuni': ['PENGHUNI', 'CALON_PENGHUNI'],
 };
 
-export default function middleware(request: NextRequest) {
+export default auth((request) => {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
   // 1. Proteksi CSRF untuk request mutasi (POST, PUT, DELETE, PATCH) pada API internal
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && pathname.startsWith('/api/') && !pathname.startsWith('/api/webhooks/')) {
+  if (
+    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) &&
+    pathname.startsWith('/api/') &&
+    !pathname.startsWith('/api/webhooks/') &&
+    !pathname.startsWith('/api/auth/')
+  ) {
     const origin = request.headers.get('origin');
     const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
 
     if (origin && host) {
       try {
         const originHost = new URL(origin).host;
-        if (originHost !== host && !originHost.includes('localhost') && !originHost.includes('127.0.0.1')) {
+        if (
+          originHost !== host &&
+          !originHost.includes('localhost') &&
+          !originHost.includes('127.0.0.1')
+        ) {
           return new NextResponse(
-            JSON.stringify({ success: false, error: 'Akses ditolak: Verifikasi CSRF origin gagal.' }),
+            JSON.stringify({
+              success: false,
+              error: 'Akses ditolak: Verifikasi CSRF origin gagal.',
+            }),
             {
               status: 403,
               headers: { 'Content-Type': 'application/json' },
@@ -34,7 +52,10 @@ export default function middleware(request: NextRequest) {
         }
       } catch {
         return new NextResponse(
-          JSON.stringify({ success: false, error: 'Akses ditolak: Format header Origin tidak sah.' }),
+          JSON.stringify({
+            success: false,
+            error: 'Akses ditolak: Format header Origin tidak sah.',
+          }),
           {
             status: 403,
             headers: { 'Content-Type': 'application/json' },
@@ -44,14 +65,49 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Pastikan seluruh rute dasbor (/admin, /pengelola, /keuangan, /penghuni, /calon)
-  // dapat diakses dengan lancar baik melalui login maupun navigasi demo multi-peran
+  // 2. Proteksi ketat RBAC untuk seluruh rute portal (/admin/*, /pengelola/*, /keuangan/*, /penghuni/*, /calon/*)
+  if (!pathname.startsWith('/api/')) {
+    const matchedPrefix = Object.keys(ROUTE_ROLE_MAP).find(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    );
+
+    if (matchedPrefix) {
+      const sessionUser = request.auth?.user;
+
+      // Belum login -> arahkan langsung ke /login
+      if (!sessionUser || (!sessionUser.id && !sessionUser.email)) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        const redirectRes = NextResponse.redirect(loginUrl);
+        applySecurityHeaders(redirectRes.headers);
+        return redirectRes;
+      }
+
+      // Akun nonaktif -> arahkan ke /login
+      if (sessionUser.isActive === false) {
+        const loginUrl = new URL('/login', request.url);
+        const redirectRes = NextResponse.redirect(loginUrl);
+        applySecurityHeaders(redirectRes.headers);
+        return redirectRes;
+      }
+
+      // Sudah login tetapi mencoba membuka URL milik role lain -> arahkan ke /403
+      const allowedRoles = ROUTE_ROLE_MAP[matchedPrefix];
+      const userRole = sessionUser.role as UserRole | undefined;
+      if (!userRole || !allowedRoles.includes(userRole)) {
+        const forbiddenUrl = new URL('/403', request.url);
+        const forbiddenRes = NextResponse.redirect(forbiddenUrl);
+        applySecurityHeaders(forbiddenRes.headers);
+        return forbiddenRes;
+      }
+    }
+  }
+
   const response = NextResponse.next();
   applySecurityHeaders(response.headers);
   return response;
-}
+});
 
-// Jalankan middleware pada seluruh prefiks rute internal yang diproteksi dan API
 export const config = {
   matcher: [
     '/admin/:path*',

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import type { UserRole } from '@/types/auth';
 import { auth } from '@/auth';
 import { findUserById, findUserByEmail } from '@/lib/auth-store';
+import { ensurePostgresHydrated } from '@/server/persistence';
 
 export interface CurrentServerUser {
   id: string;
@@ -13,11 +14,12 @@ export interface CurrentServerUser {
 }
 
 /**
- * Mendapatkan pengguna yang sedang login dari sesi JWT Auth.js.
- * Role & status aktif diambil dari data pengguna terbaru (bukan hanya dari
- * token), sehingga perubahan role atau penonaktifan akun langsung berlaku.
+ * Mendapatkan pengguna yang sedang login dari sesi JWT Auth.js dan memverifikasinya
+ * langsung terhadap data pengguna terbaru di Neon PostgreSQL.
  */
 export async function getCurrentUser(): Promise<CurrentServerUser | null> {
+  await ensurePostgresHydrated();
+
   const session = await auth();
   const sessionUser = session?.user;
   if (!sessionUser?.id && !sessionUser?.email) {
@@ -29,6 +31,9 @@ export async function getCurrentUser(): Promise<CurrentServerUser | null> {
     (sessionUser.email ? findUserByEmail(sessionUser.email) : undefined);
 
   if (user) {
+    if (!user.isActive) {
+      return null;
+    }
     return {
       id: user.id,
       name: user.name,
@@ -39,13 +44,13 @@ export async function getCurrentUser(): Promise<CurrentServerUser | null> {
     };
   }
 
-  if (sessionUser.email) {
+  if (sessionUser.email && sessionUser.isActive !== false) {
     return {
       id: (sessionUser.id as string) || `usr-${Date.now()}`,
       name: sessionUser.name || sessionUser.email.split('@')[0],
       email: sessionUser.email,
       role: (sessionUser.role as UserRole) || 'CALON_PENGHUNI',
-      isActive: sessionUser.isActive ?? true,
+      isActive: true,
     };
   }
 
@@ -53,45 +58,38 @@ export async function getCurrentUser(): Promise<CurrentServerUser | null> {
 }
 
 /**
- * Helper otorisasi peran pengguna di Server Action & Route Handler (PRD Bab 5 & Bab 11 Task 2.3).
- * Menolak akun non-aktif dan mengarahkan pengguna tanpa hak ke /403.
+ * Helper otorisasi ketat peran pengguna di Server Action, Layout, & Route Handler.
+ * - Belum login / akun nonaktif -> langsung arahkan ke /login.
+ * - Sudah login tetapi peran tidak diizinkan -> langsung arahkan ke /403.
  */
-export async function requireRole(allowedRoles: UserRole[]): Promise<CurrentServerUser> {
+export async function requireRole(
+  allowedRoles: UserRole[],
+  options?: { strictExactRole?: boolean }
+): Promise<CurrentServerUser> {
   const user = await getCurrentUser();
 
-  if (user && user.isActive && (user.role === 'ADMIN' || allowedRoles.includes(user.role))) {
-    return user;
+  if (!user || !user.isActive) {
+    redirect('/login');
   }
 
-  const fallbackRole = allowedRoles[0] || 'ADMIN';
-  return {
-    id:
-      fallbackRole === 'ADMIN'
-        ? 'usr-admin-1'
-        : fallbackRole === 'PENGELOLA'
-        ? 'usr-pengelola-1'
-        : 'usr-keuangan-1',
-    name:
-      fallbackRole === 'ADMIN'
-        ? 'Ibu Omi (Admin)'
-        : fallbackRole === 'PENGELOLA'
-        ? 'Yanti Susanti (Pengelola)'
-        : 'Aisyah Fitriani (Keuangan)',
-    email:
-      fallbackRole === 'ADMIN'
-        ? 'admin@kosomi.id'
-        : fallbackRole === 'PENGELOLA'
-        ? 'pengelola@kosomi.id'
-        : 'keuangan@kosomi.id',
-    role: fallbackRole,
-    isActive: true,
-    phone: '+62 813-7432-9562',
-  };
+  const isAllowed = options?.strictExactRole
+    ? allowedRoles.includes(user.role)
+    : user.role === 'ADMIN' || allowedRoles.includes(user.role);
+
+  if (!isAllowed) {
+    redirect('/403');
+  }
+
+  return user;
 }
 
 /**
- * Helper otorisasi untuk memastikan pengguna sudah login dengan peran apapun yang aktif.
+ * Proteksi ketat level halaman portal agar setiap role hanya dapat membuka portalnya sendiri.
  */
+export async function requireStrictPortalRole(role: UserRole): Promise<CurrentServerUser> {
+  return requireRole([role], { strictExactRole: true });
+}
+
 export async function requireAuth(): Promise<CurrentServerUser> {
   return requireRole(['ADMIN', 'PENGELOLA', 'KEUANGAN', 'PENGHUNI', 'CALON_PENGHUNI']);
 }
