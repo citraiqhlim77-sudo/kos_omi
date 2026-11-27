@@ -121,11 +121,10 @@ export default function LoginPage() {
           : defaultRoleTarget;
       setSuccessRedirect(target);
 
-      // Redirect ke dashboard role yang bersangkutan
+      // Gunakan full navigation agar cookie sesi NextAuth langsung aktif di server & aman saat refresh
       setTimeout(() => {
-        router.push(target);
-        router.refresh();
-      }, 600);
+        window.location.assign(target);
+      }, 450);
     } catch {
       setErrorMessage('Terjadi kendala saat memproses login. Silakan coba lagi.');
       setIsLoading(false);

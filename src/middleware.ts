@@ -11,7 +11,8 @@ export const ROUTE_ROLE_MAP: Record<string, UserRole[]> = {
   '/admin': ['ADMIN'],
   '/pengelola': ['PENGELOLA'],
   '/keuangan': ['KEUANGAN'],
-  '/calon': ['CALON_PENGHUNI'],
+  // Izinkan PENGHUNI melewati Edge pada /calon agar CalonPortalLayout langsung mengarahkan ke /penghuni/dashboard
+  '/calon': ['CALON_PENGHUNI', 'PENGHUNI'],
   // Izinkan token CALON_PENGHUNI melewati Edge agar layout server /penghuni memeriksa promosi role terbaru di PostgreSQL;
   // jika belum resmi PENGHUNI di DB, layout server /penghuni tetap menolak ke /403.
   '/penghuni': ['PENGHUNI', 'CALON_PENGHUNI'],

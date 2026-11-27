@@ -127,9 +127,8 @@ export default function RegisterPage() {
           : res.redirectUrl || '/calon/dashboard';
 
       setTimeout(() => {
-        router.push(targetUrl);
-        router.refresh();
-      }, 800);
+        window.location.assign(targetUrl);
+      }, 500);
     } catch {
       setErrorMessage('Terjadi kendala saat mendaftarkan akun. Silakan coba kembali.');
       setIsLoading(false);

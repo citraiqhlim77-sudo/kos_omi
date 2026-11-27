@@ -71,6 +71,19 @@ export async function verifyCredentials(email: string, password: string): Promis
   user.failedLoginCount = 0;
   user.lockedUntil = null;
   user.lastLoginAt = new Date().toISOString();
+
+  // Sinkronkan promosi role CALON_PENGHUNI -> PENGHUNI SEBELUM JWT ditandatangani jika sudah memiliki kontrak aktif
+  const store = await ensurePostgresHydrated();
+  const activeTenancy = store.tenancies.find(
+    (t) =>
+      t.status === 'AKTIF' &&
+      (t.userId === user.id || t.userEmail?.toLowerCase().trim() === user.email.toLowerCase().trim())
+  );
+  if (activeTenancy && user.role === 'CALON_PENGHUNI') {
+    user.role = 'PENGHUNI';
+    user.roomCode = activeTenancy.roomCode;
+  }
+
   savePersistentStore();
   await flushPostgresSync();
 
