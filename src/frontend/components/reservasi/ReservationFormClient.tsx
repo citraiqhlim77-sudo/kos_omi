@@ -32,9 +32,14 @@ import {
 interface ReservationFormClientProps {
   room: Room;
   currentUser?: CurrentServerUser | null;
+  isOpenSlot?: boolean;
 }
 
-export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ room, currentUser }) => {
+export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({
+  room,
+  currentUser,
+  isOpenSlot = false,
+}) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [authChecked, setAuthChecked] = useState(false);
@@ -53,7 +58,9 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
   const minDateString = minDate.toISOString().split('T')[0];
 
   // Form State
-  const [occupancyMode, setOccupancyMode] = useState<'SENDIRI_PENUH' | 'PER_ORANG_1_SLOT' | 'BERDUA_GABUNG'>('SENDIRI_PENUH');
+  const [occupancyMode, setOccupancyMode] = useState<'SENDIRI_PENUH' | 'PER_ORANG_1_SLOT' | 'BERDUA_GABUNG'>(
+    isOpenSlot ? 'PER_ORANG_1_SLOT' : 'SENDIRI_PENUH'
+  );
   const [roommateName, setRoommateName] = useState('');
   const [formData, setFormData] = useState({
     checkInDate: '',
@@ -271,17 +278,32 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
+              {isOpenSlot && (
+                <div className="mb-3 p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-sky-900 space-y-1">
+                  <strong className="block text-sky-950">
+                    Kamar No. {room.code} Terisi/Dipesan 1 Orang · Tersisa 1 Slot Teman Sekamar
+                  </strong>
+                  <p className="text-sky-800 leading-relaxed">
+                    Anda memesan <strong>1 slot tersisa</strong> dengan akun dan pembayaran sendiri sebesar{' '}
+                    <strong>{formatRupiah(Math.round(room.monthlyPrice / 2))} / Semester</strong>.
+                  </p>
+                </div>
+              )}
               <label className="block text-xs font-semibold text-zinc-700 mb-1.5">
                 Pilihan Tipe Hunian & Cara Bayar Kamar {room.code}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setOccupancyMode('SENDIRI_PENUH')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${occupancyMode === 'SENDIRI_PENUH'
-                      ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20'
-                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
-                    }`}
+                  disabled={isOpenSlot}
+                  onClick={() => !isOpenSlot && setOccupancyMode('SENDIRI_PENUH')}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    isOpenSlot
+                      ? 'border-zinc-200 bg-zinc-50 opacity-50 cursor-not-allowed'
+                      : occupancyMode === 'SENDIRI_PENUH'
+                        ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20 cursor-pointer'
+                        : 'border-zinc-200 hover:border-zinc-300 bg-white cursor-pointer'
+                  }`}
                 >
                   <span className="text-xs font-extrabold text-zinc-900 block">
                     1. Ngekos Sendiri (1 Kamar Penuh)
@@ -290,7 +312,9 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
                     {formatRupiah(room.monthlyPrice)} / Semester
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-1">
-                    Menempati 1 kamar penuh sendirian & bayar sendiri.
+                    {isOpenSlot
+                      ? 'Tidak tersedia (1 slot sudah terisi).'
+                      : 'Menempati 1 kamar penuh sendirian & bayar sendiri.'}
                   </span>
                 </button>
 
@@ -309,17 +333,23 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
                     {formatRupiah(Math.round(room.monthlyPrice / 2))} / Orang
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-1">
-                    Belum ada teman / bayar sendiri-sendiri (sisa 1 slot kamar).
+                    {isOpenSlot
+                      ? 'Slot ke-2 tersedia untuk Anda bergabung sekamar.'
+                      : 'Belum ada teman / bayar sendiri-sendiri (sisa 1 slot kamar).'}
                   </span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setOccupancyMode('BERDUA_GABUNG')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${occupancyMode === 'BERDUA_GABUNG'
-                      ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20'
-                      : 'border-zinc-200 hover:border-zinc-300 bg-white'
-                    }`}
+                  disabled={isOpenSlot}
+                  onClick={() => !isOpenSlot && setOccupancyMode('BERDUA_GABUNG')}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    isOpenSlot
+                      ? 'border-zinc-200 bg-zinc-50 opacity-50 cursor-not-allowed'
+                      : occupancyMode === 'BERDUA_GABUNG'
+                        ? 'border-[hsl(186,72%,24%)] bg-blue-50/70 ring-2 ring-[hsl(186,72%,24%)]/20 cursor-pointer'
+                        : 'border-zinc-200 hover:border-zinc-300 bg-white cursor-pointer'
+                  }`}
                 >
                   <span className="text-xs font-extrabold text-zinc-900 block">
                     3. Ngekos Berdua (Gabung 2 Orang)
@@ -328,7 +358,9 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
                     {formatRupiah(room.monthlyPrice)} / Kamar (2 Putri)
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-1">
-                    Datang langsung berdua dengan teman sekamar.
+                    {isOpenSlot
+                      ? 'Tidak tersedia (1 slot sudah terisi).'
+                      : 'Datang langsung berdua dengan teman sekamar.'}
                   </span>
                 </button>
               </div>

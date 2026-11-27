@@ -265,12 +265,12 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
                     <NextLink
                       href={`/kamar/${room.code}`}
                       className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                        isAvailable
+                        isAvailable || hasOpenSlot
                           ? 'bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white'
                           : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100'
                       }`}
                     >
-                      Lihat Detail
+                      {hasOpenSlot ? 'Pesan 1 Slot' : 'Lihat Detail'}
                       <ArrowRight size={12} />
                     </NextLink>
                   </div>

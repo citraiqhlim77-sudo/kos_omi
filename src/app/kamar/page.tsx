@@ -50,36 +50,30 @@ export default async function KamarPage() {
     ensurePostgresHydrated(),
   ]);
 
-  const openSlotRoomCodes = new Set<string>();
-  for (const rsv of store.reservations) {
-    if (
-      (rsv.status === 'PENDING_REVIEW' || rsv.status === 'APPROVED' || rsv.status === 'PAID') &&
-      (rsv.userOccupation || '').includes('1 Slot Sendiri')
-    ) {
-      openSlotRoomCodes.add(rsv.roomCode);
-    }
-  }
-  const activeCountByRoom = new Map<string, number>();
+  const usedSlotsByRoom = new Map<string, number>();
   for (const ten of store.tenancies) {
     if (ten.status === 'AKTIF') {
-      activeCountByRoom.set(ten.roomCode, (activeCountByRoom.get(ten.roomCode) || 0) + 1);
+      const slots = ten.monthlyPrice <= 2500000 ? 1 : 2;
+      usedSlotsByRoom.set(ten.roomCode, (usedSlotsByRoom.get(ten.roomCode) || 0) + slots);
     }
   }
-  for (const ten of store.tenancies) {
-    if (
-      ten.status === 'AKTIF' &&
-      activeCountByRoom.get(ten.roomCode) === 1 &&
-      ten.monthlyPrice <= 2500000
-    ) {
-      openSlotRoomCodes.add(ten.roomCode);
+  for (const rsv of store.reservations) {
+    if (rsv.status === 'PENDING_REVIEW' || rsv.status === 'APPROVED' || rsv.status === 'PAID') {
+      const isOneSlot =
+        (rsv.userOccupation || '').includes('1 Slot Sendiri') || rsv.monthlyPrice <= 2500000;
+      const slots = isOneSlot ? 1 : 2;
+      usedSlotsByRoom.set(rsv.roomCode, (usedSlotsByRoom.get(rsv.roomCode) || 0) + slots);
     }
   }
+  const openSlotRoomCodes = rooms
+    .filter((r) => r.status !== 'TERSEDIA' && r.status !== 'NONAKTIF' && usedSlotsByRoom.get(r.code) === 1)
+    .map((r) => r.code);
 
   return (
     <KamarCatalogClient
       initialRooms={rooms}
       initialStats={stats}
-      openSlotRoomCodes={Array.from(openSlotRoomCodes)}
+      openSlotRoomCodes={openSlotRoomCodes}
     />
   );
 }

@@ -92,13 +92,15 @@ export default async function DetailKamarPage({ params }: PageProps) {
       r.roomCode === room.code &&
       (r.status === 'PENDING_REVIEW' || r.status === 'APPROVED' || r.status === 'PAID')
   );
-  const hasOpenSlot =
-    !isAvailable &&
-    room.status !== 'NONAKTIF' &&
-    ((activeInRoom.length === 1 && activeInRoom[0].monthlyPrice <= 2500000) ||
-      (activeInRoom.length === 0 &&
-        activeRsvInRoom.length === 1 &&
-        (activeRsvInRoom[0].userOccupation || '').includes('1 Slot Sendiri')));
+  const usedSlots =
+    activeInRoom.reduce((sum, t) => sum + (t.monthlyPrice <= 2500000 ? 1 : 2), 0) +
+    activeRsvInRoom.reduce(
+      (sum, r) =>
+        sum +
+        ((r.userOccupation || '').includes('1 Slot Sendiri') || r.monthlyPrice <= 2500000 ? 1 : 2),
+      0
+    );
+  const hasOpenSlot = !isAvailable && room.status !== 'NONAKTIF' && usedSlots === 1;
 
   const allAvailableRooms = await fetchRoomsAction({ status: 'TERSEDIA' });
   const alternativeRooms = allAvailableRooms
@@ -314,7 +316,7 @@ export default async function DetailKamarPage({ params }: PageProps) {
 
               <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500 text-center">
                 <Lock size={13} className="text-sky-600 shrink-0" />
-                <span>Pembayaran via DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</span>
+                <span>Pembayaran resmi via Transfer Bank BRI (763701006296502 a.n. YULASTRI) dengan verifikasi pengelola</span>
               </div>
             </Card>
 

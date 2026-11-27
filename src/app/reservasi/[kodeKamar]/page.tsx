@@ -6,6 +6,7 @@ import { ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import { ReservationFormClient } from '@/components/reservasi/ReservationFormClient';
 import { getCurrentUser } from '@/lib/auth-server';
+import { ensurePostgresHydrated } from '@/server/persistence';
 import { ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -67,9 +68,10 @@ export async function generateMetadata({ params }: ReservationPageProps): Promis
 
 export default async function ReservasiKamarPage({ params }: ReservationPageProps) {
   const { kodeKamar } = await params;
-  const [room, currentUser] = await Promise.all([
+  const [room, currentUser, store] = await Promise.all([
     fetchRoomByCodeAction(kodeKamar),
     getCurrentUser(),
+    ensurePostgresHydrated(),
   ]);
 
   if (!room) {
@@ -93,7 +95,25 @@ export default async function ReservasiKamarPage({ params }: ReservationPageProp
     );
   }
 
-  if (room.status !== 'TERSEDIA') {
+  const activeTenants = store.tenancies.filter(
+    (t) => t.roomCode === room.code && t.status === 'AKTIF'
+  );
+  const activeReservations = store.reservations.filter(
+    (r) =>
+      r.roomCode === room.code &&
+      (r.status === 'PENDING_REVIEW' || r.status === 'APPROVED' || r.status === 'PAID')
+  );
+  const usedSlots =
+    activeTenants.reduce((sum, t) => sum + (t.monthlyPrice <= 2500000 ? 1 : 2), 0) +
+    activeReservations.reduce(
+      (sum, r) =>
+        sum +
+        ((r.userOccupation || '').includes('1 Slot Sendiri') || r.monthlyPrice <= 2500000 ? 1 : 2),
+      0
+    );
+  const hasOpenSlot = room.status !== 'NONAKTIF' && room.status !== 'TERSEDIA' && usedSlots === 1;
+
+  if (room.status !== 'TERSEDIA' && !hasOpenSlot) {
     const availableAlternatives = await fetchRoomsAction({ status: 'TERSEDIA' });
 
     return (
@@ -154,7 +174,7 @@ export default async function ReservasiKamarPage({ params }: ReservationPageProp
         </div>
 
         {/* CLIENT FORM COMPONENT */}
-        <ReservationFormClient room={room} currentUser={currentUser} />
+        <ReservationFormClient room={room} currentUser={currentUser} isOpenSlot={hasOpenSlot} />
       </div>
     </div>
   );

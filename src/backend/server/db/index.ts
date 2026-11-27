@@ -351,19 +351,33 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
     throw new Error(`Kamar ${input.roomCode} tidak ditemukan`);
   }
 
-  // Hitung berapa slot yang sudah terpakai di kamar ini
+  // Hitung berapa slot yang sudah terpakai di kamar ini (penghuni aktif + reservasi aktif)
+  const activeRoomTenancies = store.tenancies.filter(
+    (t) => t.roomCode === room.code && t.status === 'AKTIF'
+  );
   const activeRoomReservations = store.reservations.filter(
     (r) =>
       r.roomCode === room.code &&
       (r.status === 'PENDING_REVIEW' || r.status === 'APPROVED' || r.status === 'PAID')
   );
-  const usedSlots = activeRoomReservations.reduce((sum, r) => {
-    const isOneSlot = (r.userOccupation ?? '').includes('1 Slot Sendiri');
-    return sum + (isOneSlot ? 1 : 2);
-  }, 0);
+  const usedSlots =
+    activeRoomTenancies.reduce((sum, t) => sum + (t.monthlyPrice <= 2500000 ? 1 : 2), 0) +
+    activeRoomReservations.reduce((sum, r) => {
+      const isOneSlot =
+        (r.userOccupation ?? '').includes('1 Slot Sendiri') || r.monthlyPrice <= 2500000;
+      return sum + (isOneSlot ? 1 : 2);
+    }, 0);
+
+  const isSingleSlotBooking = (input.occupation ?? '').includes('1 Slot Sendiri');
+  const requestedSlots = isSingleSlotBooking ? 1 : 2;
 
   if (room.status === 'NONAKTIF' || usedSlots >= 2) {
     throw new Error(`Kamar ${input.roomCode} saat ini sudah penuh (2/2) atau sedang ${room.status}`);
+  }
+  if (usedSlots + requestedSlots > 2) {
+    throw new Error(
+      `Kamar ${input.roomCode} hanya menyisakan 1 slot teman sekamar (Rp 2.500.000). Silakan pilih opsi Masuk Sendiri (1 Slot).`
+    );
   }
 
   // Buat kode reservasi unik: RSV-YYYYMM-KODE
@@ -377,7 +391,6 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
     store.authUsers.find((u) => u.email.toLowerCase().trim() === normalizedEmail) ||
     store.adminUsers.find((u) => u.email.toLowerCase().trim() === normalizedEmail);
 
-  const isSingleSlotBooking = (input.occupation ?? '').includes('1 Slot Sendiri');
   const baseRoomPrice = store.settings?.semesterPrice || room.monthlyPrice;
   const monthlyPrice = isSingleSlotBooking ? Math.round(baseRoomPrice / 2) : baseRoomPrice;
   const depositAmount = 0;
@@ -413,8 +426,8 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
     db.reservations.unshift(newReservation);
   }
 
-  // Kunci kamar menjadi DIPESAN langsung pada store yang sama
-  if (roomIdx !== -1) {
+  // Kunci kamar menjadi DIPESAN (kecuali sudah ada penghuni AKTIF, tetap TERISI)
+  if (roomIdx !== -1 && activeRoomTenancies.length === 0) {
     store.rooms[roomIdx].status = 'DIPESAN';
   }
 
