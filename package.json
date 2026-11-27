@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
@@ -16,8 +18,12 @@
     "test:uat": "node tests/uat-runner.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.1",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "dotenv": "^18.0.10",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "^0.475.0",
     "next": "^15.1.7",
     "next-auth": "^5.0.0-beta.25",
@@ -26,6 +32,7 @@
     "tailwind-merge": "^3.0.1"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.16.9",
     "@playwright/test": "^1.50.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.13.4",

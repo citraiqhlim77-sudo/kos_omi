@@ -3,7 +3,12 @@ import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } f
 import type { PaymentMethodType } from '@/types/finance';
 import { ALL_ROOMS } from '@/data/rooms';
 import { createAuditLog } from '@/lib/audit';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 
 function toPaymentMethodType(methodOrType?: string): PaymentMethodType {
   const lower = (methodOrType || 'qris').toLowerCase();
@@ -63,61 +68,15 @@ declare global {
 }
 
 function initializeState(): DatabaseState {
-  // Salin 67 kamar nyata Kos Omi (Kamar 1 berstatus DIPESAN untuk 1 Studi Kasus Zahra Aulia Putri)
   const initialRooms: Room[] = JSON.parse(JSON.stringify(ALL_ROOMS)).map((r: Room) => ({
     ...r,
-    status: (r.code === '1' ? 'DIPESAN' : 'TERSEDIA') as RoomStatus,
+    status: 'TERSEDIA' as RoomStatus,
   }));
-
-  const nowIso = new Date().toISOString();
-  const expiresIso = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-
-  // 1 Studi Kasus Terpadu: Zahra Aulia Putri (Kamar No. 1) — Mulai bersih dari tahap awal PENDING_REVIEW (Menunggu Verifikasi)
-  const caseStudyReservation: Reservation = {
-    id: 'rsv-studi-kasus-1',
-    code: 'RSV-202611-1',
-    roomId: 'room-1',
-    roomCode: '1',
-    userId: 'usr-calon-zahra',
-    userName: 'Zahra Aulia Putri',
-    userEmail: 'zahra.aulia@uinib.ac.id',
-    userPhone: '081234567890',
-    userNik: '2214010045',
-    userOccupation: 'FEBI - UIN Imam Bonjol Padang [Sewa Sendiri 1 Kamar Penuh - Rp 5.000.000]',
-    emergencyContactName: 'Hj. Rahmawati (Ibu Kandung)',
-    emergencyContactPhone: '081363459988',
-    emergencyContactRelation: 'Orang Tua',
-    ktpUrl: '/rooms/kamar-1.png',
-    checkInDate: '2026-11-10',
-    durationMonths: 6,
-    monthlyPrice: 5000000,
-    depositAmount: 0,
-    totalInitialPayment: 5000000,
-    status: 'PENDING_REVIEW',
-    adminNotes: 'Pengajuan reservasi Kamar No. 1 menunggu verifikasi berkas KTM/KRS oleh Pengelola Kos Omi.',
-    expiresAt: expiresIso,
-    createdAt: nowIso,
-    updatedAt: nowIso,
-  };
 
   return {
     rooms: initialRooms,
-    users: [
-      {
-        id: 'usr-calon-zahra',
-        name: 'Zahra Aulia Putri',
-        email: 'zahra.aulia@uinib.ac.id',
-        phone: '081234567890',
-        nik: '2214010045',
-        occupation: 'FEBI - UIN Imam Bonjol Padang',
-        emergencyContactName: 'Hj. Rahmawati',
-        emergencyContactPhone: '081363459988',
-        emergencyContactRelation: 'Orang Tua',
-        ktpUrl: '/rooms/kamar-1.png',
-        createdAt: nowIso,
-      },
-    ],
-    reservations: [caseStudyReservation],
+    users: [],
+    reservations: [],
     payments: [],
     auditLogs: [],
     isInitialized: true,
@@ -137,12 +96,17 @@ function getDb(): DatabaseState {
   };
 }
 
+async function getHydratedDb(): Promise<DatabaseState> {
+  await ensurePostgresHydrated();
+  return getDb();
+}
+
 // ==========================================
 // ROOMS REPOSITORY
 // ==========================================
 
 export async function dbGetRooms(filter?: RoomFilterOptions): Promise<Room[]> {
-  const db = getDb();
+  const db = await getHydratedDb();
   let result = [...db.rooms].sort(
     (a, b) => a.floor - b.floor || (parseInt(a.code, 10) || 0) - (parseInt(b.code, 10) || 0)
   );
@@ -210,19 +174,21 @@ function resolveRoomCode(codeOrId: string): string {
 }
 
 export async function dbGetRoomByCode(codeOrId: string): Promise<Room | null> {
-  const db = getDb();
+  const db = await getHydratedDb();
   const normalized = resolveRoomCode(codeOrId);
   const room = db.rooms.find((r) => r.code === normalized || r.id === codeOrId);
   return room ? { ...room } : null;
 }
 
 export async function dbUpdateRoomStatus(codeOrId: string, status: RoomStatus): Promise<boolean> {
-  const db = getDb();
+  const db = await getHydratedDb();
   const normalized = resolveRoomCode(codeOrId);
   const index = db.rooms.findIndex((r) => r.code === normalized || r.id === codeOrId);
   if (index === -1) return false;
   db.rooms[index].status = status;
   savePersistentStore();
+  await flushPostgresSync();
+  await flushPostgresSync();
   return true;
 }
 
@@ -237,7 +203,7 @@ export async function dbUpdateRoomDetail(
     description?: string;
   }
 ): Promise<Room | null> {
-  const db = getDb();
+  const db = await getHydratedDb();
   const normalized = resolveRoomCode(codeOrId);
   const index = db.rooms.findIndex((r) => r.code === normalized || r.id === codeOrId);
   if (index === -1) return null;
@@ -247,12 +213,14 @@ export async function dbUpdateRoomDetail(
     ...data,
   };
   savePersistentStore();
+  await flushPostgresSync();
+  await flushPostgresSync();
   return { ...db.rooms[index] };
 }
 
 export async function dbGetRoomTenantHistory(code: string): Promise<any[]> {
   const normalized = code.toUpperCase().trim();
-  const db = getDb();
+  const db = await getHydratedDb();
   const room = db.rooms.find((r) => r.code === normalized);
 
   if (!room) return [];
@@ -310,7 +278,7 @@ export async function dbGetRoomTenantHistory(code: string): Promise<any[]> {
 }
 
 export async function dbGetRoomStats() {
-  const db = getDb();
+  const db = await getHydratedDb();
   const total = db.rooms.length;
   const available = db.rooms.filter((r) => r.status === 'TERSEDIA').length;
   const booked = db.rooms.filter((r) => r.status === 'DIPESAN').length;
@@ -324,7 +292,7 @@ export async function dbGetRoomStats() {
 // ==========================================
 
 export async function dbGetReservations(): Promise<Reservation[]> {
-  const db = getDb();
+  const db = await getHydratedDb();
   return db.reservations.map((res) => {
     const room = db.rooms.find((r) => r.code === res.roomCode);
     const payment = db.payments.find((p) => p.reservationCode === res.code);
@@ -333,7 +301,7 @@ export async function dbGetReservations(): Promise<Reservation[]> {
 }
 
 export async function dbGetReservationByCode(code: string): Promise<Reservation | null> {
-  const db = getDb();
+  const db = await getHydratedDb();
   const normalized = code.toUpperCase().trim();
   const res = db.reservations.find((r) => r.code === normalized);
   if (!res) return null;
@@ -344,7 +312,7 @@ export async function dbGetReservationByCode(code: string): Promise<Reservation 
 }
 
 export async function dbGetReservationsByUserEmail(email: string): Promise<Reservation[]> {
-  const db = getDb();
+  const db = await getHydratedDb();
   const normalized = email.toLowerCase().trim();
   if (!normalized) return [];
 
@@ -508,6 +476,7 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
   );
 
   savePersistentStore(store);
+  await flushPostgresSync();
   return { ...newReservation, room };
 }
 
@@ -564,6 +533,7 @@ export async function dbApproveReservation(reservationCode: string, adminNotes?:
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
   return await dbGetReservationByCode(reservationCode);
 }
 
@@ -604,6 +574,7 @@ export async function dbRejectReservation(
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
   return await dbGetReservationByCode(reservationCode);
 }
 
@@ -672,6 +643,7 @@ export async function dbCancelReservationByUser(
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
   const updated = await dbGetReservationByCode(res.code);
   return {
     success: true,
@@ -713,6 +685,7 @@ export async function dbCancelExpiredReservations(): Promise<{ cancelledCount: n
 
   if (cancelledCodes.length > 0) {
     savePersistentStore();
+  await flushPostgresSync();
   }
   return { cancelledCount: cancelledCodes.length, codes: cancelledCodes };
 }
@@ -760,6 +733,7 @@ export async function dbUpdateInvoiceSnap(
   db.payments[pIndex].snapToken = snapToken;
   db.payments[pIndex].snapRedirectUrl = snapRedirectUrl;
   savePersistentStore();
+  await flushPostgresSync();
   return { ...db.payments[pIndex] };
 }
 
@@ -941,6 +915,7 @@ export async function dbSettlePayment(
   }
 
   savePersistentStore();
+  await flushPostgresSync();
   const updatedReservation = await dbGetReservationByCode(payment.reservationCode);
 
   return {
@@ -1008,6 +983,7 @@ export async function dbSubmitPaymentConfirmation(
   });
 
   savePersistentStore();
+  await flushPostgresSync();
   return {
     success: true,
     message: `Konfirmasi pembayaran via ${(method || 'QRIS').toUpperCase()} berhasil dikirim ke Pengelola! Status akan menjadi LUNAS setelah Pengelola memastikan dana sudah masuk ke rekening/DANA.`,
@@ -1051,6 +1027,7 @@ export async function dbResetPaymentToUnpaid(
   }
 
   savePersistentStore();
+  await flushPostgresSync();
   const updatedReservation = await dbGetReservationByCode(payment.reservationCode);
   return {
     success: true,
@@ -1249,6 +1226,7 @@ export async function dbProcessMidtransWebhookResult(
     }
 
     savePersistentStore();
+  await flushPostgresSync();
     const updatedRes = await dbGetReservationByCode(payment.reservationCode);
     return {
       success: true,
@@ -1440,6 +1418,7 @@ export async function dbCleanupUserRelations(params: {
   }
 
   savePersistentStore();
+  await flushPostgresSync();
   return { releasedRooms };
 }
 

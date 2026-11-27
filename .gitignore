@@ -3,8 +3,9 @@ node_modules/
 .pnp
 .pnp.js
 
-# Next.js build output
+# Next.js & Netlify build output
 .next/
+.netlify/
 .data/
 out/
 build/
