@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authConfig } from './auth.config';
 import type { UserRole } from './types/auth';
-import { applySecurityHeaders } from './lib/security/headers';
+import { applySecurityHeaders } from '@/lib/security/headers';
 
 const { auth } = NextAuth(authConfig);
 

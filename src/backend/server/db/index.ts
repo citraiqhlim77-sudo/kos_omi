@@ -1,5 +1,5 @@
 import type { Room, RoomFilterOptions, RoomStatus } from '@/types/room';
-import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } from '../../types/reservation';
+import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } from '@/types/reservation';
 import type { PaymentMethodType } from '@/types/finance';
 import { ALL_ROOMS } from '@/data/rooms';
 import { createAuditLog } from '@/lib/audit';

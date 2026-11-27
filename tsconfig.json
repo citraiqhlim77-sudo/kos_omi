@@ -23,6 +23,36 @@
       }
     ],
     "paths": {
+      "@/components/*": [
+        "./src/frontend/components/*"
+      ],
+      "@/data/*": [
+        "./src/frontend/data/*"
+      ],
+      "@/actions/*": [
+        "./src/backend/actions/*"
+      ],
+      "@/db": [
+        "./src/backend/db/index.ts"
+      ],
+      "@/db/*": [
+        "./src/backend/db/*"
+      ],
+      "@/server": [
+        "./src/backend/server/index.ts"
+      ],
+      "@/server/*": [
+        "./src/backend/server/*"
+      ],
+      "@/lib/*": [
+        "./src/backend/lib/*"
+      ],
+      "@/frontend/*": [
+        "./src/frontend/*"
+      ],
+      "@/backend/*": [
+        "./src/backend/*"
+      ],
       "@/*": [
         "./src/*"
       ]
