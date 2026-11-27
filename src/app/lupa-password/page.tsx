@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
 
               <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-[11px] text-zinc-600 space-y-1 leading-relaxed">
                 <p className="font-bold text-zinc-800">Langkah Pemulihan:</p>
-                <p>1. Kirim pesan konfirmasi WhatsApp ke Admin Kos Omi (Ibu Yulastri: 0822-8714-6763).</p>
+                <p>1. Kirim pesan konfirmasi WhatsApp ke Admin Kos Omi (Ibu Yulastri: 0813-7432-9562).</p>
                 <p>2. Admin akan menekan tombol <strong>Reset Sandi</strong> untuk akun Anda dan memberikan kata sandi sementara.</p>
                 <p>3. Setelah berhasil masuk, segera ganti dengan kata sandi pribadi baru di menu <strong>Profil</strong>.</p>
               </div>

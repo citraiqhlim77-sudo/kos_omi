@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
@@ -279,7 +279,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                 </div>
               </div>
               <a
-                href={`https://wa.me/6282287146763?text=${encodeURIComponent(
+                href={`https://wa.me/6281374329562?text=${encodeURIComponent(
                   `Assalamu'alaikum Ibu Yulastri (Ibu Kos Omi). Saya penghuni Kamar No. ${schedule.roomCode} ingin mengonfirmasi kendala pembayaran sewa 3-bulanan (jatuh tempo ${schedule.nextDueDate}) yang telah melewati batas 7 hari. Kendala saya: `
                 )}`}
                 target="_blank"

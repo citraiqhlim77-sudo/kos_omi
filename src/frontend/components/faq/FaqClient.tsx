@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
@@ -126,13 +126,13 @@ export function FaqClient() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <a
-              href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20memiliki%20pertanyaan%20seputar%20sewa%20kamar."
+              href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20memiliki%20pertanyaan%20seputar%20sewa%20kamar."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-colors"
             >
               <Phone size={15} />
-              Hubungi Ibu Yulastri via WhatsApp (0822-8714-6763)
+              Hubungi Ibu Yulastri via WhatsApp (0813-7432-9562)
             </a>
             <NextLink
               href="/kontak"

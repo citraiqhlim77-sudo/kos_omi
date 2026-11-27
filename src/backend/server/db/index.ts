@@ -947,7 +947,8 @@ export async function dbSettlePayment(
  */
 export async function dbSubmitPaymentConfirmation(
   invoiceCode: string,
-  method?: string
+  method?: string,
+  proofDataUrl?: string
 ): Promise<{ success: boolean; message: string; payment?: PaymentInvoice; reservation?: Reservation }> {
   const db = await getHydratedDb();
   const normalized = invoiceCode.toUpperCase().trim();
@@ -971,10 +972,14 @@ export async function dbSubmitPaymentConfirmation(
   if (method) {
     payment.paymentMethod = method as any;
   }
+  if (proofDataUrl && proofDataUrl.startsWith('data:image/')) {
+    payment.snapRedirectUrl = proofDataUrl;
+  }
 
   const rIndex = db.reservations.findIndex((r) => r.code === payment.reservationCode);
   if (rIndex !== -1) {
-    db.reservations[rIndex].adminNotes = `Calon penghuni telah mengirim konfirmasi pembayaran via ${(method || 'QRIS').toUpperCase()} (${new Date().toLocaleTimeString('id-ID')} WIB). Menunggu Pengelola memeriksa mutasi dana masuk & memvalidasi pelunasan.`;
+    const proofInfo = proofDataUrl ? ' (disertai bukti screenshot transfer)' : '';
+    db.reservations[rIndex].adminNotes = `Calon penghuni telah mengirim konfirmasi transfer Bank BRI${proofInfo}. Menunggu Pengelola mengecek mutasi & memvalidasi pembayaran.`;
     db.reservations[rIndex].updatedAt = new Date().toISOString();
   }
 

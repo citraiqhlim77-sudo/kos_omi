@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import NextLink from 'next/link';
 import Image from 'next/image';
@@ -307,13 +307,13 @@ export default async function PembayaranSelesaiPage({
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <a
-                href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(reservation.userName)}%20telah%20menyelesaikan%20pembayaran%20Invoice%20${payment.invoiceCode}%20untuk%20Kamar%20${reservation.roomCode}.%20Mohon%20konfirmasi%20jadwal%20serah%20terima%20kunci.`}
+                href={`https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(reservation.userName)}%20telah%20menyelesaikan%20pembayaran%20Invoice%20${payment.invoiceCode}%20untuk%20Kamar%20${reservation.roomCode}.%20Mohon%20konfirmasi%20jadwal%20serah%20terima%20kunci.`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-3 rounded-lg transition-colors"
               >
                 <Phone size={14} />
-                Konfirmasi Check-in via WhatsApp (0822-8714-6763)
+                Konfirmasi Check-in via WhatsApp (0813-7432-9562)
               </a>
               <NextLink
                 href="/calon"

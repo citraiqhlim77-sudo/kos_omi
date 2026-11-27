@@ -72,6 +72,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
     initialReservations[0]?.payment || null
   );
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');
+  const [transferProofUrl, setTransferProofUrl] = useState<string>('');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [isCancellingModalOpen, setIsCancellingModalOpen] = useState(false);
@@ -108,7 +109,11 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
     setPaymentError(null);
     setIsPayingDirect(true);
     setFeedbackMessage(null);
-    const result = await submitPaymentConfirmationAction(invoiceCode, selectedMethod);
+    const result = await submitPaymentConfirmationAction(
+      invoiceCode,
+      selectedMethod,
+      transferProofUrl || undefined
+    );
     setIsPayingDirect(false);
     if (result.success) {
       setFeedbackMessage(result.message);
@@ -451,6 +456,9 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     selectedMethod={selectedMethod}
                     onSelectMethod={setSelectedMethod}
                     amountFormatted={formatRupiah(current.totalInitialPayment)}
+                    showProofUpload
+                    proofUrl={transferProofUrl}
+                    onProofChange={setTransferProofUrl}
                   />
                 </div>
 
@@ -705,13 +713,13 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   )}
 
                   <a
-                    href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20status%20reservasi%20saya."
+                    href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20status%20reservasi%20saya."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full inline-flex items-center justify-center gap-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs py-2.5 px-4 rounded-lg transition-colors"
                   >
                     <Phone size={13} className="text-emerald-600" />
-                    Hubungi Ibu Yulastri via WhatsApp (0822-8714-6763)
+                    Hubungi Ibu Yulastri via WhatsApp (0813-7432-9562)
                   </a>
                 </div>
               </Card>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { AdminSettings } from '@/types/admin';
@@ -215,7 +215,7 @@ export const AdminPengaturanClient: React.FC<AdminPengaturanClientProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-medium text-zinc-800 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
               <span className="text-[10px] text-zinc-500 mt-1 block">
-                Pemilik: Ibu Yulastri · WA Utama: 0822-8714-6763 · Cadangan: 0813-7432-9562
+                Pemilik: Ibu Yulastri · WA Utama: 0813-7432-9562 · Cadangan: 0813-7432-9562
               </span>
             </div>
 

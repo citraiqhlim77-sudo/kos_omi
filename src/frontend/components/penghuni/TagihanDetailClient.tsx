@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import NextLink from 'next/link';
@@ -117,7 +117,7 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
               Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (Dekat Kampus III UIN Imam Bonjol)
               <br />
-              WhatsApp Ibu Yulastri: 0822-8714-6763 • kontak@kosomi.id
+              WhatsApp Ibu Yulastri: 0813-7432-9562 • kontak@kosomi.id
             </p>
           </div>
 
@@ -220,7 +220,7 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
           </div>
           <div className="sm:text-right space-y-1">
             <h3 className="font-bold text-zinc-800">Pemilik & Pengelola Kos Omi</h3>
-            <p className="text-[11px]">Ibu Yulastri: 0822-8714-6763</p>
+            <p className="text-[11px]">Ibu Yulastri: 0813-7432-9562</p>
           </div>
         </div>
       </div>

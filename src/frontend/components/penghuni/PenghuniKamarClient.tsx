@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -111,13 +111,13 @@ export const PenghuniKamarClient: React.FC<PenghuniKamarClientProps> = ({
         </div>
 
         <a
-          href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${activeRoomCode}.%20Saya%20ingin%20mengajukan%20laporan/kendala%20kamar.`}
+          href={`https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${activeRoomCode}.%20Saya%20ingin%20mengajukan%20laporan/kendala%20kamar.`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
         >
           <Phone className="w-4 h-4" />
-          <span>Lapor Kendala Kamar via WA (0822-8714-6763)</span>
+          <span>Lapor Kendala Kamar via WA (0813-7432-9562)</span>
         </a>
       </div>
 

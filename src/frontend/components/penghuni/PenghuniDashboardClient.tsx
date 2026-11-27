@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import NextLink from 'next/link';
@@ -386,12 +386,12 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
               Ada kendala fasilitas kamar atau pertanyaan pembayaran? Hubungi kantor pengelola Kos Omi Sungai Bangek.
             </p>
             <a
-              href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${profile.roomCode}.`}
+              href={`https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20${encodeURIComponent(profile.name || 'Penghuni')}%20Kamar%20No.%20${profile.roomCode}.`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs hover:bg-emerald-100 transition-colors"
             >
-              <span>WhatsApp Ibu Yulastri (0822-8714-6763)</span>
+              <span>WhatsApp Ibu Yulastri (0813-7432-9562)</span>
             </a>
           </div>
         </div>

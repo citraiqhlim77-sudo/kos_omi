@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { fetchRoomsAction, fetchRoomStatsAction } from '@/actions/rooms';
+import { ensurePostgresHydrated } from '@/server/persistence';
 import { KamarCatalogClient } from '@/components/kamar/KamarCatalogClient';
 
 export const dynamic = 'force-dynamic';
@@ -42,11 +43,43 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function KamarPage() {
-  // Ambil seluruh kamar dan statistik langsung dari server database
-  const [rooms, stats] = await Promise.all([
+  // Ambil seluruh kamar, statistik, dan daftar kamar yang masih menerima 1 orang lagi (sisa 1 slot)
+  const [rooms, stats, store] = await Promise.all([
     fetchRoomsAction(),
     fetchRoomStatsAction(),
+    ensurePostgresHydrated(),
   ]);
 
-  return <KamarCatalogClient initialRooms={rooms} initialStats={stats} />;
+  const openSlotRoomCodes = new Set<string>();
+  for (const rsv of store.reservations) {
+    if (
+      (rsv.status === 'PENDING_REVIEW' || rsv.status === 'APPROVED' || rsv.status === 'PAID') &&
+      (rsv.userOccupation || '').includes('1 Slot Sendiri')
+    ) {
+      openSlotRoomCodes.add(rsv.roomCode);
+    }
+  }
+  const activeCountByRoom = new Map<string, number>();
+  for (const ten of store.tenancies) {
+    if (ten.status === 'AKTIF') {
+      activeCountByRoom.set(ten.roomCode, (activeCountByRoom.get(ten.roomCode) || 0) + 1);
+    }
+  }
+  for (const ten of store.tenancies) {
+    if (
+      ten.status === 'AKTIF' &&
+      activeCountByRoom.get(ten.roomCode) === 1 &&
+      ten.monthlyPrice <= 2500000
+    ) {
+      openSlotRoomCodes.add(ten.roomCode);
+    }
+  }
+
+  return (
+    <KamarCatalogClient
+      initialRooms={rooms}
+      initialStats={stats}
+      openSlotRoomCodes={Array.from(openSlotRoomCodes)}
+    />
+  );
 }

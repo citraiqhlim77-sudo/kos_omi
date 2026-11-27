@@ -273,13 +273,13 @@ export default async function DetailKamarPage({ params }: PageProps) {
                 )}
 
                 <a
-                  href={`https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20tertarik%20dengan%20Kamar%20${room.code}%20(Lantai%20${room.floor}).`}
+                  href={`https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20tertarik%20dengan%20Kamar%20${room.code}%20(Lantai%20${room.floor}).`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={14} className="text-emerald-600" />
-                  Tanya Ibu Yulastri via WhatsApp (0822-8714-6763)
+                  Tanya Ibu Yulastri via WhatsApp (0813-7432-9562)
                 </a>
               </div>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import NextLink from 'next/link';
@@ -65,7 +65,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
         <div className="flex items-center gap-2 text-xs">
           <div className="px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-200">
             <span className="text-zinc-400 block text-[10px]">Pemilik & Kontak Resmi</span>
-            <span className="font-bold text-zinc-900">Ibu Yulastri (0822-8714-6763)</span>
+            <span className="font-bold text-zinc-900">Ibu Yulastri (0813-7432-9562)</span>
           </div>
           <div className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
             <span className="text-emerald-600 block text-[10px]">Status Sistem</span>

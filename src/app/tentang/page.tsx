@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
@@ -139,11 +139,11 @@ export default function TentangPage() {
               <div className="bg-white p-4 rounded-xl border border-zinc-200">
                 <p className="text-xs text-zinc-500 font-medium">Pemilik Kos (Ibu Yulastri)</p>
                 <p className="text-sm font-extrabold text-zinc-900 font-heading mt-1">
-                  0822-8714-6763
+                  0813-7432-9562
                 </p>
                 <p className="text-[10px] text-zinc-500">Cadangan: 0813-7432-9562</p>
                 <a
-                  href="https://wa.me/6282287146763"
+                  href="https://wa.me/6281374329562"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[11px] text-emerald-600 font-semibold hover:underline inline-block mt-0.5"
@@ -299,7 +299,7 @@ export default function TentangPage() {
                   <div className="p-3.5 rounded-lg bg-zinc-50 border border-zinc-100 space-y-1">
                     <p className="font-bold text-zinc-800">Pemilik & Kontak Resmi (Ibu Yulastri):</p>
                     <p className="text-sm font-extrabold text-[hsl(186,72%,24%)]">
-                      WA Utama: 0822-8714-6763
+                      WA Utama: 0813-7432-9562
                     </p>
                     <p className="text-xs font-semibold text-zinc-700">
                       Kontak Cadangan: 0813-7432-9562
@@ -331,13 +331,13 @@ export default function TentangPage() {
                 </a>
 
                 <a
-                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20lokasi%20dan%20ketersediaan%20kamar%20kos."
+                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20lokasi%20dan%20ketersediaan%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={15} />
-                  Hubungi Ibu Yulastri (0822-8714-6763)
+                  Hubungi Ibu Yulastri (0813-7432-9562)
                 </a>
               </div>
             </div>
@@ -351,7 +351,7 @@ export default function TentangPage() {
           <div className="space-y-2 text-center md:text-left">
             <h2 className="text-2xl font-extrabold text-white">Siap Memilih Kamar di Kos Omi?</h2>
             <p className="text-xs sm:text-sm text-zinc-300 max-w-xl">
-              Cek kamar yang tersedia di Lantai 1 & Lantai 2 atau hubungi langsung Ibu Yulastri di 0822-8714-6763 (cadangan: 0813-7432-9562).
+              Cek kamar yang tersedia di Lantai 1 & Lantai 2 atau hubungi langsung Ibu Yulastri di 0813-7432-9562 (cadangan: 0813-7432-9562).
             </p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
@@ -363,7 +363,7 @@ export default function TentangPage() {
               <ArrowRight size={15} />
             </NextLink>
             <a
-              href="https://wa.me/6282287146763"
+              href="https://wa.me/6281374329562"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-lg transition-colors"

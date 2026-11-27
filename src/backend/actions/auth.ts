@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { createHash, randomBytes } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
@@ -492,13 +492,13 @@ export async function forgotPasswordAction(
   const waText = encodeURIComponent(
     `Assalamu'alaikum Ibu Admin Kos Omi, saya lupa kata sandi akun saya.\n\nEmail Akun: ${sanitizedEmail}\n\nMohon bantuannya untuk melakukan Reset Kata Sandi akun saya di portal Kos Omi. Terima kasih.`
   );
-  const adminWhatsappUrl = `https://wa.me/6282287146763?text=${waText}`;
+  const adminWhatsappUrl = `https://wa.me/6281374329562?text=${waText}`;
 
   if (user && user.isActive) {
     const nowIso = new Date().toISOString();
     store.notificationLogs.unshift({
       id: `ntf-reset-${Date.now()}`,
-      recipient: '+62 822-8714-6763',
+      recipient: '+62 813-7432-9562',
       recipientName: `Permintaan Reset Sandi (${user.name})`,
       channel: 'WHATSAPP',
       template: `permintaan_reset_sandi_${sanitizedEmail}`,

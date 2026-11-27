@@ -23,12 +23,15 @@ interface KamarCatalogClientProps {
     occupied: number;
     maintenance: number;
   };
+  openSlotRoomCodes?: string[];
 }
 
 export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
   initialRooms,
   initialStats,
+  openSlotRoomCodes = [],
 }) => {
+  const openSlotSet = useMemo(() => new Set(openSlotRoomCodes), [openSlotRoomCodes]);
   const [selectedFloor, setSelectedFloor] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -186,6 +189,7 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredRooms.map((room) => {
               const isAvailable = room.status === 'TERSEDIA';
+              const hasOpenSlot = openSlotSet.has(room.code);
 
               return (
                 <Card
@@ -215,14 +219,26 @@ export const KamarCatalogClient: React.FC<KamarCatalogClientProps> = ({
                     </div>
 
                     <div className="p-4 space-y-2.5">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <h2 className="font-heading font-extrabold text-base text-zinc-900">
                           Kamar No. {room.code}
                         </h2>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                          2 Orang
-                        </span>
+                        {hasOpenSlot ? (
+                          <span className="text-[10px] font-bold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
+                            Masih Terima 1 Orang
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                            2 Orang
+                          </span>
+                        )}
                       </div>
+
+                      {hasOpenSlot && (
+                        <p className="text-[11px] font-semibold text-sky-700 bg-sky-50/70 border border-sky-200/80 rounded-lg px-2.5 py-1.5">
+                          Kamar {room.code} masih menerima 1 orang lagi untuk sekamar.
+                        </p>
+                      )}
 
                       <div className="flex flex-wrap gap-1.5 text-[11px] text-zinc-600">
                         <span className="inline-flex items-center gap-1 bg-zinc-50 border border-zinc-200/80 px-2 py-0.5 rounded">

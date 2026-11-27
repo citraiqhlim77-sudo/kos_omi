@@ -1,4 +1,4 @@
-import { ALL_ROOMS } from '@/data/rooms';
+﻿import { ALL_ROOMS } from '@/data/rooms';
 import { buildRealTenants2026 } from '@/data/real-tenants-2026';
 
 // Placeholder hash awal (akan diganti Bcrypt hash asli saat inisialisasi)
@@ -25,7 +25,7 @@ export const STAFF_SEED_USERS: SeedUser[] = [
     nim: 'admin',
     email: 'admin@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '0822-8714-6763',
+    phone: '0813-7432-9562',
     role: 'ADMIN',
     isActive: true,
   },
@@ -45,7 +45,7 @@ export const STAFF_SEED_USERS: SeedUser[] = [
     nim: 'keuangan',
     email: 'keuangan@kosomi.id',
     passwordHash: DEFAULT_PASSWORD_HASH,
-    phone: '0822-8714-6763',
+    phone: '0813-7432-9562',
     role: 'KEUANGAN',
     isActive: true,
   },
@@ -74,7 +74,7 @@ export const SEED_SETTINGS = [
     value:
       'Jl. Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (Dekat Kampus III UIN Imam Bonjol)',
   },
-  { key: 'admin_phone', value: '0822-8714-6763' },
+  { key: 'admin_phone', value: '0813-7432-9562' },
   { key: 'due_day_default', value: '5' },
   { key: 'deposit_percent', value: '0' },
   { key: 'booking_window_hours', value: '24' },

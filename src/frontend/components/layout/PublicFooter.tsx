@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import NextLink from 'next/link';
@@ -52,12 +52,12 @@ export const PublicFooter: React.FC = () => {
                 <Phone size={18} className="text-sky-400 shrink-0 mt-0.5" />
                 <div>
                   <a
-                    href="https://wa.me/6282287146763"
+                    href="https://wa.me/6281374329562"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-white transition-colors font-semibold text-zinc-200 block"
                   >
-                    0822-8714-6763 (Ibu Yulastri)
+                    0813-7432-9562 (Ibu Yulastri)
                   </a>
                   <span className="text-xs text-zinc-400">Cadangan: 0813-7432-9562</span>
                 </div>
@@ -96,7 +96,7 @@ export const PublicFooter: React.FC = () => {
               </li>
               <li>
                 <NextLink href="/kontak" className="hover:text-white transition-colors">
-                  Hubungi Ibu Yulastri (0822-8714-6763)
+                  Hubungi Ibu Yulastri (0813-7432-9562)
                 </NextLink>
               </li>
               <li>

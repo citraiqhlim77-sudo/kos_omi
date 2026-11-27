@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
@@ -71,10 +71,10 @@ export function KontakClient() {
                   </div>
                   <div>
                     <span className="text-xs text-zinc-400 font-medium">Pemilik Kos (Ibu Yulastri)</span>
-                    <p className="font-bold text-zinc-900 text-base">0822-8714-6763 (WhatsApp Utama)</p>
+                    <p className="font-bold text-zinc-900 text-base">0813-7432-9562 (WhatsApp Utama)</p>
                     <p className="text-xs text-zinc-600 font-medium">Kontak Cadangan: 0813-7432-9562</p>
                     <a
-                      href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20kamar%20kos."
+                      href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20kamar%20kos."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-emerald-600 font-semibold hover:underline mt-0.5 inline-block"
@@ -183,7 +183,7 @@ export function KontakClient() {
                       Kirim Pertanyaan atau Jadwal Survei
                     </h2>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Isi formulir di bawah ini atau langsung chat ke WhatsApp Ibu Yulastri (0822-8714-6763 / Cadangan: 0813-7432-9562).
+                      Isi formulir di bawah ini atau langsung chat ke WhatsApp Ibu Yulastri (0813-7432-9562 / Cadangan: 0813-7432-9562).
                     </p>
                   </div>
 

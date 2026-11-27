@@ -1,4 +1,4 @@
-export interface FAQItem {
+﻿export interface FAQItem {
   id: string;
   category: 'reservasi' | 'pembayaran' | 'aturan';
   question: string;
@@ -28,7 +28,7 @@ export const FAQ_DATA: FAQItem[] = [
     id: 'faq-4',
     category: 'pembayaran',
     question: 'Bagaimana cara menghubungi Pemilik Kos Omi (Ibu Yulastri) jika ada pertanyaan?',
-    answer: 'Anda dapat menghubungi Ibu Yulastri secara langsung melalui WhatsApp Utama di nomor 0822-8714-6763 (atau kontak cadangan 0813-7432-9562), maupun datang langsung ke lokasi Kos Omi di Jalan Ekora, Sungai Bangek, Padang (dekat Kampus III UIN Imam Bonjol Padang).',
+    answer: 'Anda dapat menghubungi Ibu Yulastri secara langsung melalui WhatsApp Utama di nomor 0813-7432-9562 (atau kontak cadangan 0813-7432-9562), maupun datang langsung ke lokasi Kos Omi di Jalan Ekora, Sungai Bangek, Padang (dekat Kampus III UIN Imam Bonjol Padang).',
   },
   {
     id: 'faq-5',

@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
+import { LiveNotifBell } from '@/components/layout/LiveNotifBell';
 
 export const KeuanganNav: React.FC = () => {
   const pathname = usePathname();
@@ -68,6 +69,8 @@ export const KeuanganNav: React.FC = () => {
                 );
               })}
             </nav>
+
+            <LiveNotifBell />
 
             {/* Tombol Beranda & Keluar disembunyikan di HP (< md) agar tidak menumpuk badge Staf Keuangan */}
             <div className="hidden md:inline-flex items-center gap-1.5 pl-2 border-l border-zinc-200 shrink-0">

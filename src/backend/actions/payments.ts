@@ -204,10 +204,11 @@ export async function settlePaymentAction(
  */
 export async function submitPaymentConfirmationAction(
   invoiceCode: string,
-  paymentMethod: string = 'qris'
+  paymentMethod: string = 'bri',
+  proofDataUrl?: string
 ): Promise<{ success: boolean; message: string; payment?: PaymentInvoice; reservation?: Reservation }> {
   try {
-    const result = await dbSubmitPaymentConfirmation(invoiceCode, paymentMethod);
+    const result = await dbSubmitPaymentConfirmation(invoiceCode, paymentMethod, proofDataUrl);
     if (result.success) {
       const currentUser = await getCurrentUser();
       await createAuditLog({

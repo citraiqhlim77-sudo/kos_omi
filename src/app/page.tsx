@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { formatRupiah } from '@/data/rooms';
@@ -31,13 +31,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: `Kos Omi Sungai Bangek, Padang - ${availableCount} Kamar Kosong Siap Huni`,
-    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000/orang, tanpa biaya deposit). Hubungi Ibu Yulastri: 0822-8714-6763.`,
+    description: `Hunian nyaman Kos Omi di Sungai Bangek, Koto Tangah, Kota Padang dekat Kampus III UIN Imam Bonjol Padang. Tarif Rp 5.000.000/semester per kamar untuk maksimal 2 orang (boleh diisi 1 orang sendiri Rp 5.000.000 atau berdua Rp 2.500.000/orang, tanpa biaya deposit). Hubungi Ibu Yulastri: 0813-7432-9562.`,
     alternates: {
       canonical: 'https://kosomi.id',
     },
     openGraph: {
       title: `Kos Omi Sungai Bangek, Padang - ${availableCount} Kamar Siap Huni`,
-      description: `Cek ketersediaan kamar secara real-time di Sungai Bangek Padang (dekat UIN Imam Bonjol). Rp 5.000.000/semester per kamar (maksimal 2 orang, tanpa deposit). Hubungi Ibu Yulastri: 0822-8714-6763.`,
+      description: `Cek ketersediaan kamar secara real-time di Sungai Bangek Padang (dekat UIN Imam Bonjol). Rp 5.000.000/semester per kamar (maksimal 2 orang, tanpa deposit). Hubungi Ibu Yulastri: 0813-7432-9562.`,
       url: 'https://kosomi.id',
       siteName: 'Kos Omi Sungai Bangek, Padang',
       type: 'website',
@@ -162,7 +162,7 @@ export default async function HomePage() {
       latitude: -0.827438,
       longitude: 100.357938,
     },
-    telephone: '+6282287146763',
+    telephone: '+6281374329562',
     priceRange: 'Rp 5.000.000 / Semester',
   };
 
@@ -198,13 +198,13 @@ export default async function HomePage() {
                   <ArrowRight size={18} />
                 </NextLink>
                 <a
-                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20ketersediaan%20kamar%20kos."
+                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20tentang%20ketersediaan%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base px-6 py-3.5 rounded-lg transition-all"
                 >
                   <Phone size={18} />
-                  Hubungi Ibu Yulastri (0822-8714-6763)
+                  Hubungi Ibu Yulastri (0813-7432-9562)
                 </a>
               </div>
 
@@ -523,7 +523,7 @@ export default async function HomePage() {
               <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-zinc-500 block">WhatsApp Utama Ibu Yulastri</span>
-                  <span className="font-heading font-extrabold text-base text-zinc-900">0822-8714-6763</span>
+                  <span className="font-heading font-extrabold text-base text-zinc-900">0813-7432-9562</span>
                   <span className="text-[11px] text-zinc-500 block mt-0.5">Kontak Cadangan: 0813-7432-9562</span>
                 </div>
                 <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded">
@@ -532,13 +532,13 @@ export default async function HomePage() {
               </div>
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <a
-                  href="https://wa.me/6282287146763?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20kamar%20kos."
+                  href="https://wa.me/6281374329562?text=Halo%20Ibu%20Yulastri%20(Kos%20Omi),%20saya%20ingin%20bertanya%20mengenai%20kamar%20kos."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-3 rounded-lg transition-colors"
                 >
                   <Phone size={14} />
-                  Chat WhatsApp Ibu Yulastri (0822-8714-6763)
+                  Chat WhatsApp Ibu Yulastri (0813-7432-9562)
                 </a>
                 <NextLink
                   href="/kontak"

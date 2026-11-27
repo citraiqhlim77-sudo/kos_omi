@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import {
   AdminUserRecord,
@@ -47,7 +47,7 @@ const initialUsers: AdminUserRecord[] = [
     name: 'Ibu Yulastri (Pemilik Kos & Super Admin)',
     nim: 'admin',
     email: 'admin@kosomi.id',
-    phone: '0822-8714-6763',
+    phone: '0813-7432-9562',
     role: 'ADMIN',
     passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
@@ -71,7 +71,7 @@ const initialUsers: AdminUserRecord[] = [
     name: 'Aisyah Fitriani (Staf Keuangan)',
     nim: 'keuangan',
     email: 'keuangan@kosomi.id',
-    phone: '0822-8714-6763',
+    phone: '0813-7432-9562',
     role: 'KEUANGAN',
     passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
@@ -97,7 +97,7 @@ const initialSettings: AdminSettings = {
   kosName: 'Kos Omi Sungai Bangek, Padang',
   kosAddress:
     'Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (59F5+25 Balai Gadang) (Dekat Kampus III UIN Imam Bonjol)',
-  adminPhone: '0822-8714-6763 (Ibu Yulastri) / 0813-7432-9562',
+  adminPhone: '0813-7432-9562 (Ibu Yulastri) / 0813-7432-9562',
   dueDay: 5,
   depositPercentage: 0,
   bookingWindowHours: 24,

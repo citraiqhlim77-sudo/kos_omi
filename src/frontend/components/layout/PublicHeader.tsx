@@ -18,6 +18,7 @@ import {
 import { getClientSession } from '@/lib/auth-client';
 import { AuthUser } from '@/types/auth';
 import { LogoutButton } from '@/components/layout/LogoutButton';
+import { LiveNotifBell } from '@/components/layout/LiveNotifBell';
 
 export const PublicHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,15 +29,6 @@ export const PublicHeader: React.FC = () => {
     setSessionUser(getClientSession());
     setIsMobileMenuOpen(false);
   }, [pathname]);
-
-  const navLinks = [
-    { href: '/', label: 'Beranda', icon: Home },
-    { href: '/kamar', label: 'Katalog Kamar', icon: BedDouble },
-    ...(sessionUser ? [{ href: '/calon', label: 'Status Reservasi', icon: ShieldCheck }] : []),
-    { href: '/tentang', label: 'Tentang Kos', icon: Info },
-    { href: '/faq', label: 'FAQ', icon: HelpCircle },
-    { href: '/kontak', label: 'Kontak', icon: Phone },
-  ];
 
   const isActive = (path: string) => {
     if (!pathname) return false;
@@ -59,6 +51,20 @@ export const PublicHeader: React.FC = () => {
 
   const isOnCalonPortal = Boolean(pathname) && pathname!.startsWith('/calon');
   const dashboardHref = sessionUser?.dashboardPath || '/calon/dashboard';
+
+  const navLinks = [
+    { href: '/', label: 'Beranda', icon: Home },
+    { href: '/kamar', label: 'Katalog Kamar', icon: BedDouble },
+    ...(sessionUser || isOnCalonPortal
+      ? [
+          { href: '/calon/dashboard', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
+          { href: '/calon/profil', label: 'Profil Saya', icon: LayoutDashboard },
+        ]
+      : []),
+    { href: '/tentang', label: 'Tentang Kos', icon: Info },
+    { href: '/faq', label: 'FAQ', icon: HelpCircle },
+    { href: '/kontak', label: 'Kontak', icon: Phone },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[hsl(240,6%,90%)] transition-colors">
@@ -107,6 +113,7 @@ export const PublicHeader: React.FC = () => {
 
           {/* Desktop Auth CTA Buttons (Disembunyikan di HP < md agar header rapi) & Mobile Hamburger Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {(sessionUser || isOnCalonPortal) && <LiveNotifBell />}
             <div className="hidden md:inline-flex items-center gap-2">
               {sessionUser || isOnCalonPortal ? (
                 <>

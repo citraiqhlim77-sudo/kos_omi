@@ -252,8 +252,36 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Applicant Biodata */}
+        {/* Left 2 Cols: Applicant Biodata & Bukti Transfer BRI */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Bukti Transfer Bank BRI (jika sudah diunggah calon penghuni) */}
+          {reservation.payment?.snapRedirectUrl?.startsWith('data:image/') && (
+            <div className="bg-white p-6 rounded-2xl border border-emerald-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Bukti Transfer Bank BRI</span>
+                  </h2>
+                  <p className="text-xs text-zinc-500">
+                    Periksa kesesuaian nominal dan rekening tujuan sebelum memvalidasi pembayaran lunas.
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Bukti Terlampir
+                </span>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50 flex items-center justify-center p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={reservation.payment.snapRedirectUrl}
+                  alt={`Bukti Transfer ${reservation.userName}`}
+                  className="max-h-96 w-auto rounded-lg object-contain"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Detailed Biodata Card */}
           <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">

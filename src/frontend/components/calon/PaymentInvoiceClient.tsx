@@ -56,6 +56,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
   const [invoice, setInvoice] = useState<PaymentInvoice>(initialInvoice);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');
+  const [transferProofUrl, setTransferProofUrl] = useState<string>('');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [payFeedback, setPayFeedback] = useState<string | null>(null);
@@ -66,7 +67,8 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
     setPayFeedback(null);
     const res = await submitPaymentConfirmationAction(
       invoice.invoiceCode,
-      selectedMethod
+      selectedMethod,
+      transferProofUrl || undefined
     );
     setIsPayingDirect(false);
     if (res.success && res.payment) {
@@ -332,6 +334,9 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                   selectedMethod={selectedMethod}
                   onSelectMethod={setSelectedMethod}
                   amountFormatted={formatRupiah(invoice.amount)}
+                  showProofUpload
+                  proofUrl={transferProofUrl}
+                  onProofChange={setTransferProofUrl}
                 />
 
                 {paymentError && (

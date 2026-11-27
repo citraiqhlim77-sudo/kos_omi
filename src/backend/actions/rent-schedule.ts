@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
@@ -421,7 +421,7 @@ export async function sendRoomRentReminderAction(
 
   const isFinal = target.status === 'WAJIB_KONFIRMASI_IBU_KOS';
   const waMessage = isFinal
-    ? `Assalamu'alaikum ${occupantNames} (Kamar No. ${roomCode} Kos Omi).\n\nTagihan sewa 3-bulanan Kamar No. ${roomCode} (jatuh tempo ${target.nextDueDate}) telah melewati batas maksimal perpanjangan 7 hari (1 minggu).\n\nMohon segera mengonfirmasi kendala pembayaran secara langsung kepada Ibu Kos (Ibu Yulastri: 0822-8714-6763). Terima kasih.`
+    ? `Assalamu'alaikum ${occupantNames} (Kamar No. ${roomCode} Kos Omi).\n\nTagihan sewa 3-bulanan Kamar No. ${roomCode} (jatuh tempo ${target.nextDueDate}) telah melewati batas maksimal perpanjangan 7 hari (1 minggu).\n\nMohon segera mengonfirmasi kendala pembayaran secara langsung kepada Ibu Kos (Ibu Yulastri: 0813-7432-9562). Terima kasih.`
     : `Assalamu'alaikum ${occupantNames} (Kamar No. ${roomCode} Kos Omi).\n\nMengingatkan jadwal pembayaran sewa 3-bulanan Kamar No. ${roomCode} (tanggal masuk: ${target.checkInDate}) dengan jatuh tempo tanggal ${target.effectiveDueDate}.\n\nJika sedang ada kendala, Anda dapat mengajukan perpanjangan waktu maksimal 7 hari melalui Portal Penghuni Kos Omi. Terima kasih.`;
 
   const whatsappUrl = waPhone
@@ -521,7 +521,7 @@ export async function requestRentExtensionAction(params: {
   const store = await ensurePostgresHydrated();
   store.notificationLogs.unshift({
     id: `ntf-ext-k${mySchedule.roomCode}-${Date.now()}`,
-    recipient: '+62 822-8714-6763',
+    recipient: '+62 813-7432-9562',
     recipientName: `Pengajuan Tempo ${days} Hari (${user.name} - Kamar ${mySchedule.roomCode})`,
     channel: 'WHATSAPP',
     template: `pengajuan_tempo_${days}_hari_kamar_${mySchedule.roomCode}`,
