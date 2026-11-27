@@ -216,14 +216,19 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <NextLink
-            href="/kamar"
-            className="text-xs px-3.5 py-2 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 font-bold hover:bg-sky-100 transition-colors"
-          >
-            + Pesan Kamar Baru
-          </NextLink>
-        </div>
+        {current &&
+          (current.status === 'REJECTED' ||
+            current.status === 'CANCELLED' ||
+            current.status === 'EXPIRED') && (
+            <div className="flex flex-wrap items-center gap-2">
+              <NextLink
+                href="/kamar"
+                className="text-xs px-3.5 py-2 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 font-bold hover:bg-sky-100 transition-colors"
+              >
+                + Pesan Kamar Lain
+              </NextLink>
+            </div>
+          )}
       </div>
 
       {feedbackMessage && (

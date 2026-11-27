@@ -11,9 +11,18 @@ export function validateEmail(email: string): string | null {
   if (!email || !email.trim()) {
     return 'Alamat email wajib diisi';
   }
+  const trimmed = email.trim().toLowerCase();
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailRegex.test(email.trim())) {
-    return 'Format alamat email tidak valid (contoh: nama@domain.com)';
+  if (!emailRegex.test(trimmed)) {
+    return 'Format alamat email tidak valid (contoh: nama@gmail.com)';
+  }
+  if (
+    trimmed.endsWith('@gmail.con') ||
+    trimmed.endsWith('@gmail.co') ||
+    trimmed.endsWith('@gamil.com') ||
+    trimmed.endsWith('@gmial.com')
+  ) {
+    return 'Periksa kembali akhiran email Anda (mungkin maksud Anda @gmail.com?)';
   }
   return null;
 }

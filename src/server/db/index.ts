@@ -180,14 +180,19 @@ export async function dbGetRoomByCode(codeOrId: string): Promise<Room | null> {
   return room ? { ...room } : null;
 }
 
-export async function dbUpdateRoomStatus(codeOrId: string, status: RoomStatus): Promise<boolean> {
-  const db = await getHydratedDb();
+export async function dbUpdateRoomStatus(
+  codeOrId: string,
+  status: RoomStatus
+): Promise<boolean> {
+  if (!global.__kosOmiUnifiedStore) {
+    await ensurePostgresHydrated();
+  }
+  const db = getDb();
   const normalized = resolveRoomCode(codeOrId);
   const index = db.rooms.findIndex((r) => r.code === normalized || r.id === codeOrId);
   if (index === -1) return false;
   db.rooms[index].status = status;
   savePersistentStore();
-  await flushPostgresSync();
   await flushPostgresSync();
   return true;
 }
@@ -403,8 +408,11 @@ export async function dbCreateReservation(input: CreateReservationInput): Promis
 
   db.reservations.unshift(newReservation);
 
-  // Kunci kamar menjadi DIPESAN segera setelah reservasi diajukan (Menunggu Verifikasi)
-  await dbUpdateRoomStatus(room.code, 'DIPESAN');
+  // Kunci kamar menjadi DIPESAN langsung pada store yang sama (tanpa re-hidrasi ulang di tengah mutasi)
+  const roomIdx = store.rooms.findIndex((r) => r.code === room.code || r.id === room.id);
+  if (roomIdx !== -1) {
+    store.rooms[roomIdx].status = 'DIPESAN';
+  }
 
   // Sinkronkan pemohon reservasi ke daftar pengguna Admin & Calon Penghuni
   const existingAdminUser = store.adminUsers.find(
