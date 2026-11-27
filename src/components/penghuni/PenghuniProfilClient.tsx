@@ -249,7 +249,7 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                NIM / NIK KTP (Opsional)
+                NIM · Opsional
               </label>
               <input
                 type="text"

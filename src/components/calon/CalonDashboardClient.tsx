@@ -153,7 +153,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
     startTransition(async () => {
       const res = await approveReservationForDemoAction(
         resCode,
-        'Verifikasi KTP dan berkas calon penghuni telah disetujui oleh pengelola Kos Omi.'
+        'Data reservasi calon penghuni telah disetujui oleh pengelola Kos Omi.'
       );
 
       if (res.success && res.data) {
@@ -311,7 +311,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   </div>
                   <span className="text-xs font-bold text-zinc-800">1. Pengajuan</span>
                 </div>
-                <p className="text-[11px] text-zinc-500">Berkas identitas & KTP lengkap tersimpan</p>
+                <p className="text-[11px] text-zinc-500">Data reservasi tersimpan di sistem</p>
               </div>
 
               {/* Tahap 2: Verifikasi 2x24 Jam */}

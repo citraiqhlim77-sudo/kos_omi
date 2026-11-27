@@ -37,12 +37,11 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
   const [reservation, setReservation] = useState<Reservation>(initialReservation);
 
   // Modals state
-  const [isKtpZoomOpen, setIsKtpZoomOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
   // Form states inside dialogs
-  const [adminNotes, setAdminNotes] = useState('Dokumen KTP dan data calon penghuni telah terverifikasi lengkap.');
+  const [adminNotes, setAdminNotes] = useState('Data calon penghuni dan jadwal reservasi telah diverifikasi lengkap.');
   const [rejectionReason, setRejectionReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -165,20 +164,19 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
                 {reservation.code}
               </span>
               <span
-                className={`font-bold px-2.5 py-0.5 rounded text-xs ${
-                  status === 'APPROVED'
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : status === 'PAID'
+                className={`font-bold px-2.5 py-0.5 rounded text-xs ${status === 'APPROVED'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                  : status === 'PAID'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : status === 'REJECTED'
-                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}
               >
                 {status === 'PENDING_REVIEW'
-                  ? 'Menunggu Verifikasi KTP'
+                  ? 'Menunggu Verifikasi'
                   : status === 'APPROVED'
-                  ? 'Disetujui (Menunggu Bayar)'
+                  ? 'Disetujui · Menunggu Bayar'
                   : status === 'PAID'
                   ? 'Lunas Terverifikasi'
                   : status === 'REJECTED'
@@ -254,68 +252,8 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Applicant & KTP Document */}
+        {/* Left 2 Cols: Applicant Biodata */}
         <div className="lg:col-span-2 space-y-6">
-          {/* KTP Document Card */}
-          <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Dokumen KTM / KRS Calon Penghuni</span>
-                </h2>
-                <p className="text-xs text-zinc-500">
-                  Periksa kecocokan nama, foto Kartu Tanda Mahasiswa (KTM) / KRS, dan NIM mahasiswi
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsKtpZoomOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span>Perbesar Foto</span>
-              </button>
-            </div>
-
-            {/* Photo preview container */}
-            <div
-              onClick={() => setIsKtpZoomOpen(true)}
-              className="relative aspect-[16/10] max-h-80 w-full rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100 cursor-zoom-in group"
-            >
-              <Image
-                src={reservation.ktpUrl || '/rooms/kamar-1.png'}
-                alt={`KTM / KRS ${reservation.userName}`}
-                fill
-                unoptimized={(reservation.ktpUrl || '').startsWith('data:')}
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover group-hover:scale-[1.02] transition-transform duration-200"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 rounded-lg bg-black/75 text-white text-xs font-bold transition-opacity">
-                  Klik untuk melihat ukuran penuh
-                </span>
-              </div>
-            </div>
-
-            {/* Identity match strip */}
-            <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-zinc-500 block text-[11px]">Nama Lengkap Calon Penghuni:</span>
-                <span className="font-bold text-zinc-900 text-sm">
-                  {reservation.userName}
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block text-[11px]">Email Terdaftar:</span>
-                <span className="font-bold text-zinc-900 text-sm">
-                  {reservation.userEmail}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* Detailed Biodata Card */}
           <div className="bg-white p-6 rounded-2xl border border-zinc-200 space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
@@ -433,41 +371,12 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
             </h3>
             <ul className="space-y-1.5 list-disc pl-4 text-[11px]">
               <li>Persetujuan akan mengunci kamar menjadi <strong>DIPESAN</strong>.</li>
-              <li>Invoice Midtrans Snap otomatis berlaku selama 24 jam.</li>
-              <li>Jika tidak dibayar dalam 24 jam, sistem otomatis mengembalikan kamar ke <strong>TERSEDIA</strong>.</li>
+              <li>Tagihan pembayaran Bank BRI berlaku selama 24 jam.</li>
+              <li>Jika tidak dibayar dalam 24 jam, kamar kembali berstatus <strong>TERSEDIA</strong>.</li>
             </ul>
           </div>
         </div>
       </div>
-
-      {/* MODAL 1: KTP Zoom Fullscreen */}
-      {isKtpZoomOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-150">
-          <div className="relative max-w-4xl w-full bg-zinc-900 rounded-2xl overflow-hidden p-2 shadow-2xl">
-            <div className="flex items-center justify-between p-3 text-white border-b border-zinc-800">
-              <div className="text-xs font-bold">
-                KTP Calon Penghuni: {reservation.userName} ({reservation.userNik})
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsKtpZoomOpen(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="relative aspect-[16/10] w-full max-h-[75vh]">
-              <Image
-                src={reservation.ktpUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80'}
-                alt={`KTP ${reservation.userName}`}
-                fill
-                sizes="100vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL 2: Approve Confirmation Dialog */}
       {isApproveDialogOpen && (
@@ -569,7 +478,7 @@ export const ReservasiVerificationClient: React.FC<ReservasiVerificationClientPr
                 rows={3}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Contoh: Foto KTP buram dan nomor NIK tidak terbaca dengan jelas. Mohon ajukan kembali dengan foto KTP yang lebih terang."
+                placeholder="Contoh: Kamar sedang dalam perbaikan ringan. Silakan pilih kamar lain yang tersedia."
                 className="w-full p-2.5 rounded-xl border border-zinc-300 text-xs text-zinc-900 focus:outline-none focus:border-rose-500"
               />
               <span className="text-[10px] text-zinc-400 block text-right">

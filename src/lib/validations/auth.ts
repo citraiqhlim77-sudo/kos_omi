@@ -66,7 +66,7 @@ export function validatePhone(phone: string): string | null {
 
 export function validateFullName(name: string): string | null {
   if (!name || !name.trim()) {
-    return 'Nama lengkap sesuai KTP wajib diisi';
+    return 'Nama lengkap wajib diisi';
   }
   if (name.trim().length < 3) {
     return 'Nama lengkap minimal 3 karakter';

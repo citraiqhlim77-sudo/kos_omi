@@ -212,17 +212,6 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
 
                     <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
                       <span>WhatsApp: <strong className="text-zinc-700">{cand.userPhone}</strong></span>
-                      <span>•</span>
-                      <span>NIK: <span className="tabular-nums text-zinc-700">{cand.userNik}</span></span>
-                      <span>•</span>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewKtpUrl(cand.idCardUrl)}
-                        className="text-blue-600 hover:text-blue-800 font-bold inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Pratinjau KTP</span>
-                      </button>
                     </div>
 
                     {cand.notes && (
@@ -350,47 +339,6 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
                   {isProcessing ? 'Memproses Check-in...' : 'Ya, Selesaikan Check-in'}
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* KTP PREVIEW MODAL */}
-      {previewKtpUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/70 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200">
-            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h4 className="font-bold text-zinc-900 text-xs flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-blue-600" />
-                <span>Dokumen KTP Calon Penghuni</span>
-              </h4>
-              <button
-                type="button"
-                onClick={() => setPreviewKtpUrl(null)}
-                className="text-zinc-400 hover:text-zinc-600 font-bold"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 bg-zinc-100 flex items-center justify-center min-h-64">
-              <div className="relative w-full h-56 rounded-xl overflow-hidden border border-zinc-300">
-                <Image
-                  src={previewKtpUrl}
-                  alt="KTP Calon Penghuni"
-                  fill
-                  unoptimized={previewKtpUrl.startsWith('data:')}
-                  className="object-cover"
-                />
-              </div>
-            </div>
-            <div className="p-3 text-center border-t border-zinc-100">
-              <button
-                type="button"
-                onClick={() => setPreviewKtpUrl(null)}
-                className="px-4 py-1.5 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold"
-              >
-                Tutup Pratinjau
-              </button>
             </div>
           </div>
         </div>

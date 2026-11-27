@@ -99,7 +99,7 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
     setFeedbackBanner(null);
     const res = await approveReservationAction(
       code,
-      'Berkas KTP & identitas mahasiswi lengkap. Reservasi disetujui oleh Pengelola Kos Omi.'
+      'Data reservasi calon penghuni telah disetujui oleh Pengelola Kos Omi.'
     );
     setApprovingCode(null);
     if (res.success && res.data) {
@@ -154,7 +154,7 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            Menunggu Verifikasi KTM/KRS
+            Menunggu Verifikasi
           </span>
         );
       case 'APPROVED':
@@ -452,7 +452,7 @@ export const ReservasiManagerClient: React.FC<ReservasiManagerClientProps> = ({
                           <span>
                             {approvingCode === item.code
                               ? 'Menyetujui...'
-                              : '1. Setujui KTM/KRS'}
+                              : 'Setujui Reservasi'}
                           </span>
                         </button>
                       )}

@@ -66,7 +66,6 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
     emergencyName: '',
     emergencyPhone: '',
     emergencyRelation: '',
-    ktpUrl: '',
     agreedToRules: false,
   });
 
@@ -117,50 +116,6 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
     }
   };
 
-  const handleSimulateKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type === 'application/pdf') {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setFormData((prev) => ({ ...prev, ktpUrl: reader.result as string }));
-        }
-      };
-      reader.readAsDataURL(file);
-      return;
-    }
-
-    // Kompres gambar KTM/KTP ke Data URI JPEG ringan agar tersimpan permanen di server dan dapat dibuka Pengelola
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
-      if (!dataUrl) return;
-      const img = new window.Image();
-      img.onload = () => {
-        const maxWidth = 1000;
-        const scale = img.width > maxWidth ? maxWidth / img.width : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.8);
-          setFormData((prev) => ({ ...prev, ktpUrl: compressed }));
-        } else {
-          setFormData((prev) => ({ ...prev, ktpUrl: dataUrl }));
-        }
-      };
-      img.onerror = () => {
-        setFormData((prev) => ({ ...prev, ktpUrl: dataUrl }));
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -189,7 +144,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
         emergencyName: formData.emergencyName,
         emergencyPhone: formData.emergencyPhone,
         emergencyRelation: formData.emergencyRelation,
-        ktpUrl: formData.ktpUrl,
+        ktpUrl: '',
         agreedToRules: formData.agreedToRules,
       });
 
@@ -224,15 +179,15 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
             Daftar atau Masuk Akun Terlebih Dahulu
           </h2>
           <p className="text-sm text-zinc-600 max-w-lg mx-auto leading-relaxed">
-            Untuk memesan <strong>Kamar No. {room.code} (Lantai {room.floor})</strong>, Anda wajib terdaftar sebagai <strong>Calon Penghuni Kos Omi</strong> terlebih dahulu agar status verifikasi KTM/KRS dan tagihan pembayaran Anda tercatat aman di akun Anda.
+            Untuk memesan <strong>Kamar No. {room.code} Lantai {room.floor}</strong>, silakan daftar atau masuk sebagai <strong>Calon Penghuni</strong> terlebih dahulu agar status reservasi dan pembayaran tercatat di akun Anda.
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-left text-xs text-zinc-600 space-y-1.5 max-w-lg mx-auto">
-          <div className="font-bold text-zinc-900">Alur Pemesanan Kamar Baru:</div>
-          <div>1. Buat akun baru (Nama Lengkap, Email, No. WhatsApp, & Kata Sandi).</div>
-          <div>2. Otomatis kembali ke halaman ini untuk mengisi data diri & unggah foto identitas.</div>
-          <div>3. Pantau persetujuan pengelola & selesaikan pembayaran sewa kamar.</div>
+          <div className="font-bold text-zinc-900">Alur Pemesanan Kamar:</div>
+          <div>1. Buat akun dengan Nama Lengkap, Email, No. WhatsApp, dan Kata Sandi.</div>
+          <div>2. Isi formulir reservasi kamar dan kontak darurat.</div>
+          <div>3. Tunggu persetujuan pengelola lalu selesaikan pembayaran via Bank BRI.</div>
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
@@ -538,57 +493,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
           </div>
         </Card>
 
-        {/* 4. UNGGAH FOTO KTM ATAU KRS */}
-        <Card className="p-6 space-y-4">
-          <h2 className="font-heading font-bold text-base text-zinc-900 pb-2 border-b border-zinc-100 flex items-center gap-2">
-            <ShieldCheck size={18} className="text-emerald-600" />
-            Unggah Foto KTM (Kartu Tanda Mahasiswa) atau KRS
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4 text-center space-y-2 hover:border-[hsl(186,72%,24%)] transition-colors">
-              <Upload size={24} className="mx-auto text-zinc-400" />
-              <div className="text-xs text-zinc-600">
-                <label className="font-bold text-[hsl(186,72%,24%)] cursor-pointer hover:underline">
-                  Klik untuk pilih file KTM / KRS
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleSimulateKtpUpload}
-                    className="hidden"
-                  />
-                </label>
-                <p className="text-[11px] text-zinc-400 mt-1">Format JPG, PNG, atau PDF (Maks 5 MB)</p>
-              </div>
-            </div>
-
-            {/* Pratinjau KTM / KRS */}
-            <div className="relative aspect-[16/10] rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 flex items-center justify-center">
-              {formData.ktpUrl ? (
-                <>
-                  <Image
-                    src={formData.ktpUrl}
-                    alt="Pratinjau KTM / KRS"
-                    fill
-                    sizes="200px"
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Pratinjau KTM / KRS Siap Kirim
-                  </div>
-                </>
-              ) : (
-                <div className="text-center p-4 text-xs text-zinc-400">
-                  <FileText size={22} className="mx-auto mb-1 text-zinc-300" />
-                  <span>Belum ada foto KTM / KRS dipilih</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        {/* 5. PERSETUJUAN ATURAN KOS */}
+        {/* 4. PERSETUJUAN ATURAN KOS */}
         <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl space-y-3 text-xs text-zinc-700">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input
@@ -647,9 +552,9 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="p-3 bg-zinc-50 rounded-lg text-xs text-zinc-500 space-y-1">
             <p className="font-semibold text-zinc-700">Alur Setelah Pengajuan:</p>
-            <p>1. Tim Kos Omi memeriksa kelengkapan data & KTM / KRS (maks. 2x24 jam).</p>
-            <p>2. Setelah disetujui, Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans (batas 24 jam).</p>
-            <p>3. Kamar resmi menjadi milik Anda dan siap huni.</p>
+            <p>1. Pengelola memeriksa data reservasi Anda.</p>
+            <p>2. Setelah disetujui, lakukan pembayaran via Transfer Bank BRI dalam 24 jam.</p>
+            <p>3. Setelah divalidasi, kamar siap untuk proses Check-in.</p>
           </div>
 
           <button
@@ -671,7 +576,7 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({ ro
 
           <div className="pt-2 border-t border-zinc-100 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
             <Lock size={13} className="text-sky-600" />
-            <span>Privasi data KTM / KRS mahasiswi terlindungi di Kos Omi</span>
+            <span>Data pribadi calon penghuni terjaga aman di Kos Omi</span>
           </div>
         </Card>
       </div>

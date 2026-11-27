@@ -176,7 +176,7 @@ export default function RegisterPage() {
             {/* Full Name */}
             <div className="space-y-1.5">
               <label htmlFor="fullName" className="block text-xs font-bold text-zinc-700">
-                Nama Lengkap (Sesuai KTM / KRS) <span className="text-rose-500">*</span>
+                Nama Lengkap <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">

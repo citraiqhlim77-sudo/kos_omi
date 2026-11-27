@@ -132,7 +132,7 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
                   </span>
                 </div>
                 <p className="text-xs text-zinc-600">
-                  Data calon penghuni ({reservation.userName}) dan berkas KTM/KRS berhasil dikirim ke server.
+                  Data reservasi {reservation.userName} berhasil dikirim ke sistem.
                 </p>
               </div>
             </div>
@@ -159,7 +159,7 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold text-zinc-900">
-                    2. Verifikasi Berkas KTM/KRS (Pengelola)
+                    2. Verifikasi Pengelola
                   </h3>
                   <span className="text-[11px] font-semibold text-zinc-500">
                     {isStep2Done ? 'Terverifikasi' : isStep2Rejected ? 'Ditolak' : 'Maks 2x24 Jam'}
@@ -167,10 +167,10 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
                 </div>
                 <p className="text-xs text-zinc-600">
                   {isStep2Done
-                    ? reservation.adminNotes || 'Dokumen KTM/KRS dan data diri lengkap terverifikasi resmi oleh pengelola.'
+                    ? reservation.adminNotes || 'Data reservasi telah diverifikasi dan disetujui pengelola.'
                     : isStep2Rejected
                     ? 'Pengajuan tidak dapat disetujui.'
-                    : 'Pengelola sedang mencocokkan NIM, foto KTM/KRS, dan jadwal ketersediaan kamar.'}
+                    : 'Pengelola sedang memeriksa data reservasi dan ketersediaan kamar.'}
                 </p>
 
                 {/* Rejection box if rejected */}

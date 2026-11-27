@@ -271,79 +271,8 @@ export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
               </div>
             </div>
           </div>
-
-          {/* KTP Document */}
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-3 text-xs">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-              <h3 className="font-bold text-zinc-700 flex items-center gap-1.5">
-                <FileCheck className="w-4 h-4 text-emerald-600" />
-                <span>Dokumen KTP Terverifikasi</span>
-              </h3>
-            </div>
-
-            <p className="text-zinc-500 text-[11px]">
-              Dokumen identitas resmi telah diverifikasi oleh pengelola saat proses reservasi awal.
-            </p>
-
-            <div className="relative h-40 w-full rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100">
-              <Image
-                src={tenant.idCardUrl}
-                alt={`KTP ${tenant.userName}`}
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPreviewKtp(true)}
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl border border-zinc-200 text-zinc-700 font-bold text-xs hover:bg-zinc-50 transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Perbesar Foto KTP</span>
-            </button>
-          </div>
         </div>
       </div>
-
-      {/* FULL KTP MODAL */}
-      {previewKtp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/70 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200">
-            <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-              <h4 className="font-bold text-zinc-900 text-xs">
-                KTP Terverifikasi: {tenant.userName} ({tenant.userNik})
-              </h4>
-              <button
-                type="button"
-                onClick={() => setPreviewKtp(false)}
-                className="text-zinc-400 hover:text-zinc-600 font-bold"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 bg-zinc-100 flex items-center justify-center">
-              <div className="relative w-full h-64 rounded-xl overflow-hidden border border-zinc-300">
-                <Image
-                  src={tenant.idCardUrl}
-                  alt={`KTP ${tenant.userName}`}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </div>
-            <div className="p-3 text-center border-t border-zinc-100">
-              <button
-                type="button"
-                onClick={() => setPreviewKtp(false)}
-                className="px-4 py-1.5 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-bold"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
