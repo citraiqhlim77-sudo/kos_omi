@@ -249,20 +249,6 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                NIM · Opsional
-              </label>
-              <input
-                type="text"
-                maxLength={20}
-                value={nik}
-                onChange={(e) => setNik(e.target.value)}
-                placeholder="Masukkan NIM kampus Anda"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 tabular-nums focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-zinc-700 mb-1">
                 Email Pribadi <span className="text-rose-500">*</span>
               </label>
               <div className="relative">

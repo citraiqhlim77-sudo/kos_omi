@@ -48,22 +48,18 @@ async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
   const db = getBillingDb();
   let resolvedEmail = '';
 
-  if (paramEmail && paramEmail.trim() !== '') {
+  // Prioritaskan sesi login server (NextAuth) agar akun penghuni tidak pernah tertukar dengan localStorage lama
+  const currentUser = await getCurrentUser();
+  if (currentUser?.email && currentUser.role === 'PENGHUNI') {
+    resolvedEmail = currentUser.email.toLowerCase().trim();
+  } else if (paramEmail && paramEmail.trim() !== '') {
     resolvedEmail = paramEmail.toLowerCase().trim();
-  } else {
-    const currentUser = await getCurrentUser();
-    if (currentUser?.email) {
-      resolvedEmail = currentUser.email.toLowerCase().trim();
-    }
+  } else if (currentUser?.email) {
+    resolvedEmail = currentUser.email.toLowerCase().trim();
   }
 
   if (!resolvedEmail) {
-    const activeTenancies = ((global as any).__kosOmiTenancies as any[] | undefined) || [];
-    const firstActive = activeTenancies.find((t) => t.status === 'AKTIF');
-    resolvedEmail =
-      firstActive?.userEmail?.toLowerCase().trim() ||
-      db.profiles[0]?.email?.toLowerCase().trim() ||
-      'penghuni@example.com';
+    return '';
   }
 
   // 1. Prioritaskan kontrak tenancy AKTIF milik user yang sedang login (agar nomor kamar 100% sesuai kontrak aktif)
@@ -195,8 +191,9 @@ async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
  * Menerapkan filter server-side berdasarkan identitas pengguna login.
  */
 export async function fetchCurrentMonthlyBillAction(email?: string): Promise<MonthlyBill | null> {
-  const db = getBillingDb();
   const effectiveEmail = await getEffectiveTenantEmail(email);
+  const db = getBillingDb();
+  if (!effectiveEmail) return null;
 
   // Filter hanya tagihan milik penghuni yang sesuai
   const tenantBills = db.bills.filter(
@@ -217,8 +214,9 @@ export async function fetchMonthlyBillsAction(
   email?: string,
   statusFilter?: string
 ): Promise<MonthlyBill[]> {
-  const db = getBillingDb();
   const effectiveEmail = await getEffectiveTenantEmail(email);
+  const db = getBillingDb();
+  if (!effectiveEmail) return [];
 
   // Filter server-side: hanya kembalikan tagihan milik pengguna yang sah
   let list = db.bills.filter(
@@ -238,6 +236,7 @@ export async function fetchMonthlyBillsAction(
  * Mengambil detail tagihan berdasarkan nomor invoice dengan proteksi akses kepemilikan
  */
 export async function fetchMonthlyBillByIdAction(invoiceCode: string): Promise<MonthlyBill | null> {
+  await ensurePostgresHydrated();
   const db = getBillingDb();
   const normalized = invoiceCode.toUpperCase().trim();
   const bill = db.bills.find((b) => b.invoiceCode === normalized);
@@ -268,8 +267,9 @@ export async function fetchPaymentHistoryAction(
   yearFilter?: number,
   searchQuery?: string
 ): Promise<MonthlyBill[]> {
-  const db = getBillingDb();
   const effectiveEmail = await getEffectiveTenantEmail(email);
+  const db = getBillingDb();
+  if (!effectiveEmail) return [];
 
   // Filter hanya transaksi lunas milik penghuni bersangkutan
   let paidList = db.bills.filter(
@@ -300,14 +300,36 @@ export async function fetchPaymentHistoryAction(
  * Mengambil profil diri penghuni aktif berdasarkan sesi login pengguna
  */
 export async function fetchTenantProfileAction(email?: string): Promise<TenantProfile> {
-  const db = getBillingDb();
   const effectiveEmail = await getEffectiveTenantEmail(email);
+  const db = getBillingDb();
 
-  const matchedProfile =
-    db.profiles.find((p) => p.email.toLowerCase() === effectiveEmail) || db.profiles[0];
+  if (effectiveEmail) {
+    const matchedProfile = db.profiles.find(
+      (p) => p.email.toLowerCase().trim() === effectiveEmail
+    );
+    if (matchedProfile) {
+      return { ...matchedProfile };
+    }
+  }
 
-  if (matchedProfile) {
-    return { ...matchedProfile };
+  const currentUser = await getCurrentUser();
+  if (currentUser) {
+    return {
+      id: currentUser.id,
+      name: currentUser.name,
+      email: currentUser.email,
+      phone: currentUser.phone || '-',
+      nik: '',
+      occupation: 'Penghuni Kos Omi',
+      roomCode: '-',
+      checkInDate: '-',
+      tenancyEnd: '-',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelation: '',
+      monthlyRent: 5000000,
+      avatarUrl: '/rooms/kamar-1.png',
+    };
   }
 
   return {
@@ -317,15 +339,14 @@ export async function fetchTenantProfileAction(email?: string): Promise<TenantPr
     phone: '',
     nik: '',
     occupation: '',
-    roomCode: '1',
+    roomCode: '-',
     checkInDate: 'Belum Check-in',
     tenancyEnd: '-',
     emergencyContactName: '',
     emergencyContactPhone: '',
     emergencyContactRelation: '',
     monthlyRent: 5000000,
-    avatarUrl:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: '/rooms/kamar-1.png',
   };
 }
 
