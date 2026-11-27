@@ -31,7 +31,7 @@ export function FaqClient() {
   const categories = [
     { key: 'all', label: 'Semua Pertanyaan', icon: HelpCircle },
     { key: 'reservasi', label: 'Alur Reservasi & Tarif', icon: FileCheck },
-    { key: 'pembayaran', label: 'Pembayaran (DANA & Midtrans)', icon: CreditCard },
+    { key: 'pembayaran', label: 'Pembayaran', icon: CreditCard },
     { key: 'aturan', label: 'Tata Tertib Hunian', icon: BookOpen },
   ];
 
@@ -50,10 +50,10 @@ export function FaqClient() {
             <span>Pusat Bantuan & Tanya Jawab</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[hsl(240,6%,10%)] tracking-tight">
-            Pertanyaan yang Sering Diajukan (FAQ)
+            Pertanyaan Umum
           </h1>
           <p className="text-zinc-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-            Informasi lengkap seputar reservasi kamar, tarif sewa semesteran tanpa deposit, kanal pembayaran DANA Resmi & Midtrans, serta aturan hidup di Kos Omi.
+            Informasi singkat seputar reservasi kamar, tarif sewa, pembayaran Bank BRI, dan tata tertib Kos Omi.
           </p>
         </div>
 

@@ -71,7 +71,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
   const [selectedInvoice, setSelectedInvoice] = useState<PaymentInvoice | null>(
     initialReservations[0]?.payment || null
   );
-  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bri');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [isCancellingModalOpen, setIsCancellingModalOpen] = useState(false);
@@ -371,7 +371,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   {current.status === 'APPROVED'
                     ? 'Menunggu bayar (Batas 24 Jam)'
                     : current.status === 'PAID'
-                    ? 'Lunas via Midtrans'
+                    ? 'Lunas Terverifikasi'
                     : 'Menunggu persetujuan'}
                 </p>
               </div>
@@ -410,11 +410,11 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                     <div className="flex items-center gap-2 text-sky-950 font-extrabold text-sm sm:text-base">
                       <Clock size={18} className="text-sky-700" />
                       <span>
-                        Payment Gateway Siap! Selesaikan Pembayaran Kamar {current.roomCode} ({formatRupiah(current.totalInitialPayment)})
+                        Selesaikan Pembayaran Kamar {current.roomCode} · {formatRupiah(current.totalInitialPayment)}
                       </span>
                     </div>
                     <p className="text-xs text-sky-800 max-w-2xl">
-                      Tersedia pembayaran via <strong>DANA Resmi (082246424353), Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay & ShopeePay) melalui Midtrans</strong>.
+                      Transfer sesuai nominal ke rekening <strong>Bank BRI</strong> Kos Omi, lalu klik tombol konfirmasi di bawah.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -440,7 +440,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                       </span>
                     </div>
                     <p className="text-xs text-amber-900 leading-relaxed">
-                      Konfirmasi pembayaran Anda sebesar <strong>{formatRupiah(current.totalInitialPayment)}</strong> telah masuk ke antrean Pengelola Kos Omi. Tagihan Anda akan berubah menjadi <strong>LUNAS</strong> segera setelah <strong>Pengelola memeriksa dana masuk di rekening/DANA (082246424353) dan memvalidasi pembayaran Anda</strong>.
+                      Konfirmasi pembayaran sebesar <strong>{formatRupiah(current.totalInitialPayment)}</strong> telah diterima. Status akan berubah menjadi <strong>Lunas</strong> setelah Pengelola memverifikasi mutasi rekening BRI.
                     </p>
                   </div>
                 )}
@@ -461,41 +461,23 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
                   </div>
                 )}
 
-                {/* SATU TOMBOL AKSI UTAMA BERSIH (TANPA TOMBOL DOBEL) SESUAI METODE YANG DIPILIH */}
+                {/* Tombol Aksi Utama Konfirmasi Transfer BRI */}
                 <div className="flex flex-col gap-2.5">
-                  {selectedMethod === 'dana' ? (
-                    <button
-                      type="button"
-                      disabled={isPayingDirect}
-                      onClick={() => handleDirectPay(current.payment!.invoiceCode)}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
-                    >
-                      <CheckCircle2 size={18} />
-                      <span>
-                        {isPayingDirect
-                          ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
-                          : current.payment.status === 'PENDING'
-                          ? 'Sudah Dikirim ke Pengelola — Kirim Ulang Konfirmasi (DANA)'
-                          : 'Saya Sudah Transfer via DANA — Kirim Konfirmasi Pembayaran'}
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedInvoice(current.payment!);
-                        setIsPaymentModalOpen(true);
-                      }}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
-                    >
-                      <CreditCard size={18} />
-                      <span>
-                        Bayar Sekarang via Midtrans ({
-                          KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'QRIS / VA'
-                        })
-                      </span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    disabled={isPayingDirect}
+                    onClick={() => handleDirectPay(current.payment!.invoiceCode)}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 text-white font-extrabold text-sm px-6 py-3.5 rounded-xl transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 size={18} />
+                    <span>
+                      {isPayingDirect
+                        ? 'Mengirim Konfirmasi...'
+                        : current.payment.status === 'PENDING'
+                        ? 'Kirim Ulang Konfirmasi Transfer BRI'
+                        : 'Konfirmasi Sudah Transfer Bank BRI'}
+                    </span>
+                  </button>
                 </div>
               </div>
             )}

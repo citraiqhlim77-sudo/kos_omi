@@ -102,14 +102,14 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            <span>Lewat 7 Hari — Wajib Konfirmasi Ibu Kos</span>
+            <span>Wajib Konfirmasi Ibu Kos</span>
           </span>
         );
       case 'TERLAMBAT':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            <span>Lewat {item.daysOverdue} Hari (Maks. Tempo 7 Hari)</span>
+            <span>Terlambat {item.daysOverdue} Hari</span>
           </span>
         );
       case 'MINTA_TEMPO':
@@ -117,7 +117,7 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
             <Clock className="w-3.5 h-3.5 shrink-0" />
             <span>
-              Minta Tempo +{item.extension?.extraDays} Hari (s/d {item.effectiveDueDate})
+              Tempo +{item.extension?.extraDays} Hari · {item.effectiveDueDate}
             </span>
           </span>
         );
@@ -167,48 +167,48 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-            Siklus 3 Bulanan Per Kamar
+            Siklus 3 Bulanan
           </span>
           <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
-            Batas Tempo Maks. 7 Hari (1 Minggu)
+            Maksimal Tempo 7 Hari
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-          Tagihan Sewa & Pengingat Per Kamar
+          Tagihan Sewa &amp; Pengingat Per Kamar
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-600 max-w-3xl">
-          Jatuh tempo setiap kamar otomatis dihitung <strong>3 bulan sekali sesuai tanggal masuk masing-masing kamar</strong> (dapat diedit oleh Pengelola maupun Keuangan). Penghuni dapat mengajukan tempo maksimal <strong>7 hari</strong>; lewat 7 hari wajib konfirmasi kendala langsung ke Ibu Kos.
+        <p className="text-xs sm:text-sm text-zinc-600 max-w-2xl">
+          Jatuh tempo dihitung otomatis setiap 3 bulan sesuai tanggal masuk kamar. Lewat 7 hari wajib konfirmasi langsung ke Ibu Kos.
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-white border border-rose-200 text-xs space-y-1">
-          <span className="text-zinc-500 font-medium">Wajib Konfirmasi Ibu Kos (&gt; 7 Hari)</span>
+          <span className="text-zinc-500 font-medium">Wajib Konfirmasi Ibu Kos</span>
           <div className="text-2xl font-heading font-extrabold text-rose-700 tabular-nums">
             {countEscalated} Kamar
           </div>
           <span className="text-[11px] text-rose-600 font-semibold">
-            Melewati batas maksimal 1 minggu
+            Lewat batas 7 hari
           </span>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-amber-200 text-xs space-y-1">
-          <span className="text-zinc-500 font-medium">Perlu Diingatkan / Minta Tempo</span>
+          <span className="text-zinc-500 font-medium">Perlu Pengingat</span>
           <div className="text-2xl font-heading font-extrabold text-amber-700 tabular-nums">
             {countAttention} Kamar
           </div>
           <span className="text-[11px] text-amber-700 font-semibold">
-            H-7 jatuh tempo, terlambat 1–7 hari, atau sedang tempo
+            Mendekati jatuh tempo atau minta tempo
           </span>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-emerald-200 text-xs space-y-1">
-          <span className="text-zinc-500 font-medium">Kamar Terpantau Aman</span>
+          <span className="text-zinc-500 font-medium">Status Aman</span>
           <div className="text-2xl font-heading font-extrabold text-emerald-700 tabular-nums">
             {countSafe} / {schedules.length} Kamar
           </div>
-          <span className="text-[11px] text-zinc-500">Sinkron otomatis dengan data Pengelola</span>
+          <span className="text-[11px] text-zinc-500">Tersinkron dengan data Pengelola</span>
         </div>
       </div>
 
@@ -258,12 +258,12 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
           <table className="w-full min-w-[920px] text-xs text-left">
             <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-700 font-bold">
               <tr>
-                <th className="p-3.5">Kamar & Penghuni</th>
+                <th className="p-3.5">Kamar &amp; Penghuni</th>
                 <th className="p-3.5">Tanggal Masuk</th>
-                <th className="p-3.5">Jatuh Tempo (3 Bln)</th>
-                <th className="p-3.5">Status & Pengajuan Tempo</th>
-                <th className="p-3.5 text-center">Riwayat Pengingat</th>
-                <th className="p-3.5 text-right">Aksi Pengingat WA</th>
+                <th className="p-3.5">Jatuh Tempo</th>
+                <th className="p-3.5">Status</th>
+                <th className="p-3.5 text-center">Pengingat</th>
+                <th className="p-3.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 text-zinc-700">

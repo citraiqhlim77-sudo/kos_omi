@@ -31,16 +31,8 @@ interface KeuanganTransaksiClientProps {
 
 function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
   const type = (paymentType || '').toLowerCase();
-  const bankUpper = bank ? bank.toUpperCase() : '';
   if (type === 'qris') return 'QRIS';
-  if (type === 'dana') return 'DANA';
-  if (type === 'gopay') return 'GoPay';
-  if (type === 'shopeepay') return 'ShopeePay';
-  if (type === 'bank_transfer' || type.includes('va')) {
-    return bankUpper ? `Transfer Bank ${bankUpper}` : 'Transfer Bank VA';
-  }
-  if (bankUpper) return `Transfer Bank ${bankUpper}`;
-  return 'Transfer Bank / QRIS';
+  return 'Transfer Bank BRI';
 }
 
 function formatTxStatusLabel(status: string): string {
@@ -235,7 +227,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
             Riwayat Pembayaran &amp; Iuran Duka Cita
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Catatan pembayaran sewa kamar penghuni serta pencatatan terpisah untuk iuran sosial / duka cita (seikhlasnya) jika ada keluarga penghuni kos yang berduka.
+            Catatan pembayaran sewa kamar dan iuran duka cita sukarela penghuni kos.
           </p>
         </div>
 
@@ -295,7 +287,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
           }`}
         >
           <Receipt className="w-4 h-4" />
-          <span>Riwayat Pembayaran Sewa ({transactions.length})</span>
+          <span>Pembayaran Sewa · {transactions.length}</span>
         </button>
 
         <button
@@ -308,7 +300,7 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
           }`}
         >
           <HeartHandshake className="w-4 h-4" />
-          <span>Iuran Sosial / Duka Cita (Seikhlasnya) ({donations.length})</span>
+          <span>Iuran Duka Cita · {donations.length}</span>
         </button>
       </div>
 
@@ -332,10 +324,10 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
               <div className="space-y-1">
                 <h2 className="text-sm font-heading font-extrabold text-zinc-900 flex items-center gap-2">
                   <HeartHandshake className="w-4 h-4 text-[hsl(186,72%,24%)]" />
-                  <span>Pencatatan Terpisah — Bukan Uang Kas Wajib</span>
+                  <span>Iuran Duka Cita Sukarela</span>
                 </h2>
                 <p className="text-xs text-zinc-600 leading-relaxed">
-                  Kos Omi tidak memungut iuran kas bulanan. Tab ini khusus untuk mencatat partisipasi sukarela/seikhlasnya dari anak kos saat ada musibah atau keluarga penghuni yang meninggal dunia. Dana ini <strong>tidak dicampur</strong> dengan pendapatan sewa kamar.
+                  Pencatatan sumbangan sukarela penghuni kos saat ada musibah atau keluarga berduka, terpisah dari pendapatan sewa kamar.
                 </p>
               </div>
               <div className="relative">
@@ -484,11 +476,9 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
             onChange={(e) => setMethodFilter(e.target.value)}
             className="px-3.5 py-2 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 bg-white cursor-pointer focus:outline-hidden"
           >
-            <option value="ALL">Semua Saluran</option>
-            <option value="qris">QRIS Instan</option>
-            <option value="bank_transfer">Virtual Account</option>
-            <option value="gopay">GoPay</option>
-            <option value="shopeepay">ShopeePay</option>
+            <option value="ALL">Semua Metode</option>
+            <option value="bank_transfer">Transfer Bank BRI</option>
+            <option value="qris">QRIS</option>
           </select>
         </div>
       </div>

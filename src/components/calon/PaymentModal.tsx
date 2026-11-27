@@ -33,7 +33,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onSuccess,
 }) => {
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bri');
   const [snapToken, setSnapToken] = useState<string | null>(invoice.snapToken || null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -139,14 +139,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             amountFormatted={formatRupiah(invoice.amount)}
           />
 
-          {/* Batas Waktu Bayar */}
-          <div className="p-3 bg-amber-50 rounded-lg text-amber-900 text-xs flex items-center gap-2">
-            <Clock size={15} className="text-amber-700 shrink-0" />
-            <span>
-              Pastikan nominal transfer sesuai tagihan. Konfirmasi pembayaran tercatat otomatis di sistem Kos Omi.
-            </span>
-          </div>
-
           {/* Tombol Aksi Bayar */}
           <div className="space-y-2 pt-1">
             <button
@@ -156,8 +148,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
               {isPending
-                ? 'Mengirim Konfirmasi ke Pengelola...'
-                : `Saya Sudah Transfer (${selectedMethod.toUpperCase()}) — Kirim ke Pengelola`}
+                ? 'Mengirim Konfirmasi...'
+                : 'Konfirmasi Sudah Transfer Bank BRI'}
               <ArrowRight size={16} />
             </button>
           </div>

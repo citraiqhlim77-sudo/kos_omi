@@ -41,7 +41,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
 
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<MonthlyBill | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<string>('bca_va');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bri');
   const [isPaymentValid, setIsPaymentValid] = useState<boolean>(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
@@ -146,10 +146,10 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Daftar Tagihan & Pembayaran Kos
+            Tagihan &amp; Pembayaran Sewa
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans.
+            Pembayaran sewa kamar dilakukan melalui Transfer Bank BRI.
           </p>
         </div>
 
@@ -179,11 +179,11 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-base font-heading font-extrabold text-zinc-900">
-                    Jadwal Sewa 3-Bulanan — Kamar No. {schedule.roomCode}
+                    Jadwal Sewa Kamar No. {schedule.roomCode}
                   </h2>
                   {schedule.status === 'WAJIB_KONFIRMASI_IBU_KOS' ? (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">
-                      Wajib Konfirmasi ke Ibu Kos (&gt;7 Hari)
+                      Wajib Konfirmasi Ibu Kos
                     </span>
                   ) : schedule.status === 'MINTA_TEMPO' ? (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
@@ -191,20 +191,20 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                     </span>
                   ) : schedule.status === 'TERLAMBAT' ? (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                      Terlambat ({schedule.daysOverdue} Hari)
+                      Terlambat {schedule.daysOverdue} Hari
                     </span>
                   ) : schedule.status === 'SEGERA_JATUH_TEMPO' ? (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                      Segera Jatuh Tempo ({schedule.daysUntilDue} Hari Lagi)
+                      Jatuh Tempo {schedule.daysUntilDue} Hari Lagi
                     </span>
                   ) : (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      Jadwal Aman
+                      Aktif
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-zinc-600">
-                  Jatuh tempo dihitung otomatis setiap <strong>3 bulan sekali</strong> sesuai tanggal masuk kamar Anda.
+                  Tagihan sewa jatuh tempo setiap 3 bulan sesuai tanggal masuk kamar.
                 </p>
               </div>
             </div>
@@ -221,8 +221,8 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                 <Clock className="w-4 h-4" />
                 <span>
                   {schedule.extension
-                    ? 'Ubah Pengajuan Tempo (Maks. 7 Hari)'
-                    : 'Ajukan Perpanjangan Waktu (Maks. 7 Hari)'}
+                    ? 'Ubah Pengajuan Tempo'
+                    : 'Ajukan Perpanjangan Waktu'}
                 </span>
               </button>
             )}
@@ -234,7 +234,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
               <strong className="text-zinc-900 font-bold tabular-nums">{schedule.checkInDate}</strong>
             </div>
             <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-500 block text-[11px]">Jatuh Tempo (+3 Bulan)</span>
+              <span className="text-zinc-500 block text-[11px]">Jatuh Tempo</span>
               <strong className="text-zinc-900 font-bold tabular-nums">{schedule.nextDueDate}</strong>
             </div>
             <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
@@ -244,7 +244,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
               </strong>
             </div>
             <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-500 block text-[11px]">Tarif Siklus 3 Bulan</span>
+              <span className="text-zinc-500 block text-[11px]">Tarif Per 3 Bulan</span>
               <strong className="text-zinc-900 font-extrabold tabular-nums">
                 {formatRupiah(schedule.cycleAmount)}
               </strong>
@@ -255,13 +255,12 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
             <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <strong className="block">
-                  Pengajuan Tempo Aktif: +{schedule.extension.extraDays} Hari (Janji Bayar s/d{' '}
-                  {schedule.extension.promisedDate})
+                  Tambahan waktu +{schedule.extension.extraDays} hari hingga {schedule.extension.promisedDate}
                 </strong>
                 <span className="text-blue-800/90">Alasan: &ldquo;{schedule.extension.reason}&rdquo;</span>
               </div>
               <span className="text-[11px] font-semibold text-blue-700 shrink-0">
-                Maks. toleransi 7 hari (1 minggu)
+                Maksimal 7 hari
               </span>
             </div>
           )}
@@ -272,10 +271,10 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                 <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <strong className="block text-sm text-rose-950">
-                    Wajib Konfirmasi Kendala Langsung ke Ibu Kos
+                    Wajib Konfirmasi Langsung ke Ibu Kos
                   </strong>
                   <p className="text-rose-800 leading-relaxed">
-                    Batas waktu toleransi tunggakan maksimal <strong>7 hari (1 minggu)</strong> telah terlewati. Mohon segera hubungi Ibu Yulastri secara langsung untuk menjelaskan kendala pembayaran Anda.
+                    Batas waktu 7 hari telah terlewati. Silakan hubungi Ibu Yulastri secara langsung untuk menjelaskan kendala pembayaran Anda.
                   </p>
                 </div>
               </div>
@@ -526,7 +525,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                   disabled={isPaying}
                   className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-colors cursor-pointer"
                 >
-                  {isPaying ? 'Memproses Pelunasan...' : `Konfirmasi Pelunasan (${selectedMethod})`}
+                  {isPaying ? 'Memproses...' : 'Konfirmasi Pembayaran BRI'}
                 </button>
               </div>
             </form>
@@ -564,7 +563,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
             <form onSubmit={handleExtensionSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-zinc-800 block mb-1.5">
-                  Pilih Tambahan Waktu (Maksimal 7 Hari / 1 Minggu)
+                  Tambahan Waktu · Maksimal 7 Hari
                 </label>
                 <div className="grid grid-cols-7 gap-1.5">
                   {[1, 2, 3, 4, 5, 6, 7].map((day) => (

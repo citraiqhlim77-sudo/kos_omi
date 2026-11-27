@@ -239,8 +239,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
           type="button"
           onClick={() => setActiveTab('AKTIF')}
           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 ${activeTab === 'AKTIF'
-              ? 'bg-[hsl(186,72%,24%)] text-white'
-              : 'text-zinc-600 hover:bg-zinc-100'
+            ? 'bg-[hsl(186,72%,24%)] text-white'
+            : 'text-zinc-600 hover:bg-zinc-100'
             }`}
         >
           <Users className="w-4 h-4" />
@@ -251,8 +251,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
           type="button"
           onClick={() => setActiveTab('CALON')}
           className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 ${activeTab === 'CALON'
-              ? 'bg-[hsl(186,72%,24%)] text-white'
-              : 'text-zinc-600 hover:bg-zinc-100'
+            ? 'bg-[hsl(186,72%,24%)] text-white'
+            : 'text-zinc-600 hover:bg-zinc-100'
             }`}
         >
           <UserCheck className="w-4 h-4" />
@@ -284,8 +284,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                 type="button"
                 onClick={() => setStatusFilter('ALL')}
                 className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${statusFilter === 'ALL'
-                    ? 'bg-white text-zinc-900 font-bold'
-                    : 'hover:text-zinc-900'
+                  ? 'bg-white text-zinc-900 font-bold'
+                  : 'hover:text-zinc-900'
                   }`}
               >
                 Semua
@@ -294,8 +294,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                 type="button"
                 onClick={() => setStatusFilter('LUNAS')}
                 className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${statusFilter === 'LUNAS'
-                    ? 'bg-white text-emerald-700 font-bold'
-                    : 'hover:text-zinc-900'
+                  ? 'bg-white text-emerald-700 font-bold'
+                  : 'hover:text-zinc-900'
                   }`}
               >
                 Lunas
@@ -304,8 +304,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                 type="button"
                 onClick={() => setStatusFilter('UNPAID')}
                 className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${statusFilter === 'UNPAID'
-                    ? 'bg-white text-amber-700 font-bold'
-                    : 'hover:text-zinc-900'
+                  ? 'bg-white text-amber-700 font-bold'
+                  : 'hover:text-zinc-900'
                   }`}
               >
                 Tertunggak
@@ -318,8 +318,8 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
               className="px-3 py-2 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 bg-white cursor-pointer focus:outline-hidden"
             >
               <option value="ALL">Semua Lantai</option>
-              <option value="1">Lantai 1 (Kamar No. 1 - 33)</option>
-              <option value="2">Lantai 2 (Kamar No. 34 - 67)</option>
+              <option value="1">Lantai 1</option>
+              <option value="2">Lantai 2</option>
             </select>
           </div>
         )}

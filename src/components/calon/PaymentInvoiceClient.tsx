@@ -55,7 +55,7 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
   const router = useRouter();
   const [invoice, setInvoice] = useState<PaymentInvoice>(initialInvoice);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<string>('dana');
+  const [selectedMethod, setSelectedMethod] = useState<string>('bri');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [payFeedback, setPayFeedback] = useState<string | null>(null);
@@ -316,15 +316,15 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
               </div>
             </div>
 
-            {/* Pilihan Pembayaran Virtual Account Langsung di Halaman Invoice */}
+            {/* Pilihan Pembayaran */}
             {isUnpaid && (
               <div className="pt-4 border-t border-zinc-200 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-heading font-extrabold text-zinc-900">
-                    Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans
+                    Pembayaran via Transfer Bank BRI
                   </h3>
                   <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-                    Verifikasi Otomatis
+                    Verifikasi Pengelola
                   </span>
                 </div>
 
@@ -356,12 +356,10 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
                   <CheckCircle2 className="w-4 h-4" />
                   <span>
                     {isPayingDirect
-                      ? 'Mengirim Konfirmasi Pembayaran ke Pengelola...'
+                      ? 'Mengirim Konfirmasi...'
                       : invoice.status === 'PENDING'
-                      ? 'Menunggu Validasi Pengelola — Kirim Ulang Konfirmasi Transfer'
-                      : `Saya Sudah Transfer via ${
-                          KOS_OMI_PAYMENT_METHODS.find((m) => m.id === selectedMethod)?.label || 'DANA'
-                        } — Kirim ke Pengelola untuk Divalidasi`}
+                      ? 'Kirim Ulang Konfirmasi Transfer'
+                      : 'Konfirmasi Sudah Transfer Bank BRI'}
                   </span>
                 </button>
               </div>
@@ -384,37 +382,24 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
               </div>
             </div>
 
-            {/* Conditional Button based on Status (1 Tombol Aksi Bersih Tanpa Dobel) */}
             {isUnpaid && (
               <div className="space-y-3">
-                {selectedMethod === 'dana' ? (
-                  <button
-                    type="button"
-                    disabled={isPayingDirect}
-                    onClick={handleDirectPay}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 transition-all cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>
-                      {isPayingDirect ? 'Mengirim...' : 'Konfirmasi Transfer DANA'}
-                    </span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsPaymentModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all cursor-pointer"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Bayar via Midtrans Snap</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  disabled={isPayingDirect}
+                  onClick={handleDirectPay}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    {isPayingDirect ? 'Mengirim...' : 'Konfirmasi Transfer BRI'}
+                  </span>
+                </button>
 
-                {/* Badge Pembayaran Aman */}
                 <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center gap-2.5 text-xs text-blue-900">
                   <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
                   <span className="font-semibold">
-                    Mendukung QRIS, BRI, BCA, BSI, Bank Nagari, SeaBank, DANA &amp; ShopeePay
+                    Pembayaran via Transfer Bank BRI
                   </span>
                 </div>
               </div>
@@ -455,20 +440,22 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
             )}
           </div>
 
-          {/* Payment Gateway Information Box */}
+          {/* Payment Information Box */}
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 space-y-2.5 text-xs text-zinc-600 leading-relaxed">
             <h4 className="font-bold text-zinc-900 flex items-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-zinc-600" />
-              <span>Metode Pembayaran Resmi</span>
+              <span>Metode Pembayaran</span>
             </h4>
             <p className="text-[11px]">
-              Kos Omi menggunakan gateway resmi <strong>Midtrans Snap</strong> dengan verifikasi server instan tanpa perlu konfirmasi manual atau mengirim bukti transfer via chat.
+              Pembayaran sewa Kos Omi menggunakan <strong>Transfer Bank BRI</strong>. QRIS akan segera tersedia setelah pengajuan selesai.
             </p>
             <div className="pt-1 flex flex-wrap gap-1.5">
-              <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">QRIS</span>
-              <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BRI</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BCA</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">BSI</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">Bank Nagari</span>
-              <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">SeaBank</span>
-              <span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">DANA</span><span className="px-2 py-0.5 rounded bg-zinc-100 tabular-nums text-[10px] text-zinc-700 font-bold">ShopeePay</span>
+              <span className="px-2.5 py-0.5 rounded bg-blue-50 text-[10px] text-blue-800 border border-blue-200 font-bold">
+                Bank BRI
+              </span>
+              <span className="px-2.5 py-0.5 rounded bg-zinc-100 text-[10px] text-zinc-600 font-bold">
+                QRIS · Segera Hadir
+              </span>
             </div>
           </div>
         </div>
