@@ -19,8 +19,8 @@ export const KOS_OMI_PAYMENT_METHODS: PaymentMethodItem[] = [
     label: 'Transfer Bank BRI',
     shortDesc: 'BRImo atau ATM BRI',
     category: 'BANK',
-    accountNumber: '0058-01-045892-50-4',
-    accountHolder: 'Yulastri — Kos Omi',
+    accountNumber: '763701006296502',
+    accountHolder: 'YULASTRI',
   },
   {
     id: 'qris',
