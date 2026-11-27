@@ -14,7 +14,7 @@ export interface AdminUserRecord {
   role: UserRole;
   isActive: boolean;
   roomCode?: string;
-  plainPassword?: string;
+  passwordHashPreview?: string;
   createdAt: string;
   lastLoginAt?: string;
 }

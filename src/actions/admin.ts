@@ -12,9 +12,14 @@ import { findUserByEmail, getAuthUsersStore } from '@/lib/auth-store';
 import { hashPassword } from '@/lib/auth/password';
 import { createAuditLog, getUnifiedAuditLogsStore } from '@/lib/audit';
 import { dbCleanupUserRelations } from '@/server/db';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
-import { db as drizzleDb, schema } from '@/db';
-import { eq } from '@/db/drizzle';
+import {
+  deleteUserFromNeonPostgres,
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  formatPasswordHashPreview,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 
 // IN-MEMORY GLOBAL STATE
 declare global {
@@ -44,7 +49,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'admin@kosomi.id',
     phone: '0822-8714-6763',
     role: 'ADMIN',
-    plainPassword: 'Password123!',
+    passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',
     lastLoginAt: '2026-11-02T08:30:00Z',
@@ -56,7 +61,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'pengelola@kosomi.id',
     phone: '0813-7432-9562',
     role: 'PENGELOLA',
-    plainPassword: 'Password123!',
+    passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
     createdAt: '2026-01-02T10:00:00Z',
     lastLoginAt: '2026-11-02T09:15:00Z',
@@ -68,7 +73,7 @@ const initialUsers: AdminUserRecord[] = [
     email: 'keuangan@kosomi.id',
     phone: '0822-8714-6763',
     role: 'KEUANGAN',
-    plainPassword: 'Password123!',
+    passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
     createdAt: '2026-01-02T10:30:00Z',
     lastLoginAt: '2026-11-02T09:30:00Z',
@@ -81,7 +86,7 @@ const initialUsers: AdminUserRecord[] = [
     phone: '081234567890',
     role: 'CALON_PENGHUNI',
     roomCode: '1',
-    plainPassword: 'Password123!',
+    passwordHashPreview: '$2a$10$••••••••••••',
     isActive: true,
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
@@ -159,6 +164,7 @@ export async function fetchAdminUsersAction(filters?: {
   role?: string;
   search?: string;
 }): Promise<AdminUserRecord[]> {
+  await ensurePostgresHydrated();
   const users = getUsersStore();
   let result = [...users];
 
@@ -213,6 +219,7 @@ export async function createStaffUserAction(data: {
   }
 
   const userPassword = data.password?.trim() || 'Password123!';
+  const hashedPassword = await hashPassword(userPassword);
 
   const newUser: AdminUserRecord = {
     id: `usr-${Date.now()}`,
@@ -222,14 +229,14 @@ export async function createStaffUserAction(data: {
     phone: data.phone.trim(),
     role: data.role,
     roomCode: data.roomCode?.trim() || undefined,
-    plainPassword: userPassword,
+    passwordHashPreview: formatPasswordHashPreview(hashedPassword),
     isActive: true,
     createdAt: new Date().toISOString(),
   };
 
   users.unshift(newUser);
 
-  // Sinkronkan ke store login (__kosOmiAuthUsers) agar bisa langsung login pakai NIM atau Email
+  // Sinkronkan ke store login (__kosOmiAuthUsers) hanya menggunakan Bcrypt hash satu arah
   const authStore = getAuthUsersStore();
   authStore.unshift({
     id: newUser.id,
@@ -239,8 +246,7 @@ export async function createStaffUserAction(data: {
     phone: newUser.phone,
     role: newUser.role,
     roomCode: newUser.roomCode,
-    passwordHash: await hashPassword(userPassword),
-    plainPassword: userPassword,
+    passwordHash: hashedPassword,
     isActive: true,
     failedLoginCount: 0,
     lockedUntil: null,
@@ -278,6 +284,7 @@ export async function createStaffUserAction(data: {
   );
   getDeletedEmailsSet().delete(resolvedEmail);
   savePersistentStore(persistent);
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -334,6 +341,7 @@ export async function adminUpdateUserRoleAction(
     }
   }
   savePersistentStore();
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -362,12 +370,13 @@ export async function adminUpdateUserRoleAction(
   };
 }
 
-// 2b. Reset / Update User Password by Admin
+// 2b. Reset User Password by Admin (One-Way Bcrypt Hash — Admin tidak dapat melihat sandi lama)
 export async function adminUpdateUserPasswordAction(
   userId: string,
   newPassword: string
 ): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
   await requireRole(['ADMIN']);
+  await ensurePostgresHydrated();
   const cleanPass = newPassword.trim();
   if (cleanPass.length < 6) {
     return { success: false, message: 'Kata sandi baru minimal harus 6 karakter.' };
@@ -379,22 +388,39 @@ export async function adminUpdateUserPasswordAction(
     return { success: false, message: 'Pengguna tidak ditemukan.' };
   }
 
-  target.plainPassword = cleanPass;
+  const newHashed = await hashPassword(cleanPass);
+  target.passwordHashPreview = formatPasswordHashPreview(newHashed);
 
   const authUser = findUserByEmail(target.email);
   if (authUser) {
-    authUser.plainPassword = cleanPass;
-    authUser.passwordHash = await hashPassword(cleanPass);
+    authUser.passwordHash = newHashed;
     authUser.failedLoginCount = 0;
     authUser.lockedUntil = null;
   }
   savePersistentStore();
+  await flushPostgresSync();
+
+  await createAuditLog({
+    userId: 'usr-admin-1',
+    actorName: 'Ibu Yulastri (Admin Sistem)',
+    actorRole: 'ADMIN',
+    action: 'USER_PASSWORD_RESET',
+    category: 'users',
+    entityId: target.id,
+    description: `Mereset & mengenkripsi ulang kata sandi akun ${target.name} (${target.email})`,
+    meta: {
+      userName: target.name,
+      targetEmail: target.email,
+      encryption: 'bcrypt',
+    },
+  });
 
   revalidatePath('/admin/pengguna');
+  revalidatePath('/admin/log-aktivitas');
 
   return {
     success: true,
-    message: `Kata sandi untuk ${target.name} (${target.email}) berhasil diperbarui menjadi: ${cleanPass}`,
+    message: `Kata sandi untuk ${target.name} (${target.email}) berhasil di-reset dan dienkripsi ulang dengan Bcrypt.`,
     user: { ...target },
   };
 }
@@ -404,6 +430,7 @@ export async function toggleUserStatusAction(
   userId: string
 ): Promise<{ success: boolean; message: string; user?: AdminUserRecord }> {
   await requireRole(['ADMIN']);
+  await ensurePostgresHydrated();
   const users = getUsersStore();
   const user = users.find((u) => u.id === userId);
 
@@ -426,6 +453,7 @@ export async function toggleUserStatusAction(
     authUser.isActive = user.isActive;
   }
   savePersistentStore();
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -547,59 +575,14 @@ export async function deleteUserAction(
     roomCode: targetUser.roomCode,
   });
 
-  //    d. Jika PostgreSQL (Drizzle ORM neon-http) aktif, hapus relasi secara berurutan tanpa db.transaction()
+  //    d. Hapus relasi Foreign Key di Neon PostgreSQL secara berurutan tanpa db.transaction()
   try {
-    if (drizzleDb.isAvailable && drizzleDb.db) {
-      // Cari user di PostgreSQL berdasarkan email/id
-      const UUID_RE =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (UUID_RE.test(targetUser.id)) {
-        await drizzleDb.db
-          .delete(schema.notificationLogs)
-          .where(eq(schema.notificationLogs.userId, targetUser.id));
-
-        // Lepaskan foreign key actor_id di audit_logs menjadi null
-        await drizzleDb.db
-          .update(schema.auditLogs)
-          .set({ actorId: null })
-          .where(eq(schema.auditLogs.actorId, targetUser.id));
-
-        // Hapus invoices, tenancies, dan reservations milik user
-        const userInvoices = await drizzleDb.db
-          .select({ id: schema.invoices.id })
-          .from(schema.invoices)
-          .where(eq(schema.invoices.userId, targetUser.id));
-        if (Array.isArray(userInvoices)) {
-          for (const inv of userInvoices) {
-            await drizzleDb.db
-              .delete(schema.payments)
-              .where(eq(schema.payments.invoiceId, inv.id));
-          }
-        }
-        await drizzleDb.db
-          .delete(schema.invoices)
-          .where(eq(schema.invoices.userId, targetUser.id));
-        await drizzleDb.db
-          .delete(schema.tenancies)
-          .where(eq(schema.tenancies.userId, targetUser.id));
-        await drizzleDb.db
-          .delete(schema.reservations)
-          .where(eq(schema.reservations.userId, targetUser.id));
-      }
-
-      // Reset status kamar terkait di PostgreSQL menjadi TERSEDIA
-      for (const rCode of releasedRooms) {
-        await drizzleDb.db
-          .update(schema.rooms)
-          .set({ status: 'TERSEDIA', updatedAt: new Date() })
-          .where(eq(schema.rooms.code, rCode));
-      }
-
-      // 3) Hapus record dari tabel users berdasarkan email
-      await drizzleDb.db
-        .delete(schema.users)
-        .where(eq(schema.users.email, targetUser.email));
-    }
+    await deleteUserFromNeonPostgres({
+      userId: targetUser.id,
+      email: normalizedEmail,
+      phone: targetUser.phone,
+      releasedRooms,
+    });
   } catch (dbErr) {
     console.warn('[DeleteUser] Peringatan pembersihan relasi PostgreSQL:', dbErr);
   }
@@ -621,6 +604,7 @@ export async function deleteUserAction(
   }
   users.splice(index, 1);
   savePersistentStore(persistent);
+  await flushPostgresSync();
 
   // 4) Catat aktivitas penghapusan akun ke tabel audit_logs
   await createAuditLog({
@@ -667,6 +651,7 @@ export async function deleteUserAction(
 
 // 4. Fetch Settings
 export async function fetchAdminSettingsAction(): Promise<AdminSettings> {
+  await ensurePostgresHydrated();
   return { ...getSettingsStore() };
 }
 
@@ -714,6 +699,7 @@ export async function updateAdminSettingsAction(
     }
   }
   savePersistentStore(persistent);
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: 'usr-admin-1',
@@ -749,6 +735,7 @@ export async function fetchAuditLogsAction(filters?: {
   action?: string;
   search?: string;
 }): Promise<AuditLogRecord[]> {
+  await ensurePostgresHydrated();
   const logs = getAuditLogsStore();
   let result = [...logs];
 
@@ -774,6 +761,7 @@ export async function fetchNotificationLogsAction(filters?: {
   channel?: string;
   status?: string;
 }): Promise<NotificationLogRecord[]> {
+  await ensurePostgresHydrated();
   const logs = getNotifLogsStore();
   let result = [...logs];
 
@@ -806,26 +794,7 @@ export async function resendNotificationAction(
   log.errorMessage = null;
   log.sentAt = nowIso;
   savePersistentStore();
-
-  try {
-    if (drizzleDb.isAvailable && drizzleDb.db) {
-      const UUID_RE =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (UUID_RE.test(log.id)) {
-        await drizzleDb.db
-          .update(schema.notificationLogs)
-          .set({
-            status: 'SENT',
-            attempts: log.attempts,
-            errorMessage: null,
-            sentAt: new Date(nowIso),
-          })
-          .where(eq(schema.notificationLogs.id, log.id));
-      }
-    }
-  } catch (err) {
-    console.warn('[ResendNotification] Peringatan update PostgreSQL notification_logs:', err);
-  }
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: 'usr-admin-1',

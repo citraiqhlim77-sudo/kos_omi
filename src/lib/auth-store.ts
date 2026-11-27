@@ -25,15 +25,14 @@ export function getAuthUsersStore(): UserAuthState[] {
 /**
  * Akun seed atau akun yang baru dibuat Admin membawa placeholder hash.
  * Saat dibutuhkan untuk verifikasi login, placeholder diganti hash bcrypt asli
- * dari plainPassword pengguna (atau SEED_DEFAULT_PASSWORD) lalu disimpan ke disk.
+ * dari SEED_DEFAULT_PASSWORD lalu disimpan secara persisten.
  */
 export async function ensureSeedPasswordHashes(): Promise<void> {
   const data = loadPersistentStore();
   let changed = false;
   for (const user of data.authUsers) {
     if (user.passwordHash === DEFAULT_PASSWORD_HASH || !user.passwordHash.startsWith('$2')) {
-      const targetPass = user.plainPassword || SEED_DEFAULT_PASSWORD;
-      user.passwordHash = await hashPassword(targetPass);
+      user.passwordHash = await hashPassword(SEED_DEFAULT_PASSWORD);
       changed = true;
     }
   }

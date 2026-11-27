@@ -1,7 +1,11 @@
 import type { UserRole } from '@/types/auth';
 import { verifyPassword } from '@/lib/auth/password';
 import { ensureSeedPasswordHashes, findUserByEmail } from '@/lib/auth-store';
-import { savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  savePersistentStore,
+} from '@/server/persistence';
 
 // PRD Task 2.2: maksimal 5 kali gagal, lalu akun dikunci 15 menit.
 export const MAX_FAILED_LOGIN = 5;
@@ -21,6 +25,7 @@ export type CredentialsResult =
  * login gagal (`failed_login_count`, `locked_until`).
  */
 export async function verifyCredentials(email: string, password: string): Promise<CredentialsResult> {
+  await ensurePostgresHydrated();
   await ensureSeedPasswordHashes();
 
   const user = findUserByEmail(email);
@@ -44,18 +49,18 @@ export async function verifyCredentials(email: string, password: string): Promis
     user.failedLoginCount = 0;
   }
 
-  const isMatch =
-    (user.plainPassword && user.plainPassword === password) ||
-    (await verifyPassword(password, user.passwordHash));
+  const isMatch = await verifyPassword(password, user.passwordHash);
 
   if (!isMatch) {
     user.failedLoginCount += 1;
     if (user.failedLoginCount >= MAX_FAILED_LOGIN) {
       user.lockedUntil = new Date(now + LOCK_DURATION_MS).toISOString();
       savePersistentStore();
+      await flushPostgresSync();
       return { ok: false, reason: 'LOCKED', minutesLeft: LOCK_DURATION_MS / 60000 };
     }
     savePersistentStore();
+    await flushPostgresSync();
     return {
       ok: false,
       reason: 'INVALID',
@@ -67,6 +72,7 @@ export async function verifyCredentials(email: string, password: string): Promis
   user.lockedUntil = null;
   user.lastLoginAt = new Date().toISOString();
   savePersistentStore();
+  await flushPostgresSync();
 
   return {
     ok: true,

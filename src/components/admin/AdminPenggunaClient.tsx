@@ -21,6 +21,8 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  Lock,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface AdminPenggunaClientProps {
@@ -44,15 +46,15 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [staffPassword, setStaffPassword] = useState('Password123!');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [showStaffPasswordInput, setShowStaffPasswordInput] = useState(false);
   const [role, setRole] = useState<'PENGELOLA' | 'KEUANGAN'>('PENGELOLA');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State Lihat & Ubah Kata Sandi Pengguna oleh Admin
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
-  const [showAllPasswords, setShowAllPasswords] = useState(false);
-  const [userToEditPassword, setUserToEditPassword] = useState<AdminUserRecord | null>(null);
+  // State Reset Kata Sandi Pengguna oleh Admin (Tanpa Melihat Sandi Lama)
+  const [userToResetPassword, setUserToResetPassword] = useState<AdminUserRecord | null>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [showResetPasswordInput, setShowResetPasswordInput] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Modal Konfirmasi Hapus Pengguna (Sudah Keluar Kos)
@@ -80,7 +82,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !phone.trim()) return;
+    if (!name.trim() || !email.trim() || !phone.trim() || !staffPassword.trim()) return;
 
     setIsSubmitting(true);
     const res = await createStaffUserAction({
@@ -97,7 +99,8 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
       setName('');
       setEmail('');
       setPhone('');
-      setStaffPassword('Password123!');
+      setStaffPassword('');
+      setShowStaffPasswordInput(false);
       setFeedback({ type: 'success', message: res.message });
     } else {
       setFeedback({ type: 'error', message: res.message });
@@ -106,13 +109,13 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
     setTimeout(() => setFeedback(null), 5000);
   };
 
-  const handleUpdateUserPassword = async (e: React.FormEvent) => {
+  const handleResetUserPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userToEditPassword || !newPasswordInput.trim()) return;
+    if (!userToResetPassword || !newPasswordInput.trim()) return;
 
     setIsUpdatingPassword(true);
     const res = await adminUpdateUserPasswordAction(
-      userToEditPassword.id,
+      userToResetPassword.id,
       newPasswordInput.trim()
     );
     setIsUpdatingPassword(false);
@@ -120,15 +123,16 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
     if (res.success && res.user) {
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === userToEditPassword.id
-            ? { ...u, plainPassword: res.user!.plainPassword }
+          u.id === userToResetPassword.id
+            ? { ...u, passwordHashPreview: res.user!.passwordHashPreview }
             : u
         )
       );
-      setRevealedPasswords((prev) => ({ ...prev, [userToEditPassword.id]: true }));
       setFeedback({ type: 'success', message: res.message });
-      setUserToEditPassword(null);
+      setUserToResetPassword(null);
       setNewPasswordInput('');
+      setShowResetPasswordInput(false);
+      router.refresh();
     } else {
       setFeedback({ type: 'error', message: res.message });
     }
@@ -229,41 +233,31 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
       {/* Header */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
               Manajemen Akses, Penghuni & Staf
             </span>
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Enkripsi Sandi Satu Arah (Bcrypt Hash)</span>
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Kelola Pengguna & Hapus Data Eks Penghuni
+            Kelola Pengguna & Keamanan Akun
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Kelola akun pengguna sistem. Jika ada penghuni yang <strong>sudah keluar dari kos (tidak ngekos lagi)</strong>, tandai nonaktif/keluar kos lalu klik tombol <strong>Hapus Data</strong>.
+            Demi privasi & keamanan, seluruh kata sandi disimpan dalam bentuk <strong>kode hash satu arah</strong> (tidak dapat dilihat). Jika pengguna lupa sandi, klik <strong>Reset Sandi</strong>.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <button
             type="button"
-            onClick={() => setShowAllPasswords((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors cursor-pointer"
-          >
-            {showAllPasswords ? (
-              <>
-                <EyeOff className="w-4 h-4 text-zinc-500" />
-                <span>Sembunyikan Semua Kata Sandi</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4 text-[hsl(186,72%,24%)]" />
-                <span>Tampilkan Semua Kata Sandi</span>
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setStaffPassword('');
+              setShowStaffPasswordInput(false);
+              setIsModalOpen(true);
+            }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer active:scale-[0.99] shrink-0"
           >
             <UserPlus className="w-4 h-4" />
@@ -343,7 +337,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
         </div>
       </div>
 
-      {/* Users Table (Responsif & Sama di Laptop maupun HP, Lengkap dengan Email & Kata Sandi) */}
+      {/* Users Table (Menampilkan Kode Hash Bcrypt & Tombol Reset Sandi — Tanpa Kata Sandi Terbuka) */}
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] text-xs text-left">
@@ -351,7 +345,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
               <tr>
                 <th className="p-3.5">Nama Pengguna</th>
                 <th className="p-3.5">Email & Kontak</th>
-                <th className="p-3.5">Kata Sandi Akun</th>
+                <th className="p-3.5">Kata Sandi (Hash Bcrypt)</th>
                 <th className="p-3.5">Peran (Role)</th>
                 <th className="p-3.5">Kamar</th>
                 <th className="p-3.5">Terdaftar Sejak</th>
@@ -364,9 +358,7 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                 const isAdmin = user.role === 'ADMIN';
                 const isStaff =
                   user.role === 'ADMIN' || user.role === 'PENGELOLA' || user.role === 'KEUANGAN';
-                const isPasswordVisible =
-                  showAllPasswords || Boolean(revealedPasswords[user.id]);
-                const userPassword = user.plainPassword || 'Password123!';
+                const hashPreview = user.passwordHashPreview || '$2a$10$••••••••••••';
 
                 return (
                   <tr key={user.id} className="hover:bg-zinc-50/60 transition-colors">
@@ -380,38 +372,29 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                     </td>
 
                     <td className="p-3.5 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
-                        <span className="tabular-nums text-xs font-bold text-zinc-900 select-all">
-                          {isPasswordVisible ? userPassword : '••••••••••'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRevealedPasswords((prev) => ({
-                              ...prev,
-                              [user.id]: !prev[user.id],
-                            }))
-                          }
-                          className="p-1 text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
-                          title={isPasswordVisible ? 'Sembunyikan Kata Sandi' : 'Lihat Kata Sandi'}
+                      <div className="inline-flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-2.5 py-1.5 rounded-lg">
+                        <Lock
+                          className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <code
+                          className="font-mono text-[11px] text-zinc-600 select-none"
+                          title="Kata sandi terenkripsi satu arah dengan Bcrypt (tidak dapat dilihat dalam teks asli)"
                         >
-                          {isPasswordVisible ? (
-                            <EyeOff className="w-3.5 h-3.5" />
-                          ) : (
-                            <Eye className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                          {hashPreview}
+                        </code>
                         <button
                           type="button"
                           onClick={() => {
-                            setUserToEditPassword(user);
-                            setNewPasswordInput(userPassword);
+                            setUserToResetPassword(user);
+                            setNewPasswordInput('');
+                            setShowResetPasswordInput(false);
                           }}
-                          className="text-[10px] font-bold text-[hsl(186,72%,24%)] hover:underline pl-1 border-l border-zinc-200 cursor-pointer inline-flex items-center gap-0.5"
-                          title="Ubah / Reset Kata Sandi Pengguna Ini"
+                          className="text-[10px] font-bold text-[hsl(186,72%,24%)] hover:underline pl-2 border-l border-zinc-200 cursor-pointer inline-flex items-center gap-1"
+                          title="Reset Kata Sandi Pengguna Ini"
                         >
                           <KeyRound className="w-3 h-3" />
-                          <span>Ubah</span>
+                          <span>Reset Sandi</span>
                         </button>
                       </div>
                     </td>
@@ -509,8 +492,8 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
         </div>
       </div>
 
-      {/* Modal Ubah / Reset Kata Sandi Pengguna oleh Admin */}
-      {userToEditPassword && (
+      {/* Modal Reset Kata Sandi Pengguna oleh Admin (Tanpa Menampilkan Sandi Lama) */}
+      {userToResetPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/60 animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200 animate-in zoom-in-95 duration-150">
             <div className="bg-zinc-900 text-white p-5 flex items-center justify-between">
@@ -518,66 +501,98 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                 <KeyRound className="w-5 h-5 text-sky-400" />
                 <div>
                   <h3 className="font-heading font-extrabold text-base leading-tight">
-                    Lihat & Ubah Kata Sandi Pengguna
+                    Reset Kata Sandi Pengguna
                   </h3>
                   <p className="text-[11px] text-zinc-400">
-                    Bantuan pemulihan akses akun oleh Administrator Kos Omi
+                    Kata sandi lama terenkripsi satu arah dan tidak dapat dilihat
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setUserToEditPassword(null)}
+                onClick={() => setUserToResetPassword(null)}
                 className="p-1 rounded-lg text-zinc-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateUserPassword} className="p-6 space-y-4 text-xs">
-              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1">
-                <p className="font-bold text-zinc-900 text-sm">{userToEditPassword.name}</p>
+            <form onSubmit={handleResetUserPassword} className="p-6 space-y-4 text-xs">
+              <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-1.5">
+                <p className="font-bold text-zinc-900 text-sm">{userToResetPassword.name}</p>
                 <p className="text-zinc-600">
-                  Email Login: <strong className="text-zinc-900 select-all">{userToEditPassword.email}</strong>
+                  Email Login:{' '}
+                  <strong className="text-zinc-900 select-all">{userToResetPassword.email}</strong>
                 </p>
-                <p className="text-zinc-600">
-                  Kata Sandi Saat Ini:{' '}
-                  <strong className="font-mono text-emerald-700 select-all">
-                    {userToEditPassword.plainPassword || 'Password123!'}
-                  </strong>
+                <p className="text-zinc-600 flex items-center gap-1.5 flex-wrap">
+                  <span>Hash Saat Ini:</span>
+                  <code className="font-mono text-[11px] bg-white border border-zinc-200 px-2 py-0.5 rounded text-emerald-700">
+                    {userToResetPassword.passwordHashPreview || '$2a$10$••••••••••••'}
+                  </code>
                 </p>
               </div>
 
+              <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-[11px] leading-relaxed">
+                Masukkan kata sandi baru untuk menggantikan sandi lama pengguna. Begitu disimpan, kata sandi akan langsung di-hash dengan <strong>Bcrypt</strong> dan tidak bisa dilihat lagi.
+              </div>
+
               <div>
-                <label className="block font-bold text-zinc-700 mb-1">
-                  Kata Sandi Baru (Minimal 6 Karakter) *
-                </label>
-                <input
-                  type="text"
-                  value={newPasswordInput}
-                  onChange={(e) => setNewPasswordInput(e.target.value)}
-                  placeholder="Masukkan kata sandi baru"
-                  required
-                  minLength={6}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-zinc-700">
+                    Kata Sandi Baru (Minimal 6 Karakter) *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewPasswordInput('Password123!');
+                      setShowResetPasswordInput(true);
+                    }}
+                    className="text-[11px] font-bold text-[hsl(186,72%,24%)] hover:underline cursor-pointer"
+                  >
+                    Isi Sandi Standar (Password123!)
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showResetPasswordInput ? 'text' : 'password'}
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    placeholder="Ketik kata sandi baru untuk pengguna..."
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPasswordInput((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                    title={showResetPasswordInput ? 'Sembunyikan input' : 'Periksa ketikan sandi baru'}
+                  >
+                    {showResetPasswordInput ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
                 <button
                   type="button"
-                  onClick={() => setUserToEditPassword(null)}
+                  onClick={() => setUserToResetPassword(null)}
                   disabled={isUpdatingPassword}
                   className="px-4 py-2.5 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
                 >
-                  Tutup
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
                   className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-colors cursor-pointer"
                 >
-                  {isUpdatingPassword ? 'Menyimpan...' : 'Simpan Kata Sandi Baru'}
+                  {isUpdatingPassword ? 'Mereset...' : 'Reset & Enkripsi Sandi'}
                 </button>
               </div>
             </form>
@@ -620,7 +635,9 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                 <p className="text-zinc-600">Email: {userToDelete.email}</p>
                 <p className="text-zinc-600">No. HP: {userToDelete.phone}</p>
                 {userToDelete.roomCode && (
-                  <p className="text-zinc-600">Riwayat Kamar: <strong>{userToDelete.roomCode}</strong></p>
+                  <p className="text-zinc-600">
+                    Riwayat Kamar: <strong>{userToDelete.roomCode}</strong>
+                  </p>
                 )}
               </div>
 
@@ -654,7 +671,13 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-zinc-200 animate-in zoom-in-95 duration-150">
             <div className="bg-zinc-900 text-white p-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[hsl(186,72%,24%)] flex items-center justify-center font-bold text-sm overflow-hidden p-0"><img src="/logo-kos-omi.png" alt="Logo Kos Omi" className="w-full h-full object-cover" /></div>
+                <div className="w-8 h-8 rounded-lg bg-[hsl(186,72%,24%)] flex items-center justify-center font-bold text-sm overflow-hidden p-0">
+                  <img
+                    src="/logo-kos-omi.png"
+                    alt="Logo Kos Omi"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div>
                   <p className="text-[11px] text-zinc-400 font-medium">Manajemen Akun</p>
                   <h3 className="font-heading font-extrabold text-base leading-tight">
@@ -715,22 +738,46 @@ export const AdminPenggunaClient: React.FC<AdminPenggunaClientProps> = ({
                   onChange={(e) => setRole(e.target.value as 'PENGELOLA' | 'KEUANGAN')}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-bold text-zinc-800 bg-white cursor-pointer focus:outline-hidden"
                 >
-                  <option value="PENGELOLA">PENGELOLA (Operasional Kamar, Reservasi & Check-in/out)</option>
-                  <option value="KEUANGAN">KEUANGAN (Laporan, Rekonsiliasi Pembayaran, Tagihan)</option>
+                  <option value="PENGELOLA">
+                    PENGELOLA (Operasional Kamar, Reservasi & Check-in/out)
+                  </option>
+                  <option value="KEUANGAN">
+                    KEUANGAN (Laporan, Rekonsiliasi Pembayaran, Tagihan)
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-zinc-700 mb-1">Kata Sandi Akun Staf *</label>
-                <input
-                  type="text"
-                  value={staffPassword}
-                  onChange={(e) => setStaffPassword(e.target.value)}
-                  placeholder="Minimal 6 karakter"
-                  required
-                  minLength={6}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
-                />
+                <label className="block font-bold text-zinc-700 mb-1">
+                  Kata Sandi Awal Akun Staf *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showStaffPasswordInput ? 'text' : 'password'}
+                    value={staffPassword}
+                    onChange={(e) => setStaffPassword(e.target.value)}
+                    placeholder="Minimal 6 karakter"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-zinc-200 font-mono font-bold text-zinc-900 focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowStaffPasswordInput((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                    title={showStaffPasswordInput ? 'Sembunyikan' : 'Periksa ketikan'}
+                  >
+                    {showStaffPasswordInput ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Setelah disimpan, kata sandi langsung di-hash satu arah (Bcrypt) dan tidak dapat dilihat kembali.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
