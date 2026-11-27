@@ -10,9 +10,12 @@ import {
 } from '@/server/db';
 import { findUserById, findUserByEmail } from '@/lib/auth-store';
 import { requireRole } from '@/lib/auth-server';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
-import { db as drizzleDb, schema } from '@/db';
-import { eq } from '@/db/drizzle';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 import {
   dispatchCheckinSuccess,
   dispatchCheckoutSuccess,
@@ -63,7 +66,7 @@ export async function fetchRegisteredCalonAccountsAction(): Promise<{
   success: boolean;
   accounts: RegisteredCalonAccount[];
 }> {
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
   const calonUsers = store.adminUsers.filter((u) => u.role === 'CALON_PENGHUNI' && u.isActive);
 
   const accounts: RegisteredCalonAccount[] = calonUsers.map((u) => {
@@ -119,6 +122,7 @@ export async function fetchAllTenantsAction(): Promise<{
   success: boolean;
   tenants: TenancyRecord[];
 }> {
+  await ensurePostgresHydrated();
   const store = getTenanciesStore();
   const activeTenants = store.filter((t) => t.status === 'AKTIF');
   return { success: true, tenants: activeTenants };
@@ -131,6 +135,7 @@ export async function fetchTenantByIdAction(
   success: boolean;
   tenant: TenancyRecord | null;
 }> {
+  await ensurePostgresHydrated();
   const store = getTenanciesStore();
   const found = store.find((t) => t.id === id || t.userId === id);
   return { success: true, tenant: found || null };
@@ -141,6 +146,7 @@ export async function fetchCheckinCandidatesAction(): Promise<{
   success: boolean;
   candidates: CheckinCandidate[];
 }> {
+  await ensurePostgresHydrated();
   const store = getCheckinCandidatesStore();
   const tenancies = getTenanciesStore();
 
@@ -478,36 +484,7 @@ export async function checkInTenant(
     }
   }
   savePersistentStore();
-
-  // H. Catat ke database Neon PostgreSQL Drizzle ORM secara berurutan (tanpa db.transaction) jika terhubung
-  try {
-    if (drizzleDb.isAvailable && drizzleDb.db) {
-      await drizzleDb.db
-        .insert(schema.tenancies)
-        .values({
-          userId: candidate.userId,
-          roomId: candidate.roomId,
-          checkInDate: today,
-          contractEndDate,
-          monthlyPrice: candidate.bookingAmount,
-          dueDay: 5,
-          status: 'AKTIF',
-        })
-        .onConflictDoNothing();
-
-      await drizzleDb.db
-        .update(schema.rooms)
-        .set({ status: 'TERISI', updatedAt: new Date() })
-        .where(eq(schema.rooms.code, candidate.roomCode));
-
-      await drizzleDb.db
-        .update(schema.users)
-        .set({ role: 'PENGHUNI', updatedAt: new Date() })
-        .where(eq(schema.users.id, candidate.userId));
-    }
-  } catch (dbErr) {
-    console.warn('Peringatan saat update check-in ke Drizzle ORM:', dbErr);
-  }
+  await flushPostgresSync();
 
   // I. Catat audit log
   await dbAddAuditLog({
@@ -583,7 +560,10 @@ export async function checkOutTenant(
   const currentUser = await requireRole(['ADMIN', 'PENGELOLA']);
   const cleanId = tenancyId.trim();
   const tenancies = getTenanciesStore();
-  const tenant = tenancies.find((t) => t.id === cleanId || t.roomCode === cleanId);
+  const tenant =
+    tenancies.find((t) => t.id === cleanId) ||
+    tenancies.find((t) => t.roomCode === cleanId && t.status === 'AKTIF') ||
+    tenancies.find((t) => t.roomCode === cleanId);
 
   if (!tenant) {
     return {
@@ -696,18 +676,7 @@ export async function checkOutTenant(
   }
 
   savePersistentStore();
-
-  // Jika Neon Postgres Drizzle DB aktif:
-  try {
-    if (drizzleDb.isAvailable && drizzleDb.db) {
-      await drizzleDb.db
-        .update(schema.tenancies)
-        .set({ status: 'SELESAI', checkOutDate: today })
-        .where(eq(schema.tenancies.id, tenant.id));
-    }
-  } catch (dbErr) {
-    console.warn('Peringatan saat update tenancy di Drizzle ORM:', dbErr);
-  }
+  await flushPostgresSync();
 
   // 4. Catat audit log
   await dbAddAuditLog({
@@ -756,9 +725,16 @@ export async function checkOutTenant(
     console.warn('[Notification] Gagal mengirim notifikasi check-out:', notifErr);
   }
 
+  const roomNote =
+    remainingActiveInRoom.length > 0
+      ? `Kamar ${tenant.roomCode} tetap berstatus TERISI karena masih dihuni oleh ${remainingActiveInRoom
+          .map((r) => r.userName)
+          .join(', ')}.`
+      : `Kamar ${tenant.roomCode} kini resmi kembali TERSEDIA.`;
+
   return {
     success: true,
-    message: `Check-out berhasil diproses untuk ${tenant.userName} (Kamar ${tenant.roomCode}). Kamar kini resmi kembali TERSEDIA. Pengembalian deposit sebesar Rp ${tenant.depositAmount.toLocaleString('id-ID')} ditandai untuk pemeriksaan bagian Keuangan.`,
+    message: `Check-out berhasil diproses untuk ${tenant.userName} (Kamar ${tenant.roomCode}). ${roomNote}`,
   };
 }
 

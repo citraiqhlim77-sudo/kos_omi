@@ -1,21 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { TenantProfile } from '@/types/billing';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { updateTenantProfileAction } from '@/actions/billing';
 import { changeUserPasswordAction } from '@/actions/auth';
+import { getClientSession, setClientSession } from '@/lib/auth-client';
 import {
-  User,
   Mail,
   Phone,
-  Lock,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Save,
   KeyRound,
   IdCard,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
 
 interface PenghuniProfilClientProps {
@@ -25,37 +28,47 @@ interface PenghuniProfilClientProps {
 export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
   initialProfile,
 }) => {
+  const router = useRouter();
   const [profile, setProfile] = useState<TenantProfile>(initialProfile);
   const [name, setName] = useState(initialProfile.name || '');
-  const [nik, setNik] = useState(initialProfile.nik || '');
+  const [nik, setNik] = useState(
+    initialProfile.nik && !initialProfile.nik.startsWith('2026') ? initialProfile.nik : ''
+  );
   const [email, setEmail] = useState(initialProfile.email || '');
-  const [phone, setPhone] = useState(initialProfile.phone || '');
+  const [phone, setPhone] = useState(
+    initialProfile.phone && initialProfile.phone !== '-' ? initialProfile.phone : ''
+  );
   const [emergencyContact, setEmergencyContact] = useState(
-    initialProfile.emergencyContact ||
-      initialProfile.emergencyContactPhone ||
-      ''
+    (initialProfile.emergencyContact && initialProfile.emergencyContact !== '-') ||
+      (initialProfile.emergencyContactPhone && initialProfile.emergencyContactPhone !== '-')
+      ? initialProfile.emergencyContact || initialProfile.emergencyContactPhone || ''
+      : ''
   );
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // States
   const [isSaving, setIsSaving] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
+    null
+  );
+
+  const isUsingInitialKosEmail = (profile.email || '').toLowerCase().endsWith('@kosomi.id');
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setFeedback(null);
 
-    // Validasi password jika diisi
     if (newPassword || confirmPassword) {
-      if (newPassword.length < 8) {
+      if (newPassword.length < 6) {
         setFeedback({
           type: 'error',
-          message: 'Kata sandi baru minimal 8 karakter.',
+          message: 'Kata sandi baru minimal 6 karakter.',
         });
         setIsSaving(false);
         return;
@@ -70,10 +83,30 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
       }
     }
 
+    // 1. Simpan perubahan Email Pribadi, Nama, No. WA, & Kontak Darurat terlebih dahulu (mengacu pada email sebelumnya)
+    const res = await updateTenantProfileAction({
+      previousEmail: profile.email,
+      name,
+      nik,
+      email,
+      phone,
+      emergencyContact,
+    });
+
+    if (!res.success || !res.profile) {
+      setFeedback({
+        type: 'error',
+        message: res.message || 'Gagal menyimpan profil.',
+      });
+      setIsSaving(false);
+      return;
+    }
+
+    // 2. Jika kata sandi baru diisi, perbarui kata sandi dengan Bcrypt satu arah
     if (newPassword) {
       const pwRes = await changeUserPasswordAction({
-        email,
-        currentPassword,
+        email: res.profile.email,
+        currentPassword: currentPassword || undefined,
         newPassword,
       });
       if (!pwRes.success) {
@@ -86,35 +119,54 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
       }
     }
 
-    const res = await updateTenantProfileAction({
-      name,
-      nik,
-      email,
-      phone,
-      emergencyContact,
-    });
+    setProfile(res.profile);
+    setEmail(res.profile.email);
 
-    if (res.success && res.profile) {
-      setProfile(res.profile);
-      setFeedback({
-        type: 'success',
-        message: 'Data profil dan kontak penghuni berhasil diperbarui!',
-      });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } else {
-      setFeedback({
-        type: 'error',
-        message: res.message || 'Gagal menyimpan profil.',
+    // Sinkronkan juga ke sesi client lokal agar navigasi & dasbor langsung menampilkan email/nama baru
+    const existingSession = getClientSession();
+    if (existingSession) {
+      setClientSession({
+        ...existingSession,
+        name: res.profile.name,
+        email: res.profile.email,
       });
     }
 
+    setFeedback({
+      type: 'success',
+      message: newPassword
+        ? `${res.message} Kata sandi pribadi Anda juga telah dienkripsi ulang.`
+        : res.message,
+    });
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
     setIsSaving(false);
+    router.refresh();
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Banner Panduan Login Pertama Penghuni Tetap */}
+      {isUsingInitialKosEmail && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-xs leading-relaxed">
+            <p className="font-bold text-sm">
+              Lengkapi Email Gmail Pribadi & Kata Sandi Baru Anda
+            </p>
+            <p className="text-amber-900">
+              Saat ini akun Kamar No. <strong>{profile.roomCode}</strong> Anda masih memakai email awal sistem (
+              <code className="font-mono font-bold bg-white/80 px-1.5 py-0.5 rounded border border-amber-200">
+                {profile.email}
+              </code>
+              ). Silakan ganti kolom <strong>Alamat Email Pribadi</strong> di bawah menjadi email asli Anda (misalnya{' '}
+              <code>@gmail.com</code> atau <code>@uinib.ac.id</code>), isi nomor WhatsApp aktif, dan buat kata sandi pribadi Anda.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Toast / Banner */}
       {feedback && (
         <div
@@ -151,10 +203,10 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Profil & Keamanan Akun
+            Profil, Email Pribadi & Keamanan Sandi
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600">
-            Perbarui nomor kontak aktif WhatsApp dan atur kata sandi akun portal penghuni Anda.
+            Atur alamat email pribadi untuk login, nomor WhatsApp aktif, dan kata sandi rahasia Anda.
           </p>
         </div>
 
@@ -167,52 +219,66 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
       </div>
 
       <form onSubmit={handleProfileSubmit} className="space-y-6">
-        {/* SECTION 1: IDENTITAS PENGHUNI (KTP VERIFIED) */}
+        {/* SECTION 1: IDENTITAS & EMAIL PRIBADI */}
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-5">
-          <div className="border-b border-zinc-100 pb-3 flex items-center justify-between">
+          <div className="border-b border-zinc-100 pb-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <IdCard className="w-4 h-4 text-blue-600" />
-              <h2 className="text-sm font-bold text-zinc-900">Identitas Terverifikasi</h2>
+              <h2 className="text-sm font-bold text-zinc-900">Identitas & Email Login Pribadi</h2>
             </div>
             <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>KTP Terverifikasi Pengelola</span>
+              <span>Penghuni Terdaftar Kamar No. {profile.roomCode}</span>
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold text-zinc-700 mb-1">Nama Lengkap (Sesuai KTP)</label>
+              <label className="block font-bold text-zinc-700 mb-1">
+                Nama Lengkap <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Masukkan nama lengkap Anda"
+                required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-semibold focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-zinc-700 mb-1">Nomor Induk Kependudukan (NIK)</label>
+              <label className="block font-bold text-zinc-700 mb-1">
+                NIM / NIK KTP (Opsional)
+              </label>
               <input
                 type="text"
-                maxLength={16}
+                maxLength={20}
                 value={nik}
                 onChange={(e) => setNik(e.target.value)}
-                placeholder="Masukkan 16 digit NIK KTP"
+                placeholder="Masukkan NIM kampus atau 16 digit NIK"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 tabular-nums focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-zinc-700 mb-1">Alamat Email Terdaftar</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-medium focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
-              />
+              <label className="block font-bold text-zinc-700 mb-1">
+                Alamat Email Pribadi (Untuk Login) <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama.anda@gmail.com"
+                  required
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-semibold focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                />
+              </div>
+              <span className="text-[10px] text-zinc-500 mt-1 block">
+                Ganti dengan Gmail / email kampus aktif Anda untuk login berikutnya & pemulihan lupa sandi.
+              </span>
             </div>
 
             <div>
@@ -254,7 +320,7 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">
-                Kontak Darurat (Keluarga / Kerabat) <span className="text-rose-500">*</span>
+                Kontak Darurat (Orang Tua / Wali) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -265,7 +331,7 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-medium focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
               <span className="text-[10px] text-zinc-400 mt-1 block">
-                Nomor yang dapat dihubungi saat situasi genting / darurat medis.
+                Nomor keluarga yang dapat dihubungi saat situasi darurat.
               </span>
             </div>
           </div>
@@ -275,32 +341,49 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-5">
           <div className="border-b border-zinc-100 pb-3 flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-blue-600" />
-            <h2 className="text-sm font-bold text-zinc-900">Ubah Kata Sandi (Opsional)</h2>
+            <h2 className="text-sm font-bold text-zinc-900">
+              Buat / Ubah Kata Sandi Pribadi (Terenkripsi Bcrypt)
+            </h2>
           </div>
 
           <p className="text-xs text-zinc-500">
-            Biarkan kosong jika Anda tidak ingin mengubah kata sandi akun saat ini.
+            Kata sandi Anda dienkripsi satu arah (Admin pun tidak dapat melihat kata sandi Anda). Biarkan kosong jika tidak ingin mengubah kata sandi saat ini.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold text-zinc-700 mb-1">Kata Sandi Baru</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimal 8 karakter"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-medium focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
-              />
+              <label className="block font-bold text-zinc-700 mb-1">
+                Kata Sandi Baru (Min. 6 Karakter)
+              </label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Ketik kata sandi rahasia baru"
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-medium focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block font-bold text-zinc-700 mb-1">Ulangi Kata Sandi Baru</label>
               <input
-                type="password"
+                type={showNewPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Konfirmasi kata sandi baru"
+                placeholder="Ketik ulang kata sandi baru"
+                minLength={6}
+                autoComplete="new-password"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-zinc-900 font-medium focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20 focus:border-[hsl(186,72%,24%)] focus:outline-hidden"
               />
             </div>
@@ -315,7 +398,7 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Menyimpan Perubahan...' : 'Simpan Perubahan Profil'}</span>
+            <span>{isSaving ? 'Menyimpan Perubahan...' : 'Simpan Email, Kontak & Sandi'}</span>
           </button>
         </div>
       </form>

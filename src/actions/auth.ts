@@ -12,7 +12,13 @@ import {
   getRoleDashboardPath,
 } from '@/lib/auth-store';
 import { getCurrentUser } from '@/lib/auth-server';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  formatPasswordHashPreview,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 import { createAuditLog } from '@/lib/audit';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { sanitizeString } from '@/lib/security/sanitize';
@@ -80,7 +86,7 @@ export async function loginAction(
     throw error;
   }
 
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
   const user = findUserByEmail(sanitizedEmail);
   const nowIso = new Date().toISOString();
 
@@ -108,6 +114,7 @@ export async function loginAction(
     }
 
     savePersistentStore(store);
+    await flushPostgresSync();
   }
 
   return {
@@ -171,7 +178,7 @@ export async function registerAction(data: {
     };
   }
 
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
 
   if (store.authUsers.some((u) => u.email.toLowerCase().trim() === email)) {
     return {
@@ -195,7 +202,6 @@ export async function registerAction(data: {
     nim: email.split('@')[0],
     email,
     passwordHash,
-    plainPassword: data.password,
     phone: normalizedWaPhone,
     role: 'CALON_PENGHUNI',
     isActive: true,
@@ -207,7 +213,7 @@ export async function registerAction(data: {
 
   store.authUsers.unshift(newUser);
 
-  // Simpan juga ke daftar pengguna Admin & direktori Calon Penghuni Pengelola
+  // Simpan juga ke daftar pengguna Admin (hanya preview hash satu arah, tanpa kata sandi teks biasa)
   store.adminUsers.unshift({
     id: userId,
     name,
@@ -215,7 +221,7 @@ export async function registerAction(data: {
     email,
     phone: displayPhone,
     role: 'CALON_PENGHUNI',
-    plainPassword: data.password,
+    passwordHashPreview: formatPasswordHashPreview(passwordHash),
     isActive: true,
     createdAt: nowIso,
     lastLoginAt: nowIso,
@@ -251,6 +257,7 @@ export async function registerAction(data: {
   });
 
   savePersistentStore(store);
+  await flushPostgresSync();
 
   await createAuditLog({
     userId,
@@ -334,7 +341,7 @@ export async function updateCalonProfileAction(data: {
     return { success: false, message: 'Nama lengkap minimal 2 karakter.' };
   }
 
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
   const authUser = store.authUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
   const adminUser = store.adminUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
 
@@ -365,6 +372,7 @@ export async function updateCalonProfileAction(data: {
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: authUser?.id || adminUser?.id || 'calon',
@@ -407,42 +415,44 @@ export async function changeUserPasswordAction(data: {
     .toLowerCase()
     .trim();
 
-  if (!targetEmail) {
+  if (!currentUser?.id && !targetEmail) {
     return { success: false, message: 'Sesi pengguna tidak ditemukan. Silakan masuk ulang.' };
   }
-  if (!data.newPassword || data.newPassword.length < 8) {
-    return { success: false, message: 'Kata sandi baru minimal harus 8 karakter.' };
+  if (!data.newPassword || data.newPassword.length < 6) {
+    return { success: false, message: 'Kata sandi baru minimal harus 6 karakter.' };
   }
 
-  const store = loadPersistentStore();
-  const authUser = store.authUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+  const store = await ensurePostgresHydrated();
+  const authUser =
+    (currentUser?.id ? store.authUsers.find((u) => u.id === currentUser.id) : undefined) ||
+    store.authUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
   if (!authUser) {
     return { success: false, message: 'Akun tidak ditemukan di database.' };
   }
 
   if (data.currentPassword && data.currentPassword.trim() !== '') {
-    const matchesPlain =
-      authUser.plainPassword && authUser.plainPassword === data.currentPassword;
     const matchesHash =
       authUser.passwordHash.startsWith('$2') &&
       (await verifyPassword(data.currentPassword, authUser.passwordHash));
-    if (!matchesPlain && !matchesHash) {
+    if (!matchesHash) {
       return { success: false, message: 'Kata sandi saat ini tidak sesuai.' };
     }
   }
 
   const newHash = await hashPassword(data.newPassword);
   authUser.passwordHash = newHash;
-  authUser.plainPassword = data.newPassword;
   authUser.failedLoginCount = 0;
   authUser.lockedUntil = null;
 
-  const adminUser = store.adminUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+  const adminUser = store.adminUsers.find(
+    (u) => u.id === authUser.id || u.email.toLowerCase().trim() === authUser.email.toLowerCase().trim()
+  );
   if (adminUser) {
-    adminUser.plainPassword = data.newPassword;
+    adminUser.passwordHashPreview = formatPasswordHashPreview(newHash);
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
 
   revalidatePath('/admin/pengguna');
   return { success: true, message: 'Kata sandi akun Anda berhasil diperbarui.' };
@@ -538,8 +548,8 @@ export async function resetPasswordAction(
     return { success: false, message: 'Akun tidak ditemukan.' };
   }
 
-  user.passwordHash = await hashPassword(newPassword);
-  user.plainPassword = newPassword;
+  const newHash = await hashPassword(newPassword);
+  user.passwordHash = newHash;
   user.failedLoginCount = 0;
   user.lockedUntil = null;
   record.usedAt = new Date().toISOString();
@@ -548,10 +558,11 @@ export async function resetPasswordAction(
     (u) => u.email.toLowerCase() === record.email.toLowerCase()
   );
   if (adminUser) {
-    adminUser.plainPassword = newPassword;
+    adminUser.passwordHashPreview = formatPasswordHashPreview(newHash);
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
 
   return {
     success: true,

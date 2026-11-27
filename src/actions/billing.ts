@@ -5,7 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentUser, requireRole } from '@/lib/auth-server';
 import { dispatchPaymentSuccess } from '@/lib/notify/dispatch';
 import { dbGetReservationsByUserEmail } from '@/server/db';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 import { createAuditLog } from '@/lib/audit';
 
 // In-Memory Global Storage untuk Tagihan & Profil Penghuni
@@ -39,6 +44,7 @@ function getBillingDb(): BillingState {
  * dan menyinkronkan reservasi LUNAS milik penghuni tersebut ke Portal Penghuni.
  */
 async function getEffectiveTenantEmail(paramEmail?: string): Promise<string> {
+  await ensurePostgresHydrated();
   const db = getBillingDb();
   let resolvedEmail = '';
 
@@ -327,72 +333,180 @@ export async function fetchTenantProfileAction(email?: string): Promise<TenantPr
  * Memperbarui nomor telepon, data diri, atau kontak darurat penghuni
  */
 export async function updateTenantProfileAction(
-  data: Partial<TenantProfile>
+  data: Partial<TenantProfile> & { previousEmail?: string }
 ): Promise<{ success: boolean; message: string; profile?: TenantProfile }> {
   try {
+    const store = await ensurePostgresHydrated();
+    const currentUser = await getCurrentUser();
+
+    // Identifikasi akun penghuni berdasarkan userId sesi aktif (agar aman saat mengganti alamat email)
+    const previousEmailNorm = (
+      data.previousEmail ||
+      currentUser?.email ||
+      data.email ||
+      ''
+    )
+      .toLowerCase()
+      .trim();
+
+    const authUser =
+      (currentUser?.id ? store.authUsers.find((u) => u.id === currentUser.id) : undefined) ||
+      store.authUsers.find((u) => u.email.toLowerCase().trim() === previousEmailNorm);
+
+    const oldEmailNorm = (authUser?.email || previousEmailNorm).toLowerCase().trim();
+    const nextEmailNorm = (data.email || oldEmailNorm).toLowerCase().trim();
+
+    if (!nextEmailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmailNorm)) {
+      return {
+        success: false,
+        message: 'Format alamat email pribadi tidak valid.',
+      };
+    }
+
+    // Pastikan email baru belum dipakai oleh akun pengguna lain
+    const emailConflict = store.authUsers.some(
+      (u) =>
+        u.id !== authUser?.id &&
+        u.email.toLowerCase().trim() !== oldEmailNorm &&
+        u.email.toLowerCase().trim() === nextEmailNorm
+    );
+    if (emailConflict) {
+      return {
+        success: false,
+        message: 'Alamat email tersebut sudah digunakan oleh akun lain. Gunakan email pribadi Anda yang berbeda.',
+      };
+    }
+
+    const cleanName = (data.name || authUser?.name || '').trim();
+    const cleanPhone = (data.phone || '').trim();
+    const cleanNik = (data.nik || '').trim();
+    const cleanEmergency = (data.emergencyContact || data.emergencyContactPhone || '').trim();
+
     const db = getBillingDb();
-    const effectiveEmail = await getEffectiveTenantEmail(data.email);
+    await getEffectiveTenantEmail(oldEmailNorm);
 
-    let pIndex = db.profiles.findIndex((p) => p.email.toLowerCase() === effectiveEmail);
+    let pIndex = db.profiles.findIndex(
+      (p) =>
+        (authUser?.id && p.id === authUser.id) ||
+        p.email.toLowerCase().trim() === oldEmailNorm
+    );
+
     if (pIndex === -1) {
-      if (db.profiles.length === 0) {
-        db.profiles.push({
-          id: `usr-${Date.now()}`,
-          name: data.name || '',
-          email: data.email || 'penghuni@example.com',
-          phone: data.phone || '',
-          nik: data.nik || '',
-          occupation: 'Mahasiswi UIN Imam Bonjol Padang',
-          roomCode: '1',
-          checkInDate: new Date().toISOString().split('T')[0],
-          tenancyEnd: '-',
-          emergencyContactName: 'Wali / Orang Tua',
-          emergencyContactPhone: data.emergencyContact || '',
-          emergencyContactRelation: 'Orang Tua',
-          monthlyRent: 5000000,
-        });
-      }
+      const matchedTen = store.tenancies.find(
+        (t) =>
+          t.status === 'AKTIF' &&
+          ((authUser?.id && t.userId === authUser.id) ||
+            t.userEmail.toLowerCase().trim() === oldEmailNorm)
+      );
+      db.profiles.unshift({
+        id: authUser?.id || `usr-${Date.now()}`,
+        name: cleanName,
+        email: nextEmailNorm,
+        phone: cleanPhone,
+        nik: cleanNik,
+        occupation: 'Penghuni Tetap Kos Omi',
+        roomCode: matchedTen?.roomCode || authUser?.roomCode || '1',
+        checkInDate: matchedTen?.checkInDate || new Date().toISOString().split('T')[0],
+        tenancyEnd: matchedTen?.contractEndDate || '2026-12-31',
+        emergencyContactName: 'Orang Tua / Wali',
+        emergencyContactPhone: cleanEmergency,
+        emergencyContactRelation: 'Keluarga',
+        monthlyRent: matchedTen?.monthlyPrice || 5000000,
+        avatarUrl: `/rooms/kamar-${matchedTen?.roomCode || authUser?.roomCode || '1'}.png`,
+      });
       pIndex = 0;
+    } else {
+      db.profiles[pIndex] = {
+        ...db.profiles[pIndex],
+        ...data,
+        name: cleanName || db.profiles[pIndex].name,
+        email: nextEmailNorm,
+        phone: cleanPhone || db.profiles[pIndex].phone,
+        nik: cleanNik || db.profiles[pIndex].nik,
+        emergencyContactPhone: cleanEmergency || db.profiles[pIndex].emergencyContactPhone,
+      };
     }
 
-    db.profiles[pIndex] = {
-      ...db.profiles[pIndex],
-      ...data,
-    };
-
-    // Sinkronkan juga perubahan Nama / No. WA / NIK ke authUsers, adminUsers, dan tenancies
-    const store = loadPersistentStore();
-    const updatedProfile = db.profiles[pIndex];
-    const targetEmail = (updatedProfile.email || effectiveEmail).toLowerCase().trim();
-    const authUser = store.authUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+    // Sinkronkan perubahan Email Pribadi, Nama, No. WA, & NIK ke authUsers, adminUsers, tenancies, dan bills
     if (authUser) {
-      if (data.name) authUser.name = data.name;
-      if (data.phone) authUser.phone = data.phone.replace(/^0/, '62').replace(/^\+/, '');
-      if (data.nik) authUser.nim = data.nik;
+      if (cleanName) authUser.name = cleanName;
+      authUser.email = nextEmailNorm;
+      if (cleanPhone) authUser.phone = cleanPhone.replace(/^0/, '62').replace(/^\+/, '');
     }
-    const adminUser = store.adminUsers.find((u) => u.email.toLowerCase().trim() === targetEmail);
+
+    const adminUser = store.adminUsers.find(
+      (u) =>
+        (authUser?.id && u.id === authUser.id) ||
+        u.email.toLowerCase().trim() === oldEmailNorm
+    );
     if (adminUser) {
-      if (data.name) adminUser.name = data.name;
-      if (data.phone) adminUser.phone = data.phone;
-      if (data.nik) adminUser.nim = data.nik;
+      if (cleanName) adminUser.name = cleanName;
+      adminUser.email = nextEmailNorm;
+      if (cleanPhone) adminUser.phone = cleanPhone;
     }
+
     for (const ten of store.tenancies) {
-      if (ten.userEmail.toLowerCase().trim() === targetEmail && ten.status === 'AKTIF') {
-        if (data.name) ten.userName = data.name;
-        if (data.phone) ten.userPhone = data.phone;
-        if (data.nik) ten.userNik = data.nik;
+      if (
+        ((authUser?.id && ten.userId === authUser.id) ||
+          ten.userEmail.toLowerCase().trim() === oldEmailNorm) &&
+        ten.status === 'AKTIF'
+      ) {
+        if (cleanName) ten.userName = cleanName;
+        ten.userEmail = nextEmailNorm;
+        if (cleanPhone) ten.userPhone = cleanPhone;
+        if (cleanNik) ten.userNik = cleanNik;
+        if (cleanEmergency) {
+          ten.emergencyContact = {
+            name: ten.emergencyContact?.name || 'Orang Tua / Wali',
+            relation: ten.emergencyContact?.relation || 'Keluarga',
+            phone: cleanEmergency,
+          };
+        }
       }
     }
+
+    for (const bill of store.bills) {
+      if (bill.tenantEmail.toLowerCase().trim() === oldEmailNorm) {
+        bill.tenantEmail = nextEmailNorm;
+        if (cleanName) bill.tenantName = cleanName;
+        if (cleanPhone) bill.tenantPhone = cleanPhone;
+      }
+    }
+
     savePersistentStore(store);
+    await flushPostgresSync();
+
+    await createAuditLog({
+      userId: authUser?.id || nextEmailNorm,
+      actorName: cleanName || nextEmailNorm,
+      actorRole: 'PENGHUNI',
+      action: 'TENANT_PROFILE_UPDATED',
+      category: 'users',
+      entityId: authUser?.id || nextEmailNorm,
+      description:
+        oldEmailNorm !== nextEmailNorm
+          ? `Memperbarui email akun penghuni dari ${oldEmailNorm} menjadi ${nextEmailNorm}`
+          : `Memperbarui profil & kontak penghuni (${cleanName})`,
+      meta: {
+        previousEmail: oldEmailNorm,
+        email: nextEmailNorm,
+        phone: cleanPhone,
+      },
+    });
 
     revalidatePath('/penghuni/profil');
     revalidatePath('/penghuni/dashboard');
     revalidatePath('/admin/pengguna');
+    revalidatePath('/admin/log-aktivitas');
     revalidatePath('/pengelola/penghuni');
+    revalidatePath('/pengelola/kamar');
 
     return {
       success: true,
-      message: 'Profil dan nomor kontak Anda berhasil diperbarui di sistem.',
+      message:
+        oldEmailNorm !== nextEmailNorm
+          ? `Email pribadi (${nextEmailNorm}) dan data profil Anda berhasil disimpan! Gunakan email baru ini untuk login berikutnya.`
+          : 'Profil dan nomor kontak Anda berhasil diperbarui di sistem.',
       profile: { ...db.profiles[pIndex] },
     };
   } catch (error: any) {
@@ -451,6 +565,7 @@ export async function payMonthlyBillAction(
     (ob) => ob.invoiceNumber.toUpperCase() !== normalized
   );
   savePersistentStore(store);
+  await flushPostgresSync();
 
   await createAuditLog({
     userId: paidBill.tenantEmail,

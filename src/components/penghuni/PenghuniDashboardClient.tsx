@@ -52,36 +52,15 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
   const [recentBills, setRecentBills] = useState<MonthlyBill[]>(initialRecentBills);
 
   useEffect(() => {
-    const clientUser = getClientSession();
-    if (clientUser && clientUser.email) {
-      const clientEmail = clientUser.email.toLowerCase().trim();
-      if (
-        clientEmail !== 'penghuni@example.com' &&
-        clientEmail !== initialProfile.email.toLowerCase().trim()
-      ) {
-        Promise.all([
-          fetchTenantProfileAction(clientEmail),
-          fetchCurrentMonthlyBillAction(clientEmail),
-          fetchMonthlyBillsAction(clientEmail),
-        ]).then(([syncedProfile, syncedCurrentBill, syncedBills]) => {
-          if (syncedProfile && syncedProfile.email.toLowerCase().trim() === clientEmail) {
-            setProfile(syncedProfile);
-          } else if (clientUser.name && clientUser.name !== 'Pengguna Terdaftar') {
-            setProfile((prev) => ({
-              ...prev,
-              name: clientUser.name,
-              email: clientUser.email,
-              roomCode: clientUser.roomCode || prev.roomCode,
-            }));
-          }
-          if (syncedCurrentBill) setCurrentBill(syncedCurrentBill);
-          if (Array.isArray(syncedBills) && syncedBills.length > 0) {
-            setRecentBills(syncedBills.slice(0, 5));
-          }
-        });
-      }
-    }
-  }, [initialProfile.email]);
+    setProfile(initialProfile);
+    setCurrentBill(initialCurrentBill);
+    setRecentBills(initialRecentBills);
+  }, [initialProfile, initialCurrentBill, initialRecentBills]);
+
+  const needsAccountPersonalization =
+    (profile.email || '').toLowerCase().endsWith('@kosomi.id') ||
+    !profile.phone ||
+    profile.phone === '-';
 
   // Quick Pay Modal State
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -124,6 +103,31 @@ export const PenghuniDashboardClient: React.FC<PenghuniDashboardClientProps> = (
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Banner Pengingat Lengkapi Email Gmail & Kata Sandi Pribadi (Opsi 1) */}
+      {needsAccountPersonalization && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-sm text-amber-950">
+                Lengkapi Email Gmail Pribadi, WhatsApp & Kata Sandi Anda
+              </p>
+              <p className="text-amber-900 leading-relaxed">
+                Akun Kamar No. <strong>{profile.roomCode}</strong> Anda masih memakai data awal sistem (
+                <code className="font-mono font-bold">{profile.email}</code>). Silakan ganti ke email pribadi Anda dan buat kata sandi baru agar akun Anda aman.
+              </p>
+            </div>
+          </div>
+          <NextLink
+            href="/penghuni/profil"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors shrink-0"
+          >
+            <span>Lengkapi Akun Sekarang</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </NextLink>
         </div>
       )}
 
