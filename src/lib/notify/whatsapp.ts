@@ -294,33 +294,28 @@ async function recordNotificationLog(params: {
 }) {
   const { template, recipient, status, attempts, errorMessage, sentAt, recipientName } = params;
 
-  // 1. Simpan ke in-memory store global untuk dasbor /admin/notifikasi
+  // 1. Simpan ke store terpadu & Neon PostgreSQL untuk dasbor /admin/notifikasi
   try {
-    if (typeof global !== 'undefined' && global.__kosOmiNotifLogs) {
-      global.__kosOmiNotifLogs.unshift({
-        id: `notif-wa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        recipient,
-        recipientName: recipientName || recipient,
-        channel: 'WHATSAPP',
-        template,
-        status,
-        attempts,
-        errorMessage: errorMessage || null,
-        sentAt: sentAt ? sentAt.toISOString() : null,
-        createdAt: new Date().toISOString(),
-      });
-    }
+    const { ensurePostgresHydrated, savePersistentStore, flushPostgresSync } = await import(
+      '@/server/persistence'
+    );
+    const store = await ensurePostgresHydrated();
+    store.notificationLogs.unshift({
+      id: `notif-wa-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      recipient,
+      recipientName: recipientName || recipient,
+      channel: 'WHATSAPP',
+      template,
+      status,
+      attempts,
+      errorMessage: errorMessage || null,
+      sentAt: sentAt ? sentAt.toISOString() : null,
+      createdAt: new Date().toISOString(),
+    });
+    savePersistentStore(store);
+    await flushPostgresSync();
   } catch (err) {
-    console.warn('[WhatsApp Log] Gagal menyimpan ke memory store:', err);
-  }
-
-  // 2. Simpan ke database jika klien db terhubung
-  try {
-    const { notificationLogs } = await import('@/db/schema');
-    // Jika db terkonfigurasi:
-    // await db.insert(notificationLogs).values({ ... });
-  } catch {
-    // Mode dev in-memory
+    console.warn('[WhatsApp Log] Gagal menyimpan log notifikasi WhatsApp:', err);
   }
 }
 

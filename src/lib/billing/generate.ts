@@ -11,7 +11,12 @@
 
 import { MonthlyBill } from '@/types/billing';
 import { dbAddAuditLog } from '@/server/db';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 import { revalidatePath } from 'next/cache';
 import { db as drizzleDb, schema } from '@/db';
 import { eq } from '@/db/drizzle';
@@ -168,7 +173,7 @@ export async function generateMonthlyBills(
   const month = now.getMonth() + 1;
 
   // Akses penyimpanan persisten terpadu untuk tagihan, pembayaran, dan hunian aktif
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
   const existingBills = store.bills;
   const serverPayments = store.payments;
 
@@ -309,9 +314,11 @@ export async function generateMonthlyBills(
         await drizzleDb.db
           .insert(schema.invoices)
           .values({
+            id: newBill.id,
             invoiceNumber,
             userId: tenancy.userId,
             tenancyId: tenancy.id,
+            roomCode: tenancy.roomCode,
             type: 'SEWA_BULANAN',
             periodMonth: targetPeriodKey,
             amount: tenancy.monthlyPrice,
@@ -449,6 +456,7 @@ export async function generateMonthlyBills(
   }
 
   savePersistentStore(store);
+  await flushPostgresSync();
 
   // 4. Catat ke Audit Log
   await dbAddAuditLog({

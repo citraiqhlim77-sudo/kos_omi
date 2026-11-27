@@ -80,34 +80,28 @@ async function recordNotificationLog(params: {
 }) {
   const { userId, template, recipient, status, attempts, errorMessage, sentAt, recipientName } = params;
 
-  // 1. Simpan ke in-memory store global untuk dasbor /admin/notifikasi
+  // 1. Simpan ke store terpadu & Neon PostgreSQL untuk dasbor /admin/notifikasi
   try {
-    if (typeof global !== 'undefined' && global.__kosOmiNotifLogs) {
-      global.__kosOmiNotifLogs.unshift({
-        id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        recipient,
-        recipientName: recipientName || recipient.split('@')[0],
-        channel: 'EMAIL',
-        template,
-        status,
-        attempts,
-        errorMessage: errorMessage || null,
-        sentAt: sentAt ? sentAt.toISOString() : null,
-        createdAt: new Date().toISOString(),
-      });
-    }
+    const { ensurePostgresHydrated, savePersistentStore, flushPostgresSync } = await import(
+      '@/server/persistence'
+    );
+    const store = await ensurePostgresHydrated();
+    store.notificationLogs.unshift({
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      recipient,
+      recipientName: recipientName || recipient.split('@')[0],
+      channel: 'EMAIL',
+      template,
+      status,
+      attempts,
+      errorMessage: errorMessage || null,
+      sentAt: sentAt ? sentAt.toISOString() : null,
+      createdAt: new Date().toISOString(),
+    });
+    savePersistentStore(store);
+    await flushPostgresSync();
   } catch (err) {
-    console.warn('[Notification Log] Gagal menyimpan ke memory store:', err);
-  }
-
-  // 2. Simpan ke database PostgreSQL jika koneksi db terkonfigurasi
-  try {
-    const { notificationLogs } = await import('@/db/schema');
-    // Jika ada Drizzle DB client di proyek
-    // const { db } = await import('@/db');
-    // await db.insert(notificationLogs).values({ ... });
-  } catch {
-    // Mode dev in-memory
+    console.warn('[Notification Log] Gagal menyimpan log notifikasi email:', err);
   }
 }
 

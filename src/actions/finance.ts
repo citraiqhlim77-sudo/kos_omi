@@ -22,7 +22,12 @@ import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { dispatchBillingOverdue } from '@/lib/notify/dispatch';
 import { createAuditLog } from '@/lib/audit';
-import { loadPersistentStore, savePersistentStore } from '@/server/persistence';
+import {
+  ensurePostgresHydrated,
+  flushPostgresSync,
+  loadPersistentStore,
+  savePersistentStore,
+} from '@/server/persistence';
 
 // Global state in-memory
 declare global {
@@ -96,6 +101,7 @@ function getOverdueBillsStore(): OverdueBill[] {
 
 // 1. Fetch Finance Dashboard Stats (100% Sinkron dari Satu Sumber Transaksi Terverifikasi)
 export async function fetchFinanceDashboardStatsAction(): Promise<FinanceDashboardStats> {
+  await ensurePostgresHydrated();
   const txs = getTransactionsStore();
   const settledTxs = getSuccessfulTransactions();
   const pendingTxs = txs.filter((t) => t.transactionStatus === 'pending');
@@ -165,6 +171,7 @@ export async function fetchFinanceDashboardStatsAction(): Promise<FinanceDashboa
 }
 
 export async function fetchOperationalAnalyticsAction(): Promise<OperationalDecisionAnalytics> {
+  await ensurePostgresHydrated();
   getTransactionsStore();
   return getOperationalDecisionAnalytics();
 }
@@ -175,6 +182,7 @@ export async function fetchFinanceTransactionsAction(filters?: {
   paymentType?: string;
   search?: string;
 }): Promise<PaymentTransaction[]> {
+  await ensurePostgresHydrated();
   const txs = getTransactionsStore();
   let result = [...txs];
 
@@ -204,6 +212,7 @@ export async function fetchFinanceTransactionsAction(filters?: {
 export async function fetchTransactionByIdAction(
   idOrOrderId: string
 ): Promise<PaymentTransaction | null> {
+  await ensurePostgresHydrated();
   const txs = getTransactionsStore();
   const normalized = idOrOrderId.trim().toUpperCase();
   const found = txs.find(
@@ -216,6 +225,7 @@ export async function fetchTransactionByIdAction(
 export async function fetchDailyReportAction(
   month: string = '2026-ALL'
 ): Promise<DailyReportRow[]> {
+  await ensurePostgresHydrated();
   getTransactionsStore();
   const [yearStr, monthStr] = month.split('-');
   const year = parseInt(yearStr || '2026', 10);
@@ -260,6 +270,7 @@ export async function fetchDailyReportAction(
 export async function fetchMonthlyReportAction(
   year: number = 2026
 ): Promise<MonthlyReportRow[]> {
+  await ensurePostgresHydrated();
   getTransactionsStore();
   const { getMonthlyRevenueReport } = await import('@/lib/reports/revenue');
   const aggregatedMonthly = await getMonthlyRevenueReport(year);
@@ -279,6 +290,7 @@ export async function fetchMonthlyReportAction(
 
 // 6. Fetch Overdue Bills
 export async function fetchOverdueBillsAction(): Promise<OverdueBill[]> {
+  await ensurePostgresHydrated();
   const store = getOverdueBillsStore();
   return [...store];
 }
