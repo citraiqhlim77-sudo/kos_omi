@@ -463,10 +463,15 @@ export async function changeUserPasswordAction(data: {
  */
 export async function forgotPasswordAction(
   email: string
-): Promise<{ success: boolean; message: string; resetToken?: string }> {
-  const sanitizedEmail = sanitizeString(email).toLowerCase();
+): Promise<{
+  success: boolean;
+  message: string;
+  resetToken?: string;
+  adminWhatsappUrl?: string;
+}> {
+  const sanitizedEmail = sanitizeString(email).toLowerCase().trim();
   const genericMessage =
-    'Jika alamat email terdaftar, tautan reset kata sandi telah dikirim. Tautan berlaku 30 menit.';
+    'Permintaan reset kata sandi Anda telah dicatat. Silakan konfirmasi melalui WhatsApp Admin Kos Omi agar Admin dapat mereset kata sandi akun Anda.';
 
   const validation = forgotPasswordSchema.safeParse({ email: sanitizedEmail });
   if (!validation.success) {
@@ -481,35 +486,49 @@ export async function forgotPasswordAction(
     };
   }
 
-  const store = loadPersistentStore();
+  const store = await ensurePostgresHydrated();
   const user = findUserByEmail(sanitizedEmail);
-  if (!user || !user.isActive) {
-    return { success: true, message: genericMessage };
+
+  const waText = encodeURIComponent(
+    `Assalamu'alaikum Ibu Admin Kos Omi, saya lupa kata sandi akun saya.\n\nEmail Akun: ${sanitizedEmail}\n\nMohon bantuannya untuk melakukan Reset Kata Sandi akun saya di portal Kos Omi. Terima kasih.`
+  );
+  const adminWhatsappUrl = `https://wa.me/6282287146763?text=${waText}`;
+
+  if (user && user.isActive) {
+    const nowIso = new Date().toISOString();
+    store.notificationLogs.unshift({
+      id: `ntf-reset-${Date.now()}`,
+      recipient: '+62 822-8714-6763',
+      recipientName: `Permintaan Reset Sandi (${user.name})`,
+      channel: 'WHATSAPP',
+      template: `permintaan_reset_sandi_${sanitizedEmail}`,
+      status: 'SENT',
+      attempts: 1,
+      sentAt: nowIso,
+      createdAt: nowIso,
+    });
+    savePersistentStore(store);
+    await flushPostgresSync();
+
+    await createAuditLog({
+      userId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'PASSWORD_RESET_REQUESTED',
+      category: 'users',
+      entityId: user.id,
+      description: `Mengajukan permintaan reset kata sandi via WhatsApp Admin untuk akun ${user.email}`,
+      meta: {
+        email: user.email,
+        roomCode: user.roomCode || '-',
+      },
+    });
   }
-
-  const tokens = getResetTokensStore();
-  const now = Date.now();
-
-  for (const record of tokens) {
-    if (record.email === sanitizedEmail && !record.usedAt) {
-      record.usedAt = new Date(now).toISOString();
-    }
-  }
-
-  const rawToken = randomBytes(32).toString('hex');
-  tokens.push({
-    tokenHash: sha256(rawToken),
-    email: sanitizedEmail,
-    expiresAt: new Date(now + RESET_TOKEN_TTL_MS).toISOString(),
-    usedAt: null,
-  });
-
-  savePersistentStore(store);
 
   return {
     success: true,
     message: genericMessage,
-    resetToken: process.env.NODE_ENV === 'production' ? undefined : rawToken,
+    adminWhatsappUrl,
   };
 }
 
