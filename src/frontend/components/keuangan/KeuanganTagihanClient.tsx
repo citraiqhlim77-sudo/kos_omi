@@ -5,6 +5,7 @@ import {
   type RoomRentScheduleItem,
   type RoomScheduleStatus,
   sendRoomRentReminderAction,
+  sendBulkRentRemindersAction,
   updateRoomCheckInDateAction,
 } from '@/actions/rent-schedule';
 import {
@@ -32,7 +33,25 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
   const [statusFilter, setStatusFilter] = useState<'ALL' | RoomScheduleStatus>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sendingRoom, setSendingRoom] = useState<string | null>(null);
+  const [isSendingBulk, setIsSendingBulk] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleBulkReminder = async () => {
+    setIsSendingBulk(true);
+    const res = await sendBulkRentRemindersAction('ALL');
+    setIsSendingBulk(false);
+    setToast({ type: res.success ? 'success' : 'error', message: res.message });
+    if (res.success) {
+      setSchedules((prev) =>
+        prev.map((item) => ({
+          ...item,
+          reminderCount: item.reminderCount + 1,
+          lastReminderAt: new Date().toISOString(),
+        }))
+      );
+    }
+    setTimeout(() => setToast(null), 6000);
+  };
 
   // Modal Edit Tanggal Masuk Kamar
   const [editingRoom, setEditingRoom] = useState<RoomRentScheduleItem | null>(null);
@@ -164,21 +183,33 @@ export const KeuanganTagihanClient: React.FC<KeuanganTagihanClientProps> = ({
       )}
 
       {/* Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-            Siklus 3 Bulanan
-          </span>
-          <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
-            Maksimal Tempo 7 Hari
-          </span>
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-zinc-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+              Siklus 3 Bulanan
+            </span>
+            <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+              Maksimal Tempo 7 Hari
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
+            Tagihan Sewa &amp; Pengingat Per Kamar
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-600 max-w-2xl">
+            Jatuh tempo dihitung otomatis setiap 3 bulan sesuai tanggal masuk kamar. Lewat 7 hari wajib konfirmasi langsung ke Ibu Kos.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-          Tagihan Sewa &amp; Pengingat Per Kamar
-        </h1>
-        <p className="text-xs sm:text-sm text-zinc-600 max-w-2xl">
-          Jatuh tempo dihitung otomatis setiap 3 bulan sesuai tanggal masuk kamar. Lewat 7 hari wajib konfirmasi langsung ke Ibu Kos.
-        </p>
+
+        <button
+          type="button"
+          onClick={handleBulkReminder}
+          disabled={isSendingBulk}
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+        >
+          <BellRing className="w-4 h-4" />
+          <span>{isSendingBulk ? 'Mengirim ke Semua Kamar...' : 'Kirim Pengingat Semua (1x Klik)'}</span>
+        </button>
       </div>
 
       {/* KPI Cards */}

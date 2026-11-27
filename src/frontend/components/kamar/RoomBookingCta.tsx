@@ -8,11 +8,13 @@ import { ArrowRight, Lock, UserPlus, LogIn } from 'lucide-react';
 interface RoomBookingCtaProps {
   roomCode: string;
   isLoggedInServer?: boolean;
+  isOpenSlot?: boolean;
 }
 
 export const RoomBookingCta: React.FC<RoomBookingCtaProps> = ({
   roomCode,
   isLoggedInServer = false,
+  isOpenSlot = false,
 }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(isLoggedInServer);
   const [mounted, setMounted] = useState(false);
@@ -67,11 +69,11 @@ export const RoomBookingCta: React.FC<RoomBookingCtaProps> = ({
         href={`/reservasi/${roomCode}`}
         className="w-full inline-flex items-center justify-center gap-2 bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white font-bold text-sm px-4 py-3.5 rounded-lg transition-all active:scale-[0.99]"
       >
-        Reservasi Kamar Ini
+        {isOpenSlot ? 'Pesan 1 Slot Teman Sekamar (Rp 2.500.000)' : 'Reservasi Kamar Ini'}
         <ArrowRight size={16} />
       </NextLink>
       <p className="text-[11px] text-center text-zinc-500">
-        Pembayaran otomatis via Transfer Bank / Virtual Account (BCA, BRI, BNI, Mandiri, Permata), QRIS, serta E-Wallet (GoPay, ShopeePay) melalui Midtrans
+        Pembayaran via Transfer Bank BRI
       </p>
     </>
   );

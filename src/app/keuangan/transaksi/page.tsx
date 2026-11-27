@@ -3,7 +3,10 @@ import { Metadata } from 'next';
 import { KeuanganNav } from '@/components/keuangan/KeuanganNav';
 import { KeuanganTransaksiClient } from '@/components/keuangan/KeuanganTransaksiClient';
 import { fetchFinanceTransactionsAction } from '@/actions/finance';
-import { fetchSocialDonationsAction } from '@/actions/rent-schedule';
+import {
+  fetchSocialDonationsAction,
+  fetchSocialAnnouncementsAction,
+} from '@/actions/rent-schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,9 +17,10 @@ export const metadata: Metadata = {
 };
 
 export default async function KeuanganTransaksiPage() {
-  const [transactions, donations] = await Promise.all([
+  const [transactions, donations, announcements] = await Promise.all([
     fetchFinanceTransactionsAction(),
     fetchSocialDonationsAction(),
+    fetchSocialAnnouncementsAction(),
   ]);
 
   return (
@@ -27,6 +31,7 @@ export default async function KeuanganTransaksiPage() {
         <KeuanganTransaksiClient
           initialTransactions={transactions}
           initialDonations={donations}
+          initialAnnouncements={announcements}
         />
       </main>
     </div>

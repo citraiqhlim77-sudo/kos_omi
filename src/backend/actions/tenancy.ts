@@ -512,6 +512,14 @@ export async function checkInTenant(
   revalidatePath('/pengelola/penghuni');
   revalidatePath('/pengelola/kamar');
   revalidatePath('/pengelola/dashboard');
+  revalidatePath('/keuangan/tagihan');
+  revalidatePath('/keuangan/dashboard');
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/keuangan/laporan');
+  revalidatePath('/penghuni/dashboard');
+  revalidatePath('/penghuni/tagihan');
+  revalidatePath('/calon');
+  revalidatePath('/calon/dashboard');
   revalidatePath('/admin/dashboard');
   revalidatePath('/admin/pengguna');
   revalidatePath('/kamar');
@@ -740,6 +748,40 @@ export async function checkOutTenant(
 
 export async function processCheckoutAction(tenancyId: string, confirmUnpaid: boolean = false) {
   return checkOutTenant(tenancyId, confirmUnpaid);
+}
+
+/**
+ * 6. Ubah Mode Hunian Penghuni Tunggal di Kamar (Butuh 1 Teman Rp 2.500.000 vs Tinggal Sendiri Full Rp 5.000.000)
+ */
+export async function updateRemainingTenantModeAction(
+  tenancyId: string,
+  mode: 'BUTUH_TEMAN' | 'SENDIRI_FULL'
+): Promise<{ success: boolean; message: string }> {
+  await requireRole(['ADMIN', 'PENGELOLA']);
+  await ensurePostgresHydrated();
+  const tenancies = getTenanciesStore();
+  const tenant = tenancies.find((t) => t.id === tenancyId && t.status === 'AKTIF');
+  if (!tenant) {
+    return { success: false, message: 'Data penghuni aktif tidak ditemukan.' };
+  }
+
+  const newPrice = mode === 'BUTUH_TEMAN' ? 2500000 : 5000000;
+  tenant.monthlyPrice = newPrice;
+  savePersistentStore();
+  await flushPostgresSync();
+
+  revalidatePath('/pengelola/penghuni');
+  revalidatePath('/kamar');
+  revalidatePath(`/kamar/${tenant.roomCode}`);
+  revalidatePath('/keuangan/tagihan');
+
+  return {
+    success: true,
+    message:
+      mode === 'BUTUH_TEMAN'
+        ? `Kamar ${tenant.roomCode} kini membuka 1 slot teman sekamar (tarif Rp 2.500.000/orang).`
+        : `Kamar ${tenant.roomCode} kini berstatus 1 orang penuh (tarif Rp 5.000.000/semester).`,
+  };
 }
 
 

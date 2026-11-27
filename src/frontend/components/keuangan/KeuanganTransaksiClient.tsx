@@ -6,8 +6,11 @@ import { PaymentTransaction, GatewayReconciliationResult } from '@/types/finance
 import { reconcileGatewayTransactionsAction } from '@/actions/finance';
 import {
   type SocialDonationRecord,
+  type SocialAnnouncement,
   addSocialDonationAction,
   deleteSocialDonationAction,
+  createSocialAnnouncementAction,
+  closeSocialAnnouncementAction,
 } from '@/actions/rent-schedule';
 import { formatRupiah } from '@/data/rooms';
 import {
@@ -27,6 +30,7 @@ import {
 interface KeuanganTransaksiClientProps {
   initialTransactions: PaymentTransaction[];
   initialDonations?: SocialDonationRecord[];
+  initialAnnouncements?: SocialAnnouncement[];
 }
 
 function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
@@ -49,10 +53,40 @@ function formatTxStatusLabel(status: string): string {
 export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = ({
   initialTransactions,
   initialDonations = [],
+  initialAnnouncements = [],
 }) => {
   const [activeTab, setActiveTab] = useState<'SEWA' | 'DUKA_CITA'>('SEWA');
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(initialTransactions);
   const [donations, setDonations] = useState<SocialDonationRecord[]>(initialDonations);
+  const [announcements, setAnnouncements] = useState<SocialAnnouncement[]>(initialAnnouncements);
+  const [isAnnModalOpen, setIsAnnModalOpen] = useState(false);
+  const [annTitle, setAnnTitle] = useState('');
+  const [annDesc, setAnnDesc] = useState('');
+  const [isSavingAnn, setIsSavingAnn] = useState(false);
+
+  const handleCreateAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingAnn(true);
+    const res = await createSocialAnnouncementAction({ title: annTitle, description: annDesc });
+    setIsSavingAnn(false);
+    if (res.success && res.announcement) {
+      setAnnouncements((prev) => [res.announcement!, ...prev]);
+      setIsAnnModalOpen(false);
+      setAnnTitle('');
+      setAnnDesc('');
+      setToastMessage(res.message);
+      setTimeout(() => setToastMessage(null), 5000);
+    }
+  };
+
+  const handleCloseAnnouncement = async (id: string) => {
+    const res = await closeSocialAnnouncementAction(id);
+    if (res.success) {
+      setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isActive: false } : a)));
+      setToastMessage(res.message);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [methodFilter, setMethodFilter] = useState('ALL');
@@ -260,17 +294,27 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setDonationError(null);
-                setIsDonationModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Catat Iuran Duka Cita</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAnnModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-teal-300 bg-teal-50 hover:bg-teal-100 text-[hsl(186,72%,24%)] text-xs font-bold transition-colors cursor-pointer"
+              >
+                <HeartHandshake className="w-4 h-4" />
+                <span>Buat Pengumuman Duka Cita</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDonationError(null);
+                  setIsDonationModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Catat Iuran Manual</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -306,6 +350,27 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
 
       {activeTab === 'DUKA_CITA' ? (
         <div className="space-y-5">
+          {announcements.filter((a) => a.isActive).map((ann) => (
+            <div
+              key={ann.id}
+              className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+            >
+              <div className="space-y-0.5">
+                <span className="font-extrabold text-amber-950 block">
+                  Pengumuman Aktif ke Semua Penghuni: {ann.title}
+                </span>
+                <p className="text-amber-900">{ann.description}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCloseAnnouncement(ann.id)}
+                className="px-3.5 py-1.5 rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-bold shrink-0 cursor-pointer"
+              >
+                Tutup Pengumuman
+              </button>
+            </div>
+          ))}
+
           {/* Info Banner + KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1 p-5 rounded-2xl bg-teal-50/70 border border-teal-200 space-y-1.5">
@@ -630,6 +695,70 @@ export const KeuanganTransaksiClient: React.FC<KeuanganTransaksiClientProps> = (
         )}
       </div>
         </>
+      )}
+
+      {/* Modal Buat Pengumuman Duka Cita ke Semua Penghuni */}
+      {isAnnModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/55">
+          <div className="bg-white rounded-2xl border border-zinc-200 max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <h3 className="text-sm font-heading font-extrabold text-zinc-900">
+                Buat Pengumuman Iuran Duka Cita
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAnnModalOpen(false)}
+                className="p-1 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateAnnouncement} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-bold text-zinc-800 block mb-1">
+                  Judul Pengumuman *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={annTitle}
+                  onChange={(e) => setAnnTitle(e.target.value)}
+                  placeholder="Contoh: Duka Cita Keluarga Penghuni Kamar 12"
+                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-zinc-800 block mb-1">
+                  Deskripsi / Informasi Kemalangan *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={annDesc}
+                  onChange={(e) => setAnnDesc(e.target.value)}
+                  placeholder="Tuliskan keterangan singkat. Penghuni dapat mengirim iuran seikhlasnya via Bank BRI atau mengabaikan pengumuman ini."
+                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-300 text-xs"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAnnModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingAnn}
+                  className="px-4 py-2 rounded-xl bg-[hsl(186,72%,24%)] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingAnn ? 'Mengirim...' : 'Kirim ke Semua Penghuni'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Modal Tambah Iuran Sosial / Duka Cita */}

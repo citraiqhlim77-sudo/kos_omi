@@ -668,30 +668,30 @@ export function getCollectionRateAnalytics(): CollectionRateAnalytics {
  */
 export function getReservationConversionAnalytics(): ReservationConversionAnalytics {
   const dbReservations = ((global as any).__kosOmiDbState?.reservations as any[] | undefined) || [];
-  const candidates = ((global as any).__kosOmiCheckinCandidates as any[] | undefined) || [];
-  const settledTxs = getSuccessfulTransactions();
 
-  // Hitung reservasi unik yang berhasil LUNAS / CHECKIN
+  const normalizeKey = (raw: string) =>
+    String(raw || '')
+      .toUpperCase()
+      .trim()
+      .replace(/^(RSV-|INV-|KOS-)/i, '');
+
   const convertedCodes = new Set<string>();
   const pendingOrApprovedCodes = new Set<string>();
   let rejectedCount = 0;
   let expiredOrCancelledCount = 0;
 
-  for (const tx of settledTxs) {
-    convertedCodes.add(tx.orderId);
-  }
-  for (const c of candidates) {
-    if (c.status === 'LUNAS' || c.status === 'CHECKIN') {
-      convertedCodes.add(c.reservationCode || c.invoiceCode || c.id);
-    }
-  }
   for (const rsv of dbReservations) {
-    const code = rsv.code || rsv.id;
-    if (rsv.status === 'PAID' || rsv.status === 'CHECKIN') {
-      convertedCodes.add(code);
+    const key = normalizeKey(rsv.code || rsv.id);
+    if (
+      rsv.status === 'PAID' ||
+      rsv.status === 'CHECKIN' ||
+      rsv.status === 'CHECKED_IN' ||
+      rsv.status === 'CHECKED_OUT'
+    ) {
+      convertedCodes.add(key);
     } else if (rsv.status === 'APPROVED' || rsv.status === 'PENDING_REVIEW') {
-      if (!convertedCodes.has(code) && !convertedCodes.has(`INV-${String(code).replace('RSV-', '')}`)) {
-        pendingOrApprovedCodes.add(code);
+      if (!convertedCodes.has(key)) {
+        pendingOrApprovedCodes.add(key);
       }
     } else if (rsv.status === 'REJECTED') {
       rejectedCount++;
@@ -705,23 +705,24 @@ export function getReservationConversionAnalytics(): ReservationConversionAnalyt
   const dropOffTotal = rejectedCount + expiredOrCancelledCount;
   const totalReservations = paidOrCheckinCount + pendingOrApprovedCount + dropOffTotal;
 
-  // Rasio konversi dihitung terhadap total reservasi (dan dibandingkan terhadap yang batal/ditolak)
   const conversionRate =
     totalReservations > 0
       ? Number(((paidOrCheckinCount / totalReservations) * 100).toFixed(1))
-      : 100;
+      : 0;
   const dropOffRate =
     totalReservations > 0
       ? Number(((dropOffTotal / totalReservations) * 100).toFixed(1))
       : 0;
 
   let recommendation = '';
-  if (dropOffTotal === 0 && pendingOrApprovedCount > 0) {
-    recommendation = `Konversi reservasi mencapai ${conversionRate}% (${paidOrCheckinCount} Lunas/Check-in, 0 Batal/Ditolak). Terdapat ${pendingOrApprovedCount} reservasi aktif yang sedang menunggu pembayaran/verifikasi.`;
+  if (totalReservations === 0) {
+    recommendation = 'Belum ada pengajuan reservasi kamar yang tercatat pada periode ini.';
+  } else if (dropOffTotal === 0 && pendingOrApprovedCount > 0) {
+    recommendation = `Konversi reservasi mencapai ${conversionRate}% (${paidOrCheckinCount} Lunas/Check-in, ${pendingOrApprovedCount} sedang diproses).`;
   } else if (conversionRate >= 80) {
-    recommendation = `Tingkat konversi reservasi sangat tinggi (${conversionRate}% berhasil Lunas/Check-in vs ${dropOffRate}% batal/ditolak). Proses verifikasi KTM/KRS berjalan efektif.`;
+    recommendation = `Tingkat konversi reservasi tinggi (${conversionRate}% berhasil Lunas/Check-in). Proses verifikasi berjalan efektif.`;
   } else {
-    recommendation = `Terdapat ${dropOffTotal} reservasi gagal/kedaluwarsa (${dropOffRate}%). Percepat verifikasi KTM/KRS (< 6 jam) agar calon penghuni segera membayar sebelum masa berlaku 24 jam habis.`;
+    recommendation = `Terdapat ${dropOffTotal} reservasi dibatalkan/ditolak (${dropOffRate}%). Percepat verifikasi agar calon penghuni segera menyelesaikan pembayaran dalam 24 jam.`;
   }
 
   return {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-server';
 import { ensurePostgresHydrated } from '@/server/persistence';
+import { fetchActiveSocialAnnouncementsAction } from '@/actions/rent-schedule';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -102,7 +103,7 @@ export async function GET() {
           });
         }
       }
-      for (const log of store.notificationLogs.slice(0, 5)) {
+      for (const log of store.notificationLogs.slice(0, 8)) {
         if (log.template.startsWith('pengajuan_tempo_')) {
           items.push({
             id: `keu-ext-${log.id}`,
@@ -111,11 +112,29 @@ export async function GET() {
             href: '/keuangan/tagihan',
             createdAt: log.createdAt,
           });
+        } else if (log.template.startsWith('iuran_duka_cita_masuk_')) {
+          items.push({
+            id: `keu-don-${log.id}`,
+            title: 'Iuran Duka Cita Masuk',
+            detail: log.recipientName || 'Sumbangan sukarela baru diterima',
+            href: '/keuangan/transaksi',
+            createdAt: log.createdAt,
+          });
         }
       }
     }
 
     if (role === 'PENGHUNI') {
+      const activeAnnouncements = await fetchActiveSocialAnnouncementsAction();
+      for (const ann of activeAnnouncements) {
+        items.push({
+          id: `penghuni-ann-${ann.id}`,
+          title: `Pengumuman Duka Cita: ${ann.title}`,
+          detail: 'Klik untuk melihat info iuran sukarela atau abaikan',
+          href: '/penghuni/dashboard',
+          createdAt: ann.createdAt,
+        });
+      }
       const myTenancy = store.tenancies.find(
         (t) => t.userEmail.toLowerCase().trim() === emailNorm && t.status === 'AKTIF'
       );
@@ -163,6 +182,7 @@ export async function GET() {
     return NextResponse.json({
       count: sorted.length,
       fingerprint,
+      userRole: role,
       items: sorted,
     });
   } catch {

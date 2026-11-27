@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { TenancyRecord } from '@/types/tenancy';
 import type { RegisteredCalonAccount } from '@/actions/tenancy';
 import { updateRoomCheckInDateAction } from '@/actions/rent-schedule';
+import { updateRemainingTenantModeAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
 import {
   Users,
@@ -48,6 +49,33 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [dateError, setDateError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [updatingModeId, setUpdatingModeId] = useState<string | null>(null);
+
+  const activeCountByRoom = tenants.reduce((acc, t) => {
+    if (t.status === 'AKTIF') {
+      acc[t.roomCode] = (acc[t.roomCode] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const handleToggleRoomMode = async (tenant: TenancyRecord) => {
+    const nextMode = tenant.monthlyPrice <= 2500000 ? 'SENDIRI_FULL' : 'BUTUH_TEMAN';
+    setUpdatingModeId(tenant.id);
+    const res = await updateRemainingTenantModeAction(tenant.id, nextMode);
+    setUpdatingModeId(null);
+    if (res.success) {
+      setTenants((prev) =>
+        prev.map((t) =>
+          t.id === tenant.id
+            ? { ...t, monthlyPrice: nextMode === 'BUTUH_TEMAN' ? 2500000 : 5000000 }
+            : t
+        )
+      );
+      setToastMessage(res.message);
+      setTimeout(() => setToastMessage(null), 5000);
+      router.refresh();
+    }
+  };
 
   const openEditDateModal = (tenant: TenancyRecord) => {
     setEditingRoom({ roomCode: tenant.roomCode, userName: tenant.userName });
@@ -440,6 +468,22 @@ export const PenghuniManagerClient: React.FC<PenghuniManagerClientProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
+                        {activeCountByRoom[tenant.roomCode] === 1 && (
+                          <button
+                            type="button"
+                            disabled={updatingModeId === tenant.id}
+                            onClick={() => handleToggleRoomMode(tenant)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 ${
+                              tenant.monthlyPrice <= 2500000
+                                ? 'border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100'
+                                : 'border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100'
+                            }`}
+                          >
+                            {tenant.monthlyPrice <= 2500000
+                              ? 'Mode: Butuh 1 Teman (Rp 2,5jt)'
+                              : 'Mode: Sendiri Penuh (Rp 5jt)'}
+                          </button>
+                        )}
                         <NextLink
                           href={`/pengelola/penghuni/${tenant.id}`}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-bold transition-colors"

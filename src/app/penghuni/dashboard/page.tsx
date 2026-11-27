@@ -2,6 +2,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniDashboardClient } from '@/components/penghuni/PenghuniDashboardClient';
+import { SocialDonationBanner } from '@/components/penghuni/SocialDonationBanner';
+import { fetchActiveSocialAnnouncementsAction } from '@/actions/rent-schedule';
 import {
   fetchCurrentMonthlyBillAction,
   fetchMonthlyBillsAction,
@@ -17,10 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function PenghuniDashboardPage() {
-  const [currentBill, allBills, profile] = await Promise.all([
+  const [currentBill, allBills, profile, activeAnnouncements] = await Promise.all([
     fetchCurrentMonthlyBillAction(),
     fetchMonthlyBillsAction(),
     fetchTenantProfileAction(),
+    fetchActiveSocialAnnouncementsAction(),
   ]);
 
   const recentBills = Array.isArray(allBills) ? allBills.slice(0, 5) : [];
@@ -33,7 +36,8 @@ export default async function PenghuniDashboardPage() {
     <div className="min-h-screen bg-zinc-50/50 pb-16">
       <PenghuniNav />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+        <SocialDonationBanner announcements={activeAnnouncements} />
         <PenghuniDashboardClient
           currentBill={currentBill}
           recentBills={recentBills}

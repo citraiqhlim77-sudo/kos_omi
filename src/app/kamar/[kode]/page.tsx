@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card';
 import { RoomPhotoGallery } from '@/components/kamar/RoomPhotoGallery';
 import { RoomBookingCta } from '@/components/kamar/RoomBookingCta';
 import { getCurrentUser } from '@/lib/auth-server';
+import { ensurePostgresHydrated } from '@/server/persistence';
 
 export const dynamic = 'force-dynamic';
 import {
@@ -55,9 +56,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DetailKamarPage({ params }: PageProps) {
   const { kode } = await params;
-  const [room, currentUser] = await Promise.all([
+  const [room, currentUser, store] = await Promise.all([
     fetchRoomByCodeAction(kode),
     getCurrentUser(),
+    ensurePostgresHydrated(),
   ]);
 
   if (!room) {
@@ -82,6 +84,21 @@ export default async function DetailKamarPage({ params }: PageProps) {
   }
 
   const isAvailable = room.status === 'TERSEDIA';
+  const activeInRoom = store.tenancies.filter(
+    (t) => t.roomCode === room.code && t.status === 'AKTIF'
+  );
+  const activeRsvInRoom = store.reservations.filter(
+    (r) =>
+      r.roomCode === room.code &&
+      (r.status === 'PENDING_REVIEW' || r.status === 'APPROVED' || r.status === 'PAID')
+  );
+  const hasOpenSlot =
+    !isAvailable &&
+    room.status !== 'NONAKTIF' &&
+    ((activeInRoom.length === 1 && activeInRoom[0].monthlyPrice <= 2500000) ||
+      (activeInRoom.length === 0 &&
+        activeRsvInRoom.length === 1 &&
+        (activeRsvInRoom[0].userOccupation || '').includes('1 Slot Sendiri')));
 
   const allAvailableRooms = await fetchRoomsAction({ status: 'TERSEDIA' });
   const alternativeRooms = allAvailableRooms
@@ -252,10 +269,22 @@ export default async function DetailKamarPage({ params }: PageProps) {
               </div>
 
               <div className="space-y-3">
-                {isAvailable ? (
+                {hasOpenSlot && (
+                  <div className="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs text-sky-900 space-y-1">
+                    <strong className="block text-sky-950">
+                      Terisi 1 Orang · Masih Butuh 1 Teman Sekamar
+                    </strong>
+                    <p className="text-sky-800 leading-relaxed">
+                      Kamar ini sedang ditempati/dipesan 1 orang dan membuka 1 slot lagi. Anda bisa memesan 1 slot dengan akun &amp; pembayaran sendiri (Rp 2.500.000/semester).
+                    </p>
+                  </div>
+                )}
+
+                {isAvailable || hasOpenSlot ? (
                   <RoomBookingCta
                     roomCode={room.code}
                     isLoggedInServer={Boolean(currentUser)}
+                    isOpenSlot={hasOpenSlot}
                   />
                 ) : (
                   <div className="space-y-2">

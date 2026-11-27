@@ -31,9 +31,20 @@ export const LiveNotifBell: React.FC = () => {
         const data = (await res.json()) as {
           count: number;
           fingerprint: string;
+          userRole?: string;
           items: LiveNotifItem[];
         };
         if (!active) return;
+
+        // Jika akun Calon Penghuni baru saja di-Check-in oleh Pengelola -> arahkan otomatis ke Portal Penghuni Aktif!
+        if (
+          data.userRole === 'PENGHUNI' &&
+          typeof window !== 'undefined' &&
+          window.location.pathname.startsWith('/calon')
+        ) {
+          window.location.href = '/penghuni/dashboard';
+          return;
+        }
 
         setItems(Array.isArray(data.items) ? data.items : []);
 

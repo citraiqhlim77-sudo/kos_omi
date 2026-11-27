@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
@@ -639,4 +639,240 @@ export async function deleteSocialDonationAction(
   await writeSettingJson(DONATIONS_SETTING_KEY, nextList);
   revalidatePath('/keuangan/transaksi');
   return { success: true, message: 'Catatan iuran sosial berhasil dihapus.' };
+}
+
+/**
+ * 7. KIRIM PENGINGAT MASSAL 1X KLIK UNTUK SEMUA KAMAR (Keuangan)
+ */
+export async function sendBulkRentRemindersAction(
+  mode: 'ALL' | 'DUE_ONLY' = 'ALL'
+): Promise<{ success: boolean; count: number; message: string }> {
+  const actor = await requireRole(['ADMIN', 'KEUANGAN', 'PENGELOLA']);
+  const schedules = await fetchRoomRentSchedulesAction();
+  const targets =
+    mode === 'DUE_ONLY'
+      ? schedules.filter((s) => s.status !== 'AMAN')
+      : schedules;
+
+  if (targets.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      message: 'Tidak ada kamar yang perlu dikirim pengingat saat ini.',
+    };
+  }
+
+  const meta = await loadRentMeta();
+  const store = await ensurePostgresHydrated();
+  const nowIso = new Date().toISOString();
+
+  for (const item of targets) {
+    const prev = meta.reminders[item.roomCode] || { reminderCount: 0 };
+    meta.reminders[item.roomCode] = {
+      reminderCount: prev.reminderCount + 1,
+      lastReminderAt: nowIso,
+    };
+    const isFinal = item.status === 'WAJIB_KONFIRMASI_IBU_KOS';
+    const occupantNames = item.occupants.map((o) => o.name).join(' & ');
+    store.notificationLogs.unshift({
+      id: `ntf-bulk-k${item.roomCode}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      recipient: item.occupants[0]?.phone || '-',
+      recipientName: `${occupantNames} (Kamar ${item.roomCode})`,
+      channel: 'WHATSAPP',
+      template: isFinal
+        ? `peringatan_final_7hari_kamar_${item.roomCode}`
+        : `pengingat_sewa_3bulanan_kamar_${item.roomCode}`,
+      status: 'SENT',
+      attempts: meta.reminders[item.roomCode].reminderCount,
+      sentAt: nowIso,
+      createdAt: nowIso,
+    });
+  }
+
+  await saveRentMeta(meta);
+  savePersistentStore(store);
+  await flushPostgresSync();
+
+  await createAuditLog({
+    userId: actor.id,
+    actorName: actor.name,
+    actorRole: actor.role,
+    action: 'SEND_BULK_RENT_REMINDERS',
+    category: 'notifications',
+    entityId: `bulk-${targets.length}`,
+    description: `Mengirim pengingat sewa 3-bulanan serentak ke ${targets.length} kamar aktif`,
+    meta: { count: targets.length, mode },
+  });
+
+  revalidatePath('/keuangan/tagihan');
+  revalidatePath('/penghuni/dashboard');
+  revalidatePath('/penghuni/tagihan');
+  revalidatePath('/admin/notifikasi');
+  revalidatePath('/admin/log-aktivitas');
+
+  return {
+    success: true,
+    count: targets.length,
+    message: `Pengingat tagihan sewa 3-bulanan berhasil dikirim serentak ke ${targets.length} kamar aktif.`,
+  };
+}
+
+/**
+ * 8. PENGUMUMAN IURAN DUKA CITA (Keuangan -> Notif ke Semua Penghuni -> Donasi Seikhlasnya Otomatis Masuk Keuangan)
+ */
+export interface SocialAnnouncement {
+  id: string;
+  title: string;
+  description: string;
+  createdBy: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
+const ANNOUNCEMENTS_SETTING_KEY = 'social_announcements_json';
+
+export async function fetchSocialAnnouncementsAction(): Promise<SocialAnnouncement[]> {
+  const list = await readSettingJson<SocialAnnouncement[]>(ANNOUNCEMENTS_SETTING_KEY, []);
+  return Array.isArray(list) ? list : [];
+}
+
+export async function fetchActiveSocialAnnouncementsAction(): Promise<SocialAnnouncement[]> {
+  const list = await fetchSocialAnnouncementsAction();
+  return list.filter((a) => a.isActive);
+}
+
+export async function createSocialAnnouncementAction(input: {
+  title: string;
+  description: string;
+}): Promise<{ success: boolean; message: string; announcement?: SocialAnnouncement }> {
+  const actor = await requireRole(['ADMIN', 'KEUANGAN', 'PENGELOLA']);
+  const title = (input.title || '').trim();
+  const description = (input.description || '').trim();
+  if (title.length < 4 || description.length < 5) {
+    return {
+      success: false,
+      message: 'Judul dan deskripsi pengumuman duka cita wajib diisi.',
+    };
+  }
+
+  const list = await fetchSocialAnnouncementsAction();
+  const nowIso = new Date().toISOString();
+  const announcement: SocialAnnouncement = {
+    id: `ann-${Date.now()}`,
+    title,
+    description,
+    createdBy: actor.name,
+    createdAt: nowIso,
+    isActive: true,
+  };
+
+  await writeSettingJson(ANNOUNCEMENTS_SETTING_KEY, [announcement, ...list]);
+
+  await createAuditLog({
+    userId: actor.id,
+    actorName: actor.name,
+    actorRole: actor.role,
+    action: 'CREATE_SOCIAL_ANNOUNCEMENT',
+    category: 'notifications',
+    entityId: announcement.id,
+    description: `Menerbitkan pengumuman iuran duka cita: "${title}"`,
+    meta: { title, description },
+  });
+
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/penghuni/dashboard');
+  revalidatePath('/penghuni/tagihan');
+
+  return {
+    success: true,
+    message: 'Pengumuman iuran duka cita berhasil dikirim ke seluruh penghuni kos.',
+    announcement,
+  };
+}
+
+export async function closeSocialAnnouncementAction(
+  id: string
+): Promise<{ success: boolean; message: string }> {
+  await requireRole(['ADMIN', 'KEUANGAN', 'PENGELOLA']);
+  const list = await fetchSocialAnnouncementsAction();
+  const updated = list.map((a) => (a.id === id ? { ...a, isActive: false } : a));
+  await writeSettingJson(ANNOUNCEMENTS_SETTING_KEY, updated);
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/penghuni/dashboard');
+  return { success: true, message: 'Pengumuman duka cita telah ditutup.' };
+}
+
+export async function submitPenghuniSocialDonationAction(input: {
+  title: string;
+  amount: number;
+  method: 'TRANSFER' | 'TUNAI' | 'DANA';
+  notes?: string;
+}): Promise<{ success: boolean; message: string; record?: SocialDonationRecord }> {
+  const user = await requireRole(['PENGHUNI']);
+  const amount = Math.round(Number(input.amount));
+  if (Number.isNaN(amount) || amount < 1000) {
+    return {
+      success: false,
+      message: 'Nominal sumbangan seikhlasnya minimal Rp 1.000.',
+    };
+  }
+
+  const store = await ensurePostgresHydrated();
+  const myTenancy = store.tenancies.find(
+    (t) => t.userEmail.toLowerCase().trim() === user.email.toLowerCase().trim() && t.status === 'AKTIF'
+  );
+  const roomCode = myTenancy?.roomCode || '-';
+  const nowIso = new Date().toISOString();
+
+  const list = await fetchSocialDonationsAction();
+  const record: SocialDonationRecord = {
+    id: `don-${Date.now()}`,
+    title: (input.title || 'Iuran Duka Cita').trim(),
+    donorName: user.name,
+    roomCode,
+    amount,
+    method: input.method || 'TRANSFER',
+    notes: (input.notes || 'Transfer seikhlasnya via Portal Penghuni').trim(),
+    date: nowIso.slice(0, 10),
+    createdAt: nowIso,
+  };
+
+  const nextList = [record, ...list];
+  global.__kosOmiSocialDonationsCache = nextList;
+  await writeSettingJson(DONATIONS_SETTING_KEY, nextList);
+
+  store.notificationLogs.unshift({
+    id: `ntf-don-${Date.now()}`,
+    recipient: '+62 813-7432-9562',
+    recipientName: `Iuran Duka Cita Rp ${amount.toLocaleString('id-ID')} (${user.name} · Kamar ${roomCode})`,
+    channel: 'WHATSAPP',
+    template: `iuran_duka_cita_masuk_kamar_${roomCode}`,
+    status: 'SENT',
+    attempts: 1,
+    sentAt: nowIso,
+    createdAt: nowIso,
+  });
+  savePersistentStore(store);
+  await flushPostgresSync();
+
+  await createAuditLog({
+    userId: user.id,
+    actorName: user.name,
+    actorRole: 'PENGHUNI',
+    action: 'PENGHUNI_SOCIAL_DONATION',
+    category: 'payments',
+    entityId: record.id,
+    description: `Mengirim iuran duka cita seikhlasnya Rp ${amount.toLocaleString('id-ID')} (Kamar ${roomCode})`,
+    meta: { title: record.title, amount, roomCode },
+  });
+
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/penghuni/dashboard');
+  revalidatePath('/admin/log-aktivitas');
+
+  return {
+    success: true,
+    message: `Terima kasih! Sumbangan seikhlasnya sebesar Rp ${amount.toLocaleString('id-ID')} telah otomatis tercatat di bagian Keuangan.`,
+    record,
+  };
 }
