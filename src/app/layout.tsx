@@ -1,15 +1,6 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
-
-// Satu keluarga font untuk seluruh web: Geist (modern, bersih, profesional)
-const geist = Geist({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-geist',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: {
@@ -74,7 +65,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={geist.variable}>
+    <html lang="id">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap"
+        />
+      </head>
       <body className="antialiased font-sans text-[hsl(240,6%,10%)] bg-white min-h-screen flex flex-col">
         <WebVitals />
         <AppShell>{children}</AppShell>
