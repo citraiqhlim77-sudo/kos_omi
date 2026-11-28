@@ -3,33 +3,47 @@
 import React, { useState } from 'react';
 import NextLink from 'next/link';
 import {
-  Mail,
+  Phone,
+  User,
   ArrowLeft,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
   KeyRound,
   MessageCircle,
 } from 'lucide-react';
-import { validateEmail } from '@/lib/validations/auth';
 import { forgotPasswordAction } from '@/actions/auth';
 
+function validateWhatsappPhone(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return 'Nomor WhatsApp wajib diisi';
+  const normalized = digits.startsWith('0')
+    ? `62${digits.slice(1)}`
+    : digits.startsWith('8')
+      ? `62${digits}`
+      : digits;
+  if (!normalized.startsWith('628') || normalized.length < 10 || normalized.length > 15) {
+    return 'Masukkan nomor WhatsApp aktif yang valid (contoh: 081234567890)';
+  }
+  return null;
+}
+
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [fullName, setFullName] = useState('');
   const [touched, setTouched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
 
-  const emailError = touched ? validateEmail(email) : null;
+  const phoneError = touched ? validateWhatsappPhone(phone) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
 
-    const err = validateEmail(email);
+    const err = validateWhatsappPhone(phone);
     if (err) {
       setErrorMessage(err);
       return;
@@ -39,9 +53,10 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const res = await forgotPasswordAction(email);
+      const res = await forgotPasswordAction(phone, fullName);
       if (res.success) {
-        setWhatsappUrl(res.adminWhatsappUrl ?? null);
+        const waUrl = res.adminWhatsappUrl ?? null;
+        setWhatsappUrl(waUrl);
         setIsSubmitted(true);
       } else {
         setErrorMessage(res.message);
@@ -62,10 +77,10 @@ export default function ForgotPasswordPage() {
             <KeyRound className="w-6 h-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-zinc-900 tracking-tight">
-            Pemulihan Kata Sandi
+            Reset Kata Sandi via WhatsApp
           </h1>
           <p className="text-sm text-zinc-600 max-w-sm mx-auto">
-            Masukkan alamat email akun Kos Omi Anda untuk mengajukan reset kata sandi melalui verifikasi WhatsApp Admin Kos Omi.
+            Masukkan nomor WhatsApp terdaftar Anda untuk mengajukan reset kata sandi langsung ke Admin Kos Omi.
           </p>
         </div>
 
@@ -78,7 +93,7 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-1">
                   <p className="font-bold text-sm text-emerald-950">Permintaan Reset Tercatat</p>
                   <p className="leading-relaxed">
-                    Permintaan reset kata sandi untuk akun <span className="font-bold">{email}</span> sudah tercatat di sistem Admin Kos Omi. Klik tombol di bawah untuk langsung konfirmasi ke WhatsApp Ibu Admin agar kata sandi Anda segera di-reset.
+                    Permintaan reset kata sandi untuk nomor WhatsApp <span className="font-bold">{phone}</span> sudah tercatat. Klik tombol di bawah untuk langsung mengirim pesan ke WhatsApp Ibu Admin Kos Omi.
                   </p>
                 </div>
               </div>
@@ -91,15 +106,15 @@ export default function ForgotPasswordPage() {
                   className="w-full min-h-[46px] inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Konfirmasi Reset via WhatsApp Admin</span>
+                  <span>Kirim Reset via WhatsApp Admin (0813-7432-9562)</span>
                 </a>
               )}
 
               <div className="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200 text-[11px] text-zinc-600 space-y-1 leading-relaxed">
                 <p className="font-bold text-zinc-800">Langkah Pemulihan:</p>
                 <p>1. Kirim pesan konfirmasi WhatsApp ke Admin Kos Omi (Ibu Yulastri: 0813-7432-9562).</p>
-                <p>2. Admin akan menekan tombol <strong>Reset Sandi</strong> untuk akun Anda dan memberikan kata sandi sementara.</p>
-                <p>3. Setelah berhasil masuk, segera ganti dengan kata sandi pribadi baru di menu <strong>Profil</strong>.</p>
+                <p>2. Admin akan mereset kata sandi akun Anda dan mengirimkan kata sandi sementara via WhatsApp.</p>
+                <p>3. Setelah berhasil masuk, segera ganti kata sandi baru di menu <strong>Profil</strong>.</p>
               </div>
 
               <div className="text-center pt-1">
@@ -108,7 +123,7 @@ export default function ForgotPasswordPage() {
                   onClick={() => setIsSubmitted(false)}
                   className="text-xs font-semibold text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer"
                 >
-                  Gunakan alamat email lain
+                  Gunakan nomor WhatsApp lain
                 </button>
               </div>
             </div>
@@ -122,47 +137,67 @@ export default function ForgotPasswordPage() {
               )}
 
               <div className="space-y-1.5">
-                <label htmlFor="email" className="block text-xs font-bold text-zinc-700">
-                  Alamat Email Terdaftar <span className="text-rose-500">*</span>
+                <label htmlFor="fullName" className="block text-xs font-bold text-zinc-700">
+                  Nama Lengkap
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
-                    <Mail className="w-4 h-4" />
+                    <User className="w-4 h-4" />
                   </div>
                   <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Contoh: Aletha Ananda"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 transition-colors focus:outline-none focus:border-[hsl(186,72%,24%)] focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="phone" className="block text-xs font-bold text-zinc-700">
+                  Nomor WhatsApp Terdaftar <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     onBlur={() => setTouched(true)}
-                    placeholder="nama@gmail.com"
+                    placeholder="081234567890"
                     className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border text-sm text-zinc-900 transition-colors focus:outline-none ${
-                      emailError
+                      phoneError
                         ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-200'
                         : 'border-zinc-300 focus:border-[hsl(186,72%,24%)] focus:ring-2 focus:ring-[hsl(186,72%,24%)]/20'
                     }`}
                     disabled={isLoading}
                   />
                 </div>
-                {emailError && (
-                  <p className="text-[11px] text-rose-600 font-medium pl-1">{emailError}</p>
+                {phoneError && (
+                  <p className="text-[11px] text-rose-600 font-medium pl-1">{phoneError}</p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Mencatat Permintaan...</span>
+                    <span>Menyiapkan Pesan WhatsApp...</span>
                   </>
                 ) : (
                   <>
-                    <span>Ajukan Reset Kata Sandi</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Ajukan Reset via WhatsApp</span>
                   </>
                 )}
               </button>
@@ -184,7 +219,7 @@ export default function ForgotPasswordPage() {
         {/* Security Info */}
         <div className="flex items-center justify-center gap-2 text-xs text-zinc-500 text-center">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Kata sandi terenkripsi Bcrypt satu arah & diverifikasi langsung oleh Admin Kos Omi</span>
+          <span>Kata sandi terenkripsi Bcrypt satu arah & diverifikasi langsung via WhatsApp Admin Kos Omi</span>
         </div>
       </div>
     </div>

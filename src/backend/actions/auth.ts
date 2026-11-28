@@ -459,26 +459,39 @@ export async function changeUserPasswordAction(data: {
 }
 
 /**
- * 3. LUPA PASSWORD
+ * 3. LUPA PASSWORD (100% via WhatsApp Admin Kos Omi)
  */
+function normalizeDigitsPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('0')) return `62${digits.slice(1)}`;
+  if (digits.startsWith('8')) return `62${digits}`;
+  return digits;
+}
+
 export async function forgotPasswordAction(
-  email: string
+  whatsappPhone: string,
+  fullName?: string
 ): Promise<{
   success: boolean;
   message: string;
   resetToken?: string;
   adminWhatsappUrl?: string;
 }> {
-  const sanitizedEmail = sanitizeString(email).toLowerCase().trim();
-  const genericMessage =
-    'Permintaan reset kata sandi Anda telah dicatat. Silakan konfirmasi melalui WhatsApp Admin Kos Omi agar Admin dapat mereset kata sandi akun Anda.';
+  const cleanPhone = sanitizeString(whatsappPhone).replace(/[\s-]/g, '').trim();
+  const cleanName = sanitizeString(fullName || '').trim();
+  const normalizedPhone = normalizeDigitsPhone(cleanPhone);
 
-  const validation = forgotPasswordSchema.safeParse({ email: sanitizedEmail });
-  if (!validation.success) {
-    return { success: false, message: validation.error.message };
+  if (!normalizedPhone || normalizedPhone.length < 10 || normalizedPhone.length > 15 || !normalizedPhone.startsWith('628')) {
+    return {
+      success: false,
+      message: 'Masukkan nomor WhatsApp aktif yang valid (contoh: 081234567890).',
+    };
   }
 
-  const rateLimit = await checkRateLimit('forgot_password', sanitizedEmail);
+  const genericMessage =
+    'Permintaan reset kata sandi Anda telah dicatat. Silakan kirim konfirmasi melalui WhatsApp Admin Kos Omi agar Admin dapat segera mereset kata sandi akun Anda.';
+
+  const rateLimit = await checkRateLimit('forgot_password', normalizedPhone);
   if (!rateLimit.success) {
     return {
       success: false,
@@ -487,29 +500,44 @@ export async function forgotPasswordAction(
   }
 
   const store = await ensurePostgresHydrated();
-  const user = findUserByEmail(sanitizedEmail);
+  const user = store.authUsers.find((u) => {
+    const uPhone = normalizeDigitsPhone(u.phone || '');
+    return uPhone !== '' && uPhone === normalizedPhone;
+  });
 
-  const waText = encodeURIComponent(
-    `Assalamu'alaikum Ibu Admin Kos Omi, saya lupa kata sandi akun saya.\n\nEmail Akun: ${sanitizedEmail}\n\nMohon bantuannya untuk melakukan Reset Kata Sandi akun saya di portal Kos Omi. Terima kasih.`
-  );
-  const adminWhatsappUrl = `https://wa.me/6281374329562?text=${waText}`;
+  const displayPhone = normalizedPhone.startsWith('62')
+    ? `0${normalizedPhone.slice(2)}`
+    : cleanPhone;
+  const resolvedName = user?.name || cleanName || 'Penghuni / Calon Penghuni';
+
+  const waLines = [
+    `Assalamu'alaikum Ibu Admin Kos Omi, saya lupa kata sandi akun saya.`,
+    ``,
+    `Nama: ${resolvedName}`,
+    `Nomor WhatsApp: ${displayPhone}`,
+    ...(user?.email ? [`Akun Terdaftar: ${user.email}`] : []),
+    ...(user?.roomCode ? [`Kamar: No. ${user.roomCode}`] : []),
+    ``,
+    `Mohon bantuannya untuk melakukan Reset Kata Sandi akun saya di portal Kos Omi. Terima kasih.`,
+  ];
+  const adminWhatsappUrl = `https://wa.me/6281374329562?text=${encodeURIComponent(waLines.join('\n'))}`;
+
+  const nowIso = new Date().toISOString();
+  store.notificationLogs.unshift({
+    id: `ntf-reset-${Date.now()}`,
+    recipient: '+62 813-7432-9562',
+    recipientName: `Permintaan Reset Sandi (${resolvedName})`,
+    channel: 'WHATSAPP',
+    template: `permintaan_reset_sandi_wa_${displayPhone}`,
+    status: 'SENT',
+    attempts: 1,
+    sentAt: nowIso,
+    createdAt: nowIso,
+  });
+  savePersistentStore(store);
+  await flushPostgresSync();
 
   if (user && user.isActive) {
-    const nowIso = new Date().toISOString();
-    store.notificationLogs.unshift({
-      id: `ntf-reset-${Date.now()}`,
-      recipient: '+62 813-7432-9562',
-      recipientName: `Permintaan Reset Sandi (${user.name})`,
-      channel: 'WHATSAPP',
-      template: `permintaan_reset_sandi_${sanitizedEmail}`,
-      status: 'SENT',
-      attempts: 1,
-      sentAt: nowIso,
-      createdAt: nowIso,
-    });
-    savePersistentStore(store);
-    await flushPostgresSync();
-
     await createAuditLog({
       userId: user.id,
       actorName: user.name,
@@ -517,8 +545,9 @@ export async function forgotPasswordAction(
       action: 'PASSWORD_RESET_REQUESTED',
       category: 'users',
       entityId: user.id,
-      description: `Mengajukan permintaan reset kata sandi via WhatsApp Admin untuk akun ${user.email}`,
+      description: `Mengajukan permintaan reset kata sandi via WhatsApp (${displayPhone})`,
       meta: {
+        phone: displayPhone,
         email: user.email,
         roomCode: user.roomCode || '-',
       },
