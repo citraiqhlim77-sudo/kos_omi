@@ -47,6 +47,9 @@ export interface RoomRentScheduleItem {
   nextDueDate: string; // YYYY-MM-DD (siklus 3 bulanan sesuai tanggal masuk)
   effectiveDueDate: string; // YYYY-MM-DD (setelah tempo jika ada)
   cycleAmount: number; // Rp 2.500.000 per 3 bulan / kamar (atau Rp 5.000.000/semester)
+  myCycleAmount?: number; // Nominal bagian penghuni (setengah jika sekamar berdua, penuh jika sendiri)
+  isCyclePaid?: boolean;
+  paidAt?: string | null;
   daysUntilDue: number; // positif = sisa hari, 0 = hari ini, negatif = hari lewat jatuh tempo
   daysOverdue: number; // 0 jika belum lewat, >0 jika lewat jatuh tempo asli
   status: RoomScheduleStatus;
@@ -70,6 +73,7 @@ export interface SocialDonationRecord {
 interface RentMetaStore {
   extensions: Record<string, RoomRentExtension>;
   reminders: Record<string, RoomReminderMeta>;
+  paidCycles?: Record<string, string>;
 }
 
 const EXTENSIONS_SETTING_KEY = 'room_rent_meta_json';
@@ -164,11 +168,13 @@ async function loadRentMeta(): Promise<RentMetaStore> {
   const fallback: RentMetaStore = global.__kosOmiRentMetaCache || {
     extensions: {},
     reminders: {},
+    paidCycles: {},
   };
   const loaded = await readSettingJson<RentMetaStore>(EXTENSIONS_SETTING_KEY, fallback);
   const safe: RentMetaStore = {
     extensions: loaded?.extensions || {},
     reminders: loaded?.reminders || {},
+    paidCycles: loaded?.paidCycles || {},
   };
   global.__kosOmiRentMetaCache = safe;
   return safe;
@@ -191,16 +197,20 @@ function buildScheduleItem(
   const dueDateObj = computeCurrent3MonthDueDate(checkInDate, todayUtc);
   const nextDueDate = formatDateYmd(dueDateObj);
 
-  const ext = meta.extensions[roomCode] || null;
+  const cycleKey = `${roomCode}:${nextDueDate}`;
+  const paidAt = meta.paidCycles?.[cycleKey] || null;
+  const isCyclePaid = Boolean(paidAt);
+
+  const ext = isCyclePaid ? null : meta.extensions[roomCode] || null;
   const rem = meta.reminders[roomCode] || { reminderCount: 0 };
 
   const msPerDay = 24 * 60 * 60 * 1000;
   const rawDaysUntilDue = Math.round((dueDateObj.getTime() - todayUtc.getTime()) / msPerDay);
-  const rawDaysOverdue = rawDaysUntilDue < 0 ? Math.abs(rawDaysUntilDue) : 0;
+  const rawDaysOverdue = !isCyclePaid && rawDaysUntilDue < 0 ? Math.abs(rawDaysUntilDue) : 0;
 
   let effectiveDueObj = dueDateObj;
   let activeExtension: RoomRentExtension | null = null;
-  if (ext && ext.extraDays >= 1 && ext.extraDays <= 7) {
+  if (!isCyclePaid && ext && ext.extraDays >= 1 && ext.extraDays <= 7) {
     const cappedPromised = addDaysSafe(dueDateObj, Math.min(7, Math.max(1, ext.extraDays)));
     activeExtension = {
       ...ext,
@@ -212,7 +222,9 @@ function buildScheduleItem(
   const daysUntilEffective = Math.round((effectiveDueObj.getTime() - todayUtc.getTime()) / msPerDay);
 
   let status: RoomScheduleStatus = 'AMAN';
-  if (rawDaysOverdue > 7 || (activeExtension && daysUntilEffective < 0)) {
+  if (isCyclePaid) {
+    status = 'AMAN';
+  } else if (rawDaysOverdue > 7 || (activeExtension && daysUntilEffective < 0)) {
     // Lewat batas maksimal 7 hari (1 minggu) belum juga dibayar -> Wajib Konfirmasi Kendala ke Ibu Kos Langsung
     status = 'WAJIB_KONFIRMASI_IBU_KOS';
   } else if (activeExtension) {
@@ -225,6 +237,9 @@ function buildScheduleItem(
     status = 'AMAN';
   }
 
+  const cycleAmount = 2500000;
+  const myCycleAmount = occupants.length >= 2 ? Math.round(cycleAmount / 2) : cycleAmount;
+
   return {
     roomCode,
     roomFloor,
@@ -232,7 +247,10 @@ function buildScheduleItem(
     checkInDate: (checkInDate || '2026-07-01').slice(0, 10),
     nextDueDate,
     effectiveDueDate: formatDateYmd(effectiveDueObj),
-    cycleAmount: 2500000, // Per 3 bulan per kamar (Rp 5.000.000 per semester / 6 bulan)
+    cycleAmount, // Per 3 bulan per kamar (Rp 5.000.000 per semester / 6 bulan)
+    myCycleAmount,
+    isCyclePaid,
+    paidAt,
     daysUntilDue: rawDaysUntilDue,
     daysOverdue: rawDaysOverdue,
     status,
@@ -555,6 +573,169 @@ export async function requestRentExtensionAction(params: {
     success: true,
     message: `Pengajuan perpanjangan waktu +${days} hari (s/d ${promisedDate}) berhasil dicatat! Jika melewati batas 7 hari belum dibayar, Anda wajib konfirmasi langsung ke Ibu Kos.`,
     schedule: updated,
+  };
+}
+
+/**
+ * 5b. Penghuni membayar tagihan sewa 3-bulanan langsung dari kartu Jatuh Tempo / Daftar Tagihan
+ * Otomatis mencatat transaksi LUNAS ke daftar tagihan penghuni & laporan Keuangan + melunasi siklus jatuh tempo.
+ */
+export async function payRoomRentCycleAction(params: {
+  method?: string;
+  transferProofUrl?: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+  bill?: import('@/types/billing').MonthlyBill;
+  schedule?: RoomRentScheduleItem | null;
+}> {
+  const user = await requireRole(['PENGHUNI']);
+  const mySchedule = await fetchMyRoomRentScheduleAction();
+  if (!mySchedule) {
+    return { success: false, message: 'Data kontrak kamar aktif Anda tidak ditemukan.' };
+  }
+
+  const nowIso = new Date().toISOString();
+  const cycleKey = `${mySchedule.roomCode}:${mySchedule.nextDueDate}`;
+  const invoiceCode = `INV-SEWA-${mySchedule.roomCode}-${mySchedule.nextDueDate.replace(/-/g, '')}`;
+  const amount = mySchedule.myCycleAmount ?? mySchedule.cycleAmount;
+  const methodLabel =
+    (params.method || 'bri').toLowerCase() === 'qris'
+      ? 'QRIS'
+      : 'Transfer Bank BRI (763701006296502)';
+
+  const store = await ensurePostgresHydrated();
+
+  // 1. Update atau buat tagihan MonthlyBill pada store.bills
+  const dueYear = Number(mySchedule.nextDueDate.slice(0, 4)) || new Date().getFullYear();
+  const periodKey = mySchedule.nextDueDate.slice(0, 7);
+  const existingBill = store.bills.find(
+    (b) =>
+      b.invoiceCode === invoiceCode &&
+      (b.tenantEmail?.toLowerCase().trim() === user.email.toLowerCase().trim() ||
+        b.roomCode === mySchedule.roomCode)
+  );
+
+  let targetBill: import('@/types/billing').MonthlyBill;
+  if (existingBill) {
+    existingBill.status = 'LUNAS';
+    existingBill.paidAt = nowIso;
+    existingBill.paymentMethod = methodLabel;
+    existingBill.rentAmount = amount;
+    existingBill.totalAmount = amount;
+    existingBill.amount = amount;
+    targetBill = existingBill;
+  } else {
+    targetBill = {
+      id: `bill-sewa-${mySchedule.roomCode}-${Date.now()}`,
+      invoiceCode,
+      roomCode: mySchedule.roomCode,
+      tenantEmail: user.email,
+      tenantName: user.name,
+      tenantPhone: user.phone || '-',
+      periodMonth: `Sewa 3-Bulanan (${mySchedule.nextDueDate})`,
+      periodKey,
+      year: dueYear,
+      dueDate: mySchedule.effectiveDueDate,
+      rentAmount: amount,
+      amount,
+      penaltyAmount: 0,
+      totalAmount: amount,
+      status: 'LUNAS',
+      paidAt: nowIso,
+      paymentMethod: methodLabel,
+      createdAt: nowIso,
+    };
+    store.bills.unshift(targetBill);
+  }
+
+  // 2. Catat transaksi pembayaran ke store.payments agar langsung masuk ke portal Keuangan
+  const existingPayment = store.payments.find((p) => p.invoiceCode === invoiceCode);
+  if (existingPayment) {
+    existingPayment.status = 'SETTLEMENT';
+    existingPayment.paidAt = nowIso;
+    existingPayment.paymentMethod = methodLabel;
+    if (params.transferProofUrl) {
+      existingPayment.rawPayload = {
+        ...(existingPayment.rawPayload || {}),
+        transferProofUrl: params.transferProofUrl,
+      };
+    }
+  } else {
+    store.payments.unshift({
+      id: `pay-sewa-${Date.now()}`,
+      invoiceCode,
+      reservationId: `sewa-${mySchedule.roomCode}`,
+      reservationCode: `SEWA-${mySchedule.roomCode}`,
+      roomCode: mySchedule.roomCode,
+      amount,
+      paymentMethod: methodLabel,
+      status: 'SETTLEMENT',
+      bank: 'BRI',
+      settlementTime: nowIso,
+      rawPayload: {
+        tenantName: user.name,
+        tenantEmail: user.email,
+        transferProofUrl: params.transferProofUrl || undefined,
+      },
+      expiresAt: nowIso,
+      paidAt: nowIso,
+      createdAt: nowIso,
+    });
+  }
+
+  // 3. Tandai siklus 3-bulanan kamar ini LUNAS & hapus status perpanjangan waktu lama
+  const meta = await loadRentMeta();
+  meta.paidCycles = meta.paidCycles || {};
+  meta.paidCycles[cycleKey] = nowIso;
+  if (meta.extensions[mySchedule.roomCode]) {
+    delete meta.extensions[mySchedule.roomCode];
+  }
+  await saveRentMeta(meta);
+
+  // 4. Catat notifikasi & audit log
+  store.notificationLogs.unshift({
+    id: `ntf-pay-sewa-k${mySchedule.roomCode}-${Date.now()}`,
+    recipient: '+62 813-7432-9562',
+    recipientName: `Pembayaran Sewa Lunas (${user.name} - Kamar ${mySchedule.roomCode})`,
+    channel: 'WHATSAPP',
+    template: `pembayaran_sewa_lunas_kamar_${mySchedule.roomCode}`,
+    status: 'SENT',
+    attempts: 1,
+    sentAt: nowIso,
+    createdAt: nowIso,
+  });
+
+  savePersistentStore(store);
+  await flushPostgresSync();
+
+  await createAuditLog({
+    userId: user.id,
+    actorName: user.name,
+    actorRole: 'PENGHUNI',
+    action: 'PAY_ROOM_RENT_CYCLE',
+    category: 'payments',
+    entityId: invoiceCode,
+    description: `Melunasi tagihan sewa 3-bulanan Kamar No. ${mySchedule.roomCode} sebesar Rp ${amount.toLocaleString('id-ID')} via ${methodLabel}`,
+    meta: { roomCode: mySchedule.roomCode, invoiceCode, amount, method: methodLabel },
+  });
+
+  revalidatePath('/penghuni/tagihan');
+  revalidatePath('/penghuni/dashboard');
+  revalidatePath('/penghuni/riwayat');
+  revalidatePath('/keuangan/tagihan');
+  revalidatePath('/keuangan/transaksi');
+  revalidatePath('/keuangan/dashboard');
+  revalidatePath('/keuangan/laporan');
+  revalidatePath('/admin/notifikasi');
+  revalidatePath('/admin/log-aktivitas');
+
+  const updatedSchedule = await fetchMyRoomRentScheduleAction();
+  return {
+    success: true,
+    message: `Pembayaran sewa 3-bulanan Kamar No. ${mySchedule.roomCode} (${invoiceCode}) berhasil dicatat LUNAS dan diteruskan ke Keuangan Kos Omi!`,
+    bill: targetBill,
+    schedule: updatedSchedule,
   };
 }
 
