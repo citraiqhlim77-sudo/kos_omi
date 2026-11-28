@@ -126,7 +126,7 @@ class ZodNumber extends ZodType<number> {
     return this;
   }
 
-  int(message?: string) {
+  int(_message?: string) {
     this.isInteger = true;
     return this;
   }

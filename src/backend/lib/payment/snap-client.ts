@@ -47,7 +47,7 @@ export function loadSnapScript(): Promise<void> {
     return snapScriptPromise;
   }
 
-  snapScriptPromise = new Promise((resolve, reject) => {
+  snapScriptPromise = new Promise((resolve) => {
     // Cek apakah elemen script snap sudah ada di DOM
     const existingScript = document.getElementById('midtrans-snap-script');
     if (existingScript) {

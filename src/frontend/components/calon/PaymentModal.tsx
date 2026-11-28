@@ -28,7 +28,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   invoice,
   reservation,
-  onSuccess,
 }) => {
   const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');

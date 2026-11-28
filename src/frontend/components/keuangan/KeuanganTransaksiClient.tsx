@@ -33,7 +33,7 @@ interface KeuanganTransaksiClientProps {
   initialAnnouncements?: SocialAnnouncement[];
 }
 
-function formatPaymentMethodLabel(paymentType: string, bank?: string | null): string {
+function formatPaymentMethodLabel(paymentType: string, _bank?: string | null): string {
   const type = (paymentType || '').toLowerCase();
   if (type === 'qris') return 'QRIS';
   return 'Transfer Bank BRI';
