@@ -8,7 +8,6 @@ import { payMonthlyBillAction } from '@/actions/billing';
 import {
 type RoomRentScheduleItem,
 requestRentExtensionAction,
-payRoomRentCycleAction,
 } from '@/actions/rent-schedule';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
@@ -43,7 +42,6 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<MonthlyBill | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');
-  const [transferProofUrl, setTransferProofUrl] = useState<string>('');
   const [, setIsPaymentValid] = useState<boolean>(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
@@ -100,91 +98,27 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
   const openPayModal = (bill: MonthlyBill) => {
     setSelectedBill(bill);
     setPayError(null);
-    setTransferProofUrl('');
     setIsPaymentValid(false);
     setIsPayModalOpen(true);
-  };
-
-  const openSchedulePayModal = () => {
-    if (!schedule) return;
-    const cycleInvoiceCode = `INV-SEWA-${schedule.roomCode}-${schedule.nextDueDate.replace(/-/g, '')}`;
-    const existing = bills.find((b) => b.invoiceCode === cycleInvoiceCode);
-    const amount = schedule.myCycleAmount ?? schedule.cycleAmount;
-    const dueYear = Number(schedule.nextDueDate.slice(0, 4)) || new Date().getFullYear();
-    const targetBill: MonthlyBill = existing || {
-      id: `cycle-${schedule.roomCode}-${schedule.nextDueDate}`,
-      invoiceCode: cycleInvoiceCode,
-      roomCode: schedule.roomCode,
-      tenantName: schedule.occupants[0]?.name || '',
-      tenantEmail: schedule.occupants[0]?.email || '',
-      tenantPhone: schedule.occupants[0]?.phone || '-',
-      periodMonth: `Sewa 3-Bulanan (${schedule.nextDueDate})`,
-      periodKey: schedule.nextDueDate.slice(0, 7),
-      year: dueYear,
-      dueDate: schedule.effectiveDueDate,
-      rentAmount: amount,
-      amount,
-      penaltyAmount: 0,
-      totalAmount: amount,
-      status: schedule.daysOverdue > 0 ? 'TERLAMBAT' : 'BELUM_BAYAR',
-      createdAt: new Date().toISOString(),
-    };
-    openPayModal(targetBill);
   };
 
   const handlePaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBill) return;
     setPayError(null);
-    setIsPaying(true);
 
-    try {
-      if (selectedBill.invoiceCode.startsWith('INV-SEWA-')) {
-        const res = await payRoomRentCycleAction({
-          method: selectedMethod,
-          transferProofUrl: transferProofUrl || undefined,
-        });
-        if (res.success && res.bill) {
-          setBills((prev) => {
-            const exists = prev.some(
-              (item) => item.invoiceCode === res.bill!.invoiceCode || item.id === res.bill!.id
-            );
-            if (exists) {
-              return prev.map((item) =>
-                item.invoiceCode === res.bill!.invoiceCode || item.id === res.bill!.id
-                  ? res.bill!
-                  : item
-              );
-            }
-            return [res.bill!, ...prev];
-          });
-          if (res.schedule) {
-            setSchedule(res.schedule);
-          }
-          setIsPayModalOpen(false);
-          setToastMessage(res.message);
-          setTimeout(() => setToastMessage(null), 6000);
-        } else {
-          setPayError(res.message || 'Gagal mencatat pembayaran sewa.');
-        }
-      } else {
-        const res = await payMonthlyBillAction(selectedBill.invoiceCode, selectedMethod);
-        if (res.success && res.bill) {
-          setBills((prev) =>
-            prev.map((item) => (item.id === res.bill!.id ? res.bill! : item))
-          );
-          setIsPayModalOpen(false);
-          setToastMessage(
-            `Tagihan sewa ${res.bill.periodMonth} (${res.bill.invoiceCode}) berhasil dilunasi via Transfer Bank BRI!`
-          );
-          setTimeout(() => setToastMessage(null), 5000);
-        } else {
-          setPayError(res.message || 'Gagal memproses pembayaran tagihan.');
-        }
-      }
-    } finally {
-      setIsPaying(false);
+    setIsPaying(true);
+    const res = await payMonthlyBillAction(selectedBill.invoiceCode, selectedMethod);
+
+    if (res.success && res.bill) {
+      setBills((prev) =>
+        prev.map((item) => (item.id === res.bill!.id ? res.bill! : item))
+      );
+      setIsPayModalOpen(false);
+      setToastMessage(`Tagihan sewa ${res.bill.periodMonth} (${res.bill.invoiceCode}) berhasil dilunasi via ${selectedMethod}!`);
+      setTimeout(() => setToastMessage(null), 5000);
     }
+    setIsPaying(false);
   };
 
   const unpaidCount = bills.filter((b) => b.status === 'BELUM_BAYAR' || b.status === 'TERLAMBAT').length;
@@ -247,11 +181,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                   <h2 className="text-base font-heading font-extrabold text-zinc-900">
                     Jadwal Sewa Kamar No. {schedule.roomCode}
                   </h2>
-                  {schedule.isCyclePaid ? (
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      ✓ Lunas Periode Ini
-                    </span>
-                  ) : schedule.status === 'WAJIB_KONFIRMASI_IBU_KOS' ? (
+                  {schedule.status === 'WAJIB_KONFIRMASI_IBU_KOS' ? (
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">
                       Wajib Konfirmasi Ibu Kos
                     </span>
@@ -268,48 +198,33 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                       Jatuh Tempo {schedule.daysUntilDue} Hari Lagi
                     </span>
                   ) : (
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                      Menunggu Pembayaran
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Aktif
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-zinc-600">
-                  {schedule.isCyclePaid
-                    ? 'Pembayaran sewa periode 3-bulanan Anda sudah lunas dan tercatat di Keuangan Kos Omi.'
-                    : 'Tagihan sewa jatuh tempo setiap 3 bulan sesuai tanggal masuk kamar. Anda dapat langsung membayar via Bank BRI atau mengajukan perpanjangan waktu.'}
+                  Tagihan sewa jatuh tempo setiap 3 bulan sesuai tanggal masuk kamar.
                 </p>
               </div>
             </div>
 
-            {!schedule.isCyclePaid && (
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={openSchedulePayModal}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(186,72%,24%)] hover:bg-[hsl(186,74%,18%)] text-white text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Bayar Kos Sekarang</span>
-                </button>
-
-                {schedule.status !== 'WAJIB_KONFIRMASI_IBU_KOS' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExtError(null);
-                      setIsExtModalOpen(true);
-                    }}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-teal-300 bg-teal-50 hover:bg-teal-100 text-[hsl(186,72%,24%)] text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {schedule.extension
-                        ? 'Ubah Pengajuan Tempo'
-                        : 'Ajukan Perpanjangan Waktu'}
-                    </span>
-                  </button>
-                )}
-              </div>
+            {schedule.status !== 'WAJIB_KONFIRMASI_IBU_KOS' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setExtError(null);
+                  setIsExtModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-teal-300 bg-teal-50 hover:bg-teal-100 text-[hsl(186,72%,24%)] text-xs font-bold transition-colors cursor-pointer shrink-0"
+              >
+                <Clock className="w-4 h-4" />
+                <span>
+                  {schedule.extension
+                    ? 'Ubah Pengajuan Tempo'
+                    : 'Ajukan Perpanjangan Waktu'}
+                </span>
+              </button>
             )}
           </div>
 
@@ -329,11 +244,9 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
               </strong>
             </div>
             <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200">
-              <span className="text-zinc-500 block text-[11px]">
-                Tarif Per 3 Bulan {schedule.occupants.length >= 2 ? '(Bagian Anda)' : '(1 Kamar)'}
-              </span>
+              <span className="text-zinc-500 block text-[11px]">Tarif Per 3 Bulan</span>
               <strong className="text-zinc-900 font-extrabold tabular-nums">
-                {formatRupiah(schedule.myCycleAmount ?? schedule.cycleAmount)}
+                {formatRupiah(schedule.cycleAmount)}
               </strong>
             </div>
           </div>
@@ -586,37 +499,6 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
                 amountFormatted={formatRupiah(selectedBill.totalAmount)}
                 onValidationChange={setIsPaymentValid}
               />
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-zinc-700">
-                  Upload Bukti Screenshot Transfer BRI (Opsional)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                      setPayError('Ukuran gambar bukti transfer maksimal 2 MB.');
-                      return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      if (typeof reader.result === 'string') {
-                        setTransferProofUrl(reader.result);
-                      }
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                  className="block w-full text-xs text-zinc-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-[hsl(186,72%,24%)] hover:file:bg-teal-100 cursor-pointer"
-                />
-                {transferProofUrl && (
-                  <p className="text-[11px] font-semibold text-emerald-700">
-                    ✓ Bukti transfer siap dilampirkan.
-                  </p>
-                )}
-              </div>
 
               {payError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold">
