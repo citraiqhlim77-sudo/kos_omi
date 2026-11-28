@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniProfilClient } from '@/components/penghuni/PenghuniProfilClient';

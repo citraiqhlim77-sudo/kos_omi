@@ -1,32 +1,24 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React,{ useState,useEffect,useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import NextLink from 'next/link';
-import { Room, ROOM_TYPE_LABELS } from '@/types/room';
+import { Room,ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import { submitReservationAction } from '@/actions/reservations';
 import { getClientSession } from '@/lib/auth-client';
 import { CurrentServerUser } from '@/lib/auth-server';
 import { Card } from '@/components/ui/Card';
 import {
-  Calendar,
-  Clock,
-  ShieldCheck,
-  Upload,
-  CheckCircle2,
-  AlertCircle,
-  ArrowRight,
-  ArrowLeft,
-  User,
-  Phone,
-  Mail,
-  Briefcase,
-  FileText,
-  Lock,
-  UserPlus,
-  LogIn,
+Calendar,CheckCircle2,
+AlertCircle,
+ArrowRight,
+ArrowLeft,
+User,
+Phone,Lock,
+UserPlus,
+LogIn
 } from 'lucide-react';
 
 interface ReservationFormClientProps {
@@ -108,7 +100,6 @@ export const ReservationFormClient: React.FC<ReservationFormClientProps> = ({
 
   const isSingleSlot = occupancyMode === 'PER_ORANG_1_SLOT';
   const monthlyPrice = isSingleSlot ? Math.round(room.monthlyPrice / 2) : room.monthlyPrice;
-  const depositAmount = 0;
   const totalInitial = monthlyPrice;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

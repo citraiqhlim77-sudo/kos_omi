@@ -3,7 +3,7 @@
 import React from 'react';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPin, Phone, Mail, Clock, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { MapPin,Phone,Mail,Clock,ShieldCheck,CheckCircle2 } from 'lucide-react';
 
 export const PublicFooter: React.FC = () => {
   const pathname = usePathname();

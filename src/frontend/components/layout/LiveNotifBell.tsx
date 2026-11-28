@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React,{ useEffect,useRef,useState } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, X } from 'lucide-react';
+import { Bell,X } from 'lucide-react';
 
 interface LiveNotifItem {
   id: string;

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
 import { getClientSession } from '@/lib/auth-client';
-import { ArrowRight, Lock, UserPlus, LogIn } from 'lucide-react';
+import { ArrowRight,Lock,UserPlus,LogIn } from 'lucide-react';
 
 interface RoomBookingCtaProps {
   roomCode: string;

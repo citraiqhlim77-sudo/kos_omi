@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Room, RoomType, ROOM_TYPE_LABELS } from '@/types/room';
+import React,{ useState,useEffect } from 'react';
+import { Room,RoomType } from '@/types/room';
 import { updateRoomDetailAction } from '@/actions/rooms';
-import { X, Check, AlertCircle, Save, Layers, DollarSign, Maximize2, Tag } from 'lucide-react';
+import { X,AlertCircle,Save } from 'lucide-react';
 
 interface RoomEditModalProps {
   isOpen: boolean;

@@ -1,27 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
-import { Room, RoomStatus, TenantHistoryItem, ROOM_STATUS_LABELS, ROOM_TYPE_LABELS } from '@/types/room';
+import { Room,RoomStatus,TenantHistoryItem,ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import { RoomStatusModal } from './RoomStatusModal';
 import { RoomEditModal } from './RoomEditModal';
 import {
-  ArrowLeft,
-  Wrench,
-  Edit,
-  CheckCircle2,
-  Calendar,
-  Phone,
-  Mail,
-  User,
-  ShieldCheck,
-  Maximize2,
-  Tag,
-  Clock,
-  FileText,
-  AlertCircle,
+ArrowLeft,
+Wrench,
+Edit,
+CheckCircle2,User,FileText
 } from 'lucide-react';
 
 interface RoomDetailClientProps {
@@ -34,7 +24,7 @@ export const RoomDetailClient: React.FC<RoomDetailClientProps> = ({
   initialHistories,
 }) => {
   const [room, setRoom] = useState<Room>(initialRoom);
-  const [histories, setHistories] = useState<TenantHistoryItem[]>(initialHistories);
+  const [histories] = useState<TenantHistoryItem[]>(initialHistories);
 
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -98,30 +88,6 @@ export const RoomDetailClient: React.FC<RoomDetailClientProps> = ({
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
             Selesai Sewa
-          </span>
-        );
-    }
-  };
-
-  const getDepositBadge = (status: TenantHistoryItem['depositStatus']) => {
-    switch (status) {
-      case 'DITAHAN':
-        return (
-          <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-            Ditahan (Aktif)
-          </span>
-        );
-      case 'DIKEMBALIKAN':
-        return (
-          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            Dikembalikan 100%
-          </span>
-        );
-      case 'MENUNGGU_PEMERIKSAAN':
-      default:
-        return (
-          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-            Menunggu Lunas
           </span>
         );
     }

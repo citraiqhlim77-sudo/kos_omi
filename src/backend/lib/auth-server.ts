@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { UserRole } from '@/types/auth';
 import { auth } from '@/auth';
-import { findUserById, findUserByEmail } from '@/lib/auth-store';
+import { findUserById,findUserByEmail } from '@/lib/auth-store';
 import { ensurePostgresHydrated } from '@/server/persistence';
 
 export interface CurrentServerUser {

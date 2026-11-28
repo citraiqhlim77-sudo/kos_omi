@@ -1,29 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Reservation, ReservationStatus } from '@/types/reservation';
-import { approveReservationAction, rejectReservationAction } from '@/actions/reservations';
-import { settlePaymentAction, resetPaymentToUnpaidAction } from '@/actions/payments';
+import { Reservation } from '@/types/reservation';
+import { approveReservationAction,rejectReservationAction } from '@/actions/reservations';
+import { settlePaymentAction,resetPaymentToUnpaidAction } from '@/actions/payments';
 import { formatRupiah } from '@/data/rooms';
 import {
-  ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Clock,
-  ShieldCheck,
-  User,
-  Phone,
-  Mail,
-  Briefcase,
-  BedDouble,
-  Maximize2,
-  X,
-  FileText,
-  Calendar,
+ArrowLeft,
+CheckCircle2,
+XCircle,Clock,
+ShieldCheck,
+User,
+Phone,
+Mail,
+Briefcase,X
 } from 'lucide-react';
 
 interface ReservasiVerificationClientProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser, requireStrictPortalRole } from '@/lib/auth-server';
+import { getCurrentUser,requireStrictPortalRole } from '@/lib/auth-server';
 
 export const dynamic = 'force-dynamic';
 

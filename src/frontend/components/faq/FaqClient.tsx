@@ -1,18 +1,16 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import NextLink from 'next/link';
-import { FAQ_DATA, FAQItem } from '@/data/faq';
+import { FAQ_DATA } from '@/data/faq';
 import { Card } from '@/components/ui/Card';
 import {
-  HelpCircle,
-  ChevronDown,
-  Phone,
-  Mail,
-  ShieldCheck,
-  CreditCard,
-  FileCheck,
-  BookOpen,
+HelpCircle,
+ChevronDown,
+Phone,
+Mail,CreditCard,
+FileCheck,
+BookOpen
 } from 'lucide-react';
 
 export function FaqClient() {

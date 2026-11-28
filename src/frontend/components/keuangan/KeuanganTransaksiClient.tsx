@@ -1,30 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { PaymentTransaction, GatewayReconciliationResult } from '@/types/finance';
+import { PaymentTransaction,GatewayReconciliationResult } from '@/types/finance';
 import { reconcileGatewayTransactionsAction } from '@/actions/finance';
 import {
-  type SocialDonationRecord,
-  type SocialAnnouncement,
-  addSocialDonationAction,
-  deleteSocialDonationAction,
-  createSocialAnnouncementAction,
-  closeSocialAnnouncementAction,
+type SocialDonationRecord,
+type SocialAnnouncement,
+addSocialDonationAction,
+deleteSocialDonationAction,
+createSocialAnnouncementAction,
+closeSocialAnnouncementAction,
 } from '@/actions/rent-schedule';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Receipt,
-  Search,
-  ArrowRight,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  X,
-  FileCheck2,
-  HeartHandshake,
-  Plus,
-  Trash2,
+Receipt,
+Search,
+ArrowRight,
+CheckCircle2,
+AlertTriangle,
+RefreshCw,
+X,
+FileCheck2,
+HeartHandshake,
+Plus,
+Trash2,
 } from 'lucide-react';
 
 interface KeuanganTransaksiClientProps {

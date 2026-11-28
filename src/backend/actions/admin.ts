@@ -1,24 +1,24 @@
-﻿'use server';
+'use server';
 
 import {
-  AdminUserRecord,
-  AdminSettings,
-  AuditLogRecord,
-  NotificationLogRecord,
+AdminUserRecord,
+AdminSettings,
+AuditLogRecord,
+NotificationLogRecord,
 } from '@/types/admin';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
-import { findUserByEmail, getAuthUsersStore } from '@/lib/auth-store';
+import { findUserByEmail,getAuthUsersStore } from '@/lib/auth-store';
 import { hashPassword } from '@/lib/auth/password';
-import { createAuditLog, getUnifiedAuditLogsStore } from '@/lib/audit';
+import { createAuditLog,getUnifiedAuditLogsStore } from '@/lib/audit';
 import { dbCleanupUserRelations } from '@/server/db';
 import {
-  deleteUserFromNeonPostgres,
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  formatPasswordHashPreview,
-  loadPersistentStore,
-  savePersistentStore,
+deleteUserFromNeonPostgres,
+ensurePostgresHydrated,
+flushPostgresSync,
+formatPasswordHashPreview,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 
 // IN-MEMORY GLOBAL STATE
@@ -41,107 +41,6 @@ function getDeletedEmailsSet(): Set<string> {
   return global.__kosOmiDeletedUserEmails;
 }
 
-const initialUsers: AdminUserRecord[] = [
-  {
-    id: 'usr-admin-1',
-    name: 'Ibu Yulastri (Pemilik Kos & Super Admin)',
-    nim: 'admin',
-    email: 'admin@kosomi.id',
-    phone: '0813-7432-9562',
-    role: 'ADMIN',
-    passwordHashPreview: '$2a$10$••••••••••••',
-    isActive: true,
-    createdAt: '2026-01-01T00:00:00Z',
-    lastLoginAt: '2026-11-02T08:30:00Z',
-  },
-  {
-    id: 'usr-pengelola-1',
-    name: 'Yanti Susanti (Pengelola Operasional Kos)',
-    nim: 'pengelola',
-    email: 'pengelola@kosomi.id',
-    phone: '0813-7432-9562',
-    role: 'PENGELOLA',
-    passwordHashPreview: '$2a$10$••••••••••••',
-    isActive: true,
-    createdAt: '2026-01-02T10:00:00Z',
-    lastLoginAt: '2026-11-02T09:15:00Z',
-  },
-  {
-    id: 'usr-keuangan-1',
-    name: 'Aisyah Fitriani (Staf Keuangan)',
-    nim: 'keuangan',
-    email: 'keuangan@kosomi.id',
-    phone: '0813-7432-9562',
-    role: 'KEUANGAN',
-    passwordHashPreview: '$2a$10$••••••••••••',
-    isActive: true,
-    createdAt: '2026-01-02T10:30:00Z',
-    lastLoginAt: '2026-11-02T09:30:00Z',
-  },
-  {
-    id: 'usr-calon-zahra',
-    name: 'Zahra Aulia Putri (Kamar 1)',
-    nim: '2214010045',
-    email: 'zahra.aulia@uinib.ac.id',
-    phone: '081234567890',
-    role: 'CALON_PENGHUNI',
-    roomCode: '1',
-    passwordHashPreview: '$2a$10$••••••••••••',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-];
-
-const initialSettings: AdminSettings = {
-  kosName: 'Kos Omi Sungai Bangek, Padang',
-  kosAddress:
-    'Jalan Ekora, Sungai Bangek, Kel. Balai Gadang, Kec. Koto Tangah, Kota Padang, Sumatera Barat 25586 (59F5+25 Balai Gadang) (Dekat Kampus III UIN Imam Bonjol)',
-  adminPhone: '0813-7432-9562 (Ibu Yulastri) / 0813-7432-9562',
-  dueDay: 5,
-  depositPercentage: 0,
-  bookingWindowHours: 24,
-  timezone: 'Asia/Jakarta (WIB)',
-  lateFeeEnabled: false,
-  lateFeeDailyAmount: 0,
-  semesterPrice: 5000000,
-  depositPolicy: 'Tanpa Biaya Jaminan (Rp 0)',
-  latePolicy: 'Tanpa Denda Keterlambatan Otomatis (Status: Belum Lunas / Menunggu Pelunasan)',
-};
-
-const initialAuditLogs: AuditLogRecord[] = [
-  {
-    id: 'aud-init-1',
-    actorId: 'usr-calon-zahra',
-    actorName: 'Zahra Aulia Putri',
-    actorRole: 'CALON_PENGHUNI',
-    action: 'CREATE_RESERVATION',
-    entity: 'reservations',
-    entityId: 'RSV-202611-1',
-    meta: {
-      description: 'Mengajukan reservasi Kamar No. 1 untuk sewa 1 semester (6 bulan)',
-      roomCode: '1',
-      tenantName: 'Zahra Aulia Putri',
-      durationMonths: 6,
-      amount: 5000000,
-    },
-    createdAt: new Date().toISOString(),
-  },
-];
-
-const initialNotificationLogs: NotificationLogRecord[] = [
-  {
-    id: 'ntf-studi-kasus-1',
-    recipient: '081234567890',
-    recipientName: 'Zahra Aulia Putri (Kamar 1)',
-    channel: 'WHATSAPP',
-    template: 'bukti_pengajuan_reservasi_RSV-202611-1_kamar_1',
-    status: 'SENT',
-    attempts: 1,
-    sentAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-  },
-];
 
 function getUsersStore(): AdminUserRecord[] {
   return loadPersistentStore().adminUsers;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { KeuanganNav } from '@/components/keuangan/KeuanganNav';
 import { KeuanganTagihanClient } from '@/components/keuangan/KeuanganTagihanClient';

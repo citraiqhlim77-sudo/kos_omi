@@ -1,10 +1,10 @@
 import type { UserRole } from '@/types/auth';
 import { verifyPassword } from '@/lib/auth/password';
-import { ensureSeedPasswordHashes, findUserByEmail } from '@/lib/auth-store';
+import { ensureSeedPasswordHashes,findUserByEmail } from '@/lib/auth-store';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+savePersistentStore,
 } from '@/server/persistence';
 
 // PRD Task 2.2: maksimal 5 kali gagal, lalu akun dikunci 15 menit.

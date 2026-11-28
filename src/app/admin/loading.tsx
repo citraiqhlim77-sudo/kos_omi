@@ -1,5 +1,4 @@
-import React from 'react';
-import { Skeleton, DashboardKpiSkeleton, TableSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton,DashboardKpiSkeleton,TableSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminLoading() {
   return (

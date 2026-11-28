@@ -1,5 +1,4 @@
-import React from 'react';
-import { Skeleton, TableSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton,TableSkeleton } from '@/components/ui/Skeleton';
 
 export default function PenghuniLoading() {
   return (

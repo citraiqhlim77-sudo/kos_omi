@@ -1,15 +1,15 @@
 'use server';
 
-import { MonthlyBill, TenantProfile } from '@/types/billing';
+import { MonthlyBill,TenantProfile } from '@/types/billing';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUser, requireRole } from '@/lib/auth-server';
+import { getCurrentUser,requireRole } from '@/lib/auth-server';
 import { dispatchPaymentSuccess } from '@/lib/notify/dispatch';
 import { dbGetReservationsByUserEmail } from '@/server/db';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 import { createAuditLog } from '@/lib/audit';
 
@@ -24,12 +24,6 @@ declare global {
   var __kosOmiBillingState: BillingState | undefined;
 }
 
-function initBillingState(): BillingState {
-  return {
-    bills: [],
-    profiles: [],
-  };
-}
 
 function getBillingDb(): BillingState {
   const store = loadPersistentStore();

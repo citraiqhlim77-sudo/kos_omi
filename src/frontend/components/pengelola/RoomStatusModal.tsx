@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { Room, RoomStatus, ROOM_STATUS_LABELS } from '@/types/room';
+import { Room,RoomStatus,ROOM_STATUS_LABELS } from '@/types/room';
 import { updateRoomStatusAction } from '@/actions/rooms';
 import {
-  X,
-  ShieldAlert,
-  CheckCircle2,
-  AlertTriangle,
-  Wrench,
-  BedDouble,
-  ArrowRight,
-  LogOut,
-  CalendarCheck,
+X,
+ShieldAlert,AlertTriangle,
+Wrench,
+BedDouble,
+ArrowRight
 } from 'lucide-react';
 
 interface RoomStatusModalProps {

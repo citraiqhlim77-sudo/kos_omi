@@ -1,6 +1,5 @@
-import React from 'react';
 import { Metadata } from 'next';
-import { fetchRoomsAction, fetchRoomStatsAction } from '@/actions/rooms';
+import { fetchRoomsAction,fetchRoomStatsAction } from '@/actions/rooms';
 import { ensurePostgresHydrated } from '@/server/persistence';
 import { KamarCatalogClient } from '@/components/kamar/KamarCatalogClient';
 

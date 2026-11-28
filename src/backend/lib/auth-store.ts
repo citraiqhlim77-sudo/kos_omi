@@ -1,12 +1,12 @@
 import type { UserRole } from '@/types/auth';
-import { DEFAULT_PASSWORD_HASH, type SeedUser } from '@/db/seed';
+import { DEFAULT_PASSWORD_HASH } from '@/db/seed';
 import { hashPassword } from '@/lib/auth/password';
 import {
-  loadPersistentStore,
-  savePersistentStore,
-  SEED_DEFAULT_PASSWORD,
-  type UserAuthRecord,
-  type ResetTokenRecord,
+loadPersistentStore,
+savePersistentStore,
+SEED_DEFAULT_PASSWORD,
+type UserAuthRecord,
+type ResetTokenRecord,
 } from '@/server/persistence';
 
 export { SEED_DEFAULT_PASSWORD };

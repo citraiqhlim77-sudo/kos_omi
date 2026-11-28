@@ -1,24 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React,{ useState,useMemo } from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
-import { Room, RoomStatus, RoomType, ROOM_STATUS_LABELS, ROOM_TYPE_LABELS } from '@/types/room';
-import { formatRupiah, ALL_ROOMS } from '@/data/rooms';
+import { Room,RoomStatus,ROOM_TYPE_LABELS } from '@/types/room';
+import { formatRupiah,ALL_ROOMS } from '@/data/rooms';
 import { RoomStatusModal } from './RoomStatusModal';
 import { RoomEditModal } from './RoomEditModal';
 import {
-  Search,
-  Filter,
-  Edit,
-  Wrench,
-  ArrowRight,
-  Eye,
-  CheckCircle2,
-  Clock,
-  Home,
-  ShieldAlert,
-  SlidersHorizontal,
+Search,Edit,
+Wrench,
+ArrowRight,
+Eye,
+CheckCircle2
 } from 'lucide-react';
 
 interface KamarManagerClientProps {

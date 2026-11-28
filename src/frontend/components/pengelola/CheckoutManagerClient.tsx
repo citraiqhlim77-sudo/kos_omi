@@ -1,25 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TenancyRecord } from '@/types/tenancy';
 import { processCheckoutAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
 import {
-  LogOut,
-  AlertTriangle,
-  CheckCircle2,
-  Calendar,
-  CreditCard,
-  Building2,
-  X,
-  Phone,
-  ShieldAlert,
-  ArrowRight,
-  ShieldCheck,
-  Receipt,
-  AlertCircle,
+LogOut,
+AlertTriangle,
+CheckCircle2,X,ShieldAlert,
+ArrowRight,AlertCircle
 } from 'lucide-react';
 
 interface CheckoutManagerClientProps {

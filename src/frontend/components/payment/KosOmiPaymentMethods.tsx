@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { QrCode, Building2, Copy, Check, Clock, Upload, Image as ImageIcon, X } from 'lucide-react';
+import React,{ useState } from 'react';
+import { QrCode,Building2,Copy,Check,Clock,Upload,Image as ImageIcon,X } from 'lucide-react';
 
 export interface PaymentMethodItem {
   id: 'bri' | 'qris';

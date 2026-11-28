@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TenancyRecord } from '@/types/tenancy';
@@ -9,18 +9,18 @@ import { updateRoomCheckInDateAction } from '@/actions/rent-schedule';
 import { updateRemainingTenantModeAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Users,
-  Search,
-  Phone,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-  UserCheck,
-  Clock,
-  Mail,
-  Calendar,
-  Pencil,
-  X,
+Users,
+Search,
+Phone,
+CheckCircle2,
+AlertTriangle,
+ArrowRight,
+UserCheck,
+Clock,
+Mail,
+Calendar,
+Pencil,
+X,
 } from 'lucide-react';
 
 interface PenghuniManagerClientProps {

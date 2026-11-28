@@ -1,31 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
-  Lock,
-  Mail,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ShieldCheck,
-  Check,
-  AlertCircle,
-  Building2,
-  Users,
-  Wallet,
-  Home,
-  UserCheck,
+Lock,
+Mail,
+Eye,
+EyeOff,
+ArrowRight,
+ShieldCheck,
+Check,
+AlertCircle,
 } from 'lucide-react';
-import { DEMO_ACCOUNTS, getRoleDashboardPath } from '@/data/auth-demo';
+import { DEMO_ACCOUNTS,getRoleDashboardPath } from '@/data/auth-demo';
 import { loginAction } from '@/actions/auth';
-import { loginWithCredentials, loginWithDemoAccount, setClientSession } from '@/lib/auth-client';
-import { validateEmail, validatePassword } from '@/lib/validations/auth';
+import { loginWithCredentials,loginWithDemoAccount,setClientSession } from '@/lib/auth-client';
+import { validateEmail,validatePassword } from '@/lib/validations/auth';
 import { UserRole } from '@/types/auth';
 
 export default function LoginPage() {
-  const router = useRouter();
 
   // Form State
   const [email, setEmail] = useState('');
@@ -43,17 +36,6 @@ export default function LoginPage() {
   // Field errors (Email & Kata Sandi)
   const emailError = touched.email ? validateEmail(email) : null;
   const passwordError = touched.password ? validatePassword(password, 6) : null;
-
-  // Handle Demo Account Click
-  const handleSelectDemoAccount = (role: UserRole) => {
-    const acc = DEMO_ACCOUNTS.find((a) => a.role === role);
-    if (!acc) return;
-    setSelectedRole(role);
-    setEmail(acc.email);
-    setPassword(acc.password);
-    setErrorMessage(null);
-    setTouched({ email: true, password: true });
-  };
 
   // Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,22 +110,6 @@ export default function LoginPage() {
     } catch {
       setErrorMessage('Terjadi kendala saat memproses login. Silakan coba lagi.');
       setIsLoading(false);
-    }
-  };
-
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case 'ADMIN':
-        return <Building2 className="w-4 h-4 text-indigo-600" />;
-      case 'PENGELOLA':
-        return <Users className="w-4 h-4 text-blue-600" />;
-      case 'KEUANGAN':
-        return <Wallet className="w-4 h-4 text-emerald-600" />;
-      case 'PENGHUNI':
-        return <Home className="w-4 h-4 text-sky-600" />;
-      case 'CALON_PENGHUNI':
-      default:
-        return <UserCheck className="w-4 h-4 text-amber-600" />;
     }
   };
 

@@ -1,28 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { CheckinCandidate } from '@/types/tenancy';
 import { processCheckinAction } from '@/actions/tenancy';
 import { formatRupiah } from '@/data/rooms';
 import {
-  LogIn,
-  CheckCircle2,
-  Calendar,
-  BedDouble,
-  User,
-  Phone,
-  FileCheck,
-  ShieldCheck,
-  CreditCard,
-  Eye,
-  X,
-  AlertCircle,
-  Building2,
-  Clock,
-  ArrowRight,
+LogIn,
+CheckCircle2,ShieldCheck,
+CreditCard,X,
+AlertCircle,ArrowRight
 } from 'lucide-react';
 
 interface CheckinManagerClientProps {
@@ -42,7 +30,6 @@ export const CheckinManagerClient: React.FC<CheckinManagerClientProps> = ({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [previewKtpUrl, setPreviewKtpUrl] = useState<string | null>(null);
 
   const openConfirmModal = (candidate: CheckinCandidate) => {
     setSelectedCandidate(candidate);

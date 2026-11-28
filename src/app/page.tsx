@@ -2,24 +2,24 @@
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { formatRupiah } from '@/data/rooms';
-import { fetchFeaturedRoomsAction, fetchRoomStatsAction } from '@/actions/rooms';
+import { fetchFeaturedRoomsAction,fetchRoomStatsAction } from '@/actions/rooms';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import {
-  Wifi,
-  Shield,
-  UtensilsCrossed,
-  ShowerHead,
-  Bike,
-  CheckCircle2,
-  ArrowRight,
-  MapPin,
-  Lock,
-  Bed,
-  BookOpen,
-  Dumbbell,
-  Camera,
-  Phone,
+Wifi,
+Shield,
+UtensilsCrossed,
+ShowerHead,
+Bike,
+CheckCircle2,
+ArrowRight,
+MapPin,
+Lock,
+Bed,
+BookOpen,
+Dumbbell,
+Camera,
+Phone,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';

@@ -1,24 +1,24 @@
 'use server';
 
-import { TenancyRecord, CheckinCandidate } from '@/types/tenancy';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { TenancyRecord,CheckinCandidate } from '@/types/tenancy';
+import { revalidatePath,revalidateTag } from 'next/cache';
 import {
-  dbUpdateRoomStatus,
-  dbAddAuditLog,
-  dbGetReservationByCode,
-  dbGetReservations,
+dbUpdateRoomStatus,
+dbAddAuditLog,
+dbGetReservationByCode,
+dbGetReservations,
 } from '@/server/db';
-import { findUserById, findUserByEmail } from '@/lib/auth-store';
+import { findUserById,findUserByEmail } from '@/lib/auth-store';
 import { requireRole } from '@/lib/auth-server';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 import {
-  dispatchCheckinSuccess,
-  dispatchCheckoutSuccess,
+dispatchCheckinSuccess,
+dispatchCheckoutSuccess,
 } from '@/lib/notify/dispatch';
 
 // IN-MEMORY GLOBAL STATE
@@ -28,10 +28,6 @@ declare global {
   // eslint-disable-next-line no-var
   var __kosOmiCheckinCandidates: CheckinCandidate[] | undefined;
 }
-
-// Data hunian aktif & antrean check-in awal dikosongkan agar tidak pernah membuat ulang data yang sudah check-out
-const initialTenancies: TenancyRecord[] = [];
-const initialCheckinCandidates: CheckinCandidate[] = [];
 
 function getTenanciesStore(): TenancyRecord[] {
   return loadPersistentStore().tenancies;

@@ -1,11 +1,10 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { TagihanDetailClient } from '@/components/penghuni/TagihanDetailClient';
 import {
-  fetchMonthlyBillByIdAction,
-  fetchTenantProfileAction,
+fetchMonthlyBillByIdAction,
+fetchTenantProfileAction,
 } from '@/actions/billing';
 
 interface TagihanDetailPageProps {

@@ -1,23 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React,{ useEffect,useState } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ShieldCheck,
-  Building2,
-  Users,
-  Wallet,
-  Home,
-  UserCheck,
-  ArrowRight,
-  LogOut,
-  AlertTriangle,
-  ExternalLink,
+ShieldCheck,
+Building2,LogOut,
+AlertTriangle,
+ExternalLink
 } from 'lucide-react';
-import { DEMO_ACCOUNTS } from '@/data/auth-demo';
-import { clearClientSession, getClientSession, loginWithDemoAccount } from '@/lib/auth-client';
-import { AuthUser, UserRole } from '@/types/auth';
+import { clearClientSession,getClientSession } from '@/lib/auth-client';
+import { AuthUser,UserRole } from '@/types/auth';
 
 interface RoleDashboardPreviewProps {
   role: UserRole;
@@ -49,11 +42,6 @@ export const RoleDashboardPreview: React.FC<RoleDashboardPreviewProps> = ({
   const handleLogout = () => {
     clearClientSession();
     router.push('/login');
-  };
-
-  const handleSwitchRole = (targetRole: UserRole) => {
-    const { redirectUrl } = loginWithDemoAccount(targetRole);
-    router.push(redirectUrl);
   };
 
   return (

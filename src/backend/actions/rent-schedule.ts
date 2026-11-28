@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { getCurrentUser, requireRole } from '@/lib/auth-server';
+import { getCurrentUser,requireRole } from '@/lib/auth-server';
 import { createAuditLog } from '@/lib/audit';
-import { getNeonDb, schema } from '@/db';
+import { getNeonDb,schema } from '@/db';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+savePersistentStore,
 } from '@/server/persistence';
 
 export interface RoomRentExtension {

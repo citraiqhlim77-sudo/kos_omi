@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { NotificationLogRecord } from '@/types/admin';
 import { resendNotificationAction } from '@/actions/admin';
 import {
-  Search,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  RefreshCw,
-  Mail,
-  MessageSquare,
-  Send,
+Search,
+CheckCircle2,
+AlertCircle,
+Clock,
+RefreshCw,
+Mail,
+MessageSquare,
+Send,
 } from 'lucide-react';
 
 interface AdminNotifikasiClientProps {

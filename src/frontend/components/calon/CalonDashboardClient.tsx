@@ -1,53 +1,42 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
-import { Reservation, PaymentInvoice } from '@/types/reservation';
-import { Room } from '@/types/room';
+import { Reservation,PaymentInvoice } from '@/types/reservation';
 import { formatRupiah } from '@/data/rooms';
-import { ReservationStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
+import { ReservationStatusBadge,PaymentStatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import dynamic from 'next/dynamic';
+import {
+cancelReservationByCalonAction,
+fetchMyReservationsAction,
+} from '@/actions/reservations';
+import {
+submitPaymentConfirmationAction,
+} from '@/actions/payments';
+import { getClientSession,setClientSession } from '@/lib/auth-client';
+import {
+KosOmiPaymentSelector
+} from '@/components/payment/KosOmiPaymentMethods';
+import { useRouter } from 'next/navigation';
+import {
+Clock,CreditCard,
+Building,
+CheckCircle2,
+AlertCircle,
+FileText,
+User,
+ArrowRight,
+ExternalLink,
+Phone,XCircle
+} from 'lucide-react';
 
 // Dynamic import untuk modal pembayaran Midtrans Snap (Task 3.6 Performa & Optimasi)
 const PaymentModal = dynamic(
   () => import('@/components/calon/PaymentModal').then((mod) => mod.PaymentModal),
   { ssr: false }
 );
-import {
-  approveReservationForDemoAction,
-  cancelReservationByCalonAction,
-  fetchMyReservationsAction,
-} from '@/actions/reservations';
-import {
-  submitPaymentConfirmationAction,
-  resetPaymentToUnpaidAction,
-} from '@/actions/payments';
-import { getClientSession, setClientSession } from '@/lib/auth-client';
-import {
-  KosOmiPaymentSelector,
-  KOS_OMI_PAYMENT_METHODS,
-} from '@/components/payment/KosOmiPaymentMethods';
-import { useRouter } from 'next/navigation';
-import {
-  Calendar,
-  Clock,
-  ShieldCheck,
-  CreditCard,
-  Building,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  User,
-  ArrowRight,
-  ExternalLink,
-  Phone,
-  Sparkles,
-  MapPin,
-  RefreshCw,
-  XCircle,
-} from 'lucide-react';
 
 interface CalonDashboardClientProps {
   initialReservations: Reservation[];
@@ -61,7 +50,7 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
   currentUserName = '',
 }) => {
   const router = useRouter();
-  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+  const [, setReservations] = useState<Reservation[]>(initialReservations);
   const [activeReservation, setActiveReservation] = useState<Reservation | null>(
     initialReservations[0] || null
   );
@@ -77,7 +66,6 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
   const [isPayingDirect, setIsPayingDirect] = useState(false);
   const [isCancellingModalOpen, setIsCancellingModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -130,49 +118,6 @@ export const CalonDashboardClient: React.FC<CalonDashboardClientProps> = ({
     } else {
       setPaymentError(result.message || 'Gagal mengirim konfirmasi pembayaran.');
     }
-  };
-
-  const handleResetToUnpaid = (invoiceCode: string) => {
-    setFeedbackMessage(null);
-    setPaymentError(null);
-    startTransition(async () => {
-      const res = await resetPaymentToUnpaidAction(invoiceCode);
-      if (res.success && res.reservation) {
-        setFeedbackMessage(
-          `Tagihan ${invoiceCode} berhasil dikembalikan ke status BELUM DIBAYAR.`
-        );
-        setReservations((prev) =>
-          prev.map((r) => (r.code === res.reservation!.code ? res.reservation! : r))
-        );
-        setActiveReservation(res.reservation);
-        if (res.payment) {
-          setSelectedInvoice(res.payment);
-        }
-      }
-    });
-  };
-
-  // Fungsi demo untuk menyetujui reservasi secara instan (memudahkan pengujian)
-  const handleApproveDemo = (resCode: string) => {
-    setFeedbackMessage(null);
-    startTransition(async () => {
-      const res = await approveReservationForDemoAction(
-        resCode,
-        'Data reservasi calon penghuni telah disetujui oleh pengelola Kos Omi.'
-      );
-
-      if (res.success && res.data) {
-        setFeedbackMessage('Reservasi berhasil disetujui! Invoice pembayaran 24 jam telah aktif.');
-        // Perbarui state lokal
-        setReservations((prev) =>
-          prev.map((r) => (r.code === resCode ? res.data! : r))
-        );
-        setActiveReservation(res.data);
-        if (res.data.payment) {
-          setSelectedInvoice(res.data.payment);
-        }
-      }
-    });
   };
 
   const handleCancelReservation = async (resCode: string) => {

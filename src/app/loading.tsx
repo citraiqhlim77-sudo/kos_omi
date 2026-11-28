@@ -1,5 +1,4 @@
-import React from 'react';
-import { Skeleton, DashboardKpiSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton,DashboardKpiSkeleton } from '@/components/ui/Skeleton';
 
 export default function RootLoading() {
   return (

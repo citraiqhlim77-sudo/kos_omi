@@ -1,26 +1,20 @@
-﻿import React from 'react';
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { fetchPaymentStatusFromServerAction } from '@/actions/payments';
 import { formatRupiah } from '@/data/rooms';
 import { ROOM_TYPE_LABELS } from '@/types/room';
-import { PaymentStatusBadge, ReservationStatusBadge } from '@/components/ui/Badge';
+import { PaymentStatusBadge,ReservationStatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import {
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Home,
-  FileText,
-  Calendar,
-  Building,
-  User,
-  CreditCard,
-  Phone,
-  ArrowRight,
-  ShieldCheck,
-  MapPin,
+CheckCircle2,
+AlertCircle,
+Clock,
+Home,CreditCard,
+Phone,
+ArrowRight,
+ShieldCheck,
+MapPin
 } from 'lucide-react';
 
 export const metadata: Metadata = {

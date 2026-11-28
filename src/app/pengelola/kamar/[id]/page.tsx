@@ -1,7 +1,6 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchRoomByCodeAction, fetchRoomTenantHistoryAction } from '@/actions/rooms';
+import { fetchRoomByCodeAction,fetchRoomTenantHistoryAction } from '@/actions/rooms';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { RoomDetailClient } from '@/components/pengelola/RoomDetailClient';
 

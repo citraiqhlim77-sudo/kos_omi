@@ -1,35 +1,31 @@
-﻿'use server';
+'use server';
 
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash,randomBytes } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
-import { AuthError, CredentialsSignin } from 'next-auth';
-import { signIn, signOut } from '@/auth';
-import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { AuthError,CredentialsSignin } from 'next-auth';
+import { signIn,signOut } from '@/auth';
+import { hashPassword,verifyPassword } from '@/lib/auth/password';
 import {
-  type UserAuthState,
-  findUserByEmail,
-  getResetTokensStore,
-  getRoleDashboardPath,
+type UserAuthState,
+findUserByEmail,getRoleDashboardPath
 } from '@/lib/auth-store';
 import { getCurrentUser } from '@/lib/auth-server';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  formatPasswordHashPreview,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+formatPasswordHashPreview,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 import { createAuditLog } from '@/lib/audit';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { sanitizeString } from '@/lib/security/sanitize';
 import {
-  loginSchema,
-  registerSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
+loginSchema,
+registerSchema,resetPasswordSchema
 } from '@/lib/security/zod';
 
-const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 menit (PRD Task 2.2)
+ // 30 menit (PRD Task 2.2)
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');

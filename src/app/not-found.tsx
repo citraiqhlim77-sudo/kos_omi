@@ -1,6 +1,5 @@
-import React from 'react';
 import NextLink from 'next/link';
-import { BedDouble, Home, HelpCircle, Phone, ArrowLeft, Search, ShieldCheck } from 'lucide-react';
+import { BedDouble,Home,HelpCircle,Phone,ShieldCheck } from 'lucide-react';
 
 export default function NotFound() {
   const quickLinks = [

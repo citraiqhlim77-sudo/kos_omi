@@ -1,14 +1,14 @@
 import {
-  pgTable,
-  varchar,
-  integer,
-  boolean,
-  timestamp,
-  text,
-  jsonb,
-  index,
-  uniqueIndex,
-  pgEnum,
+pgTable,
+varchar,
+integer,
+boolean,
+timestamp,
+text,
+jsonb,
+index,
+uniqueIndex,
+pgEnum,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 

@@ -3,19 +3,10 @@
 import React from 'react';
 import NextLink from 'next/link';
 import {
-  ShieldCheck,
-  Users,
-  Settings,
-  History,
-  Bell,
-  BedDouble,
-  Activity,
-  ArrowRight,
-  Server,
-  Database,
-  CheckCircle2,
-  Clock,
-  Layers,
+Users,Bell,
+BedDouble,
+Activity,
+ArrowRight
 } from 'lucide-react';
 import { AdminUserRecord } from '@/types/admin';
 

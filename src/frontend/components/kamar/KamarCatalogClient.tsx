@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React,{ useState,useMemo } from 'react';
 import NextLink from 'next/link';
 import Image from 'next/image';
-import { formatRupiah, ALL_ROOMS } from '@/data/rooms';
+import { formatRupiah,ALL_ROOMS } from '@/data/rooms';
 import { Room } from '@/types/room';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import {
-  Search,
-  RotateCcw,
-  ArrowRight,
-  Check,
+Search,
+RotateCcw,
+ArrowRight,
+Check,
 } from 'lucide-react';
 
 interface KamarCatalogClientProps {

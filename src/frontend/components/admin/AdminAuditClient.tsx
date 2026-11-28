@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import { AuditLogRecord } from '@/types/admin';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Search,
-  Filter,
-  Clock,
-  Eye,
-  X,
-  CheckCircle2,
-  FileText,
-  UserCheck,
-  Calendar,
-  Layers,
+Search,
+Filter,
+Clock,
+Eye,
+X,
+CheckCircle2,
+FileText,
+UserCheck,
+Calendar,
+Layers,
 } from 'lucide-react';
 
 interface AdminAuditClientProps {

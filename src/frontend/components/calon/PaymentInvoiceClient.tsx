@@ -1,45 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { PaymentInvoice, Reservation } from '@/types/reservation';
-import { Room, ROOM_TYPE_LABELS } from '@/types/room';
+import { PaymentInvoice,Reservation } from '@/types/reservation';
+import { Room,ROOM_TYPE_LABELS } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import {
-  submitPaymentConfirmationAction,
-  resetPaymentToUnpaidAction,
+submitPaymentConfirmationAction,
 } from '@/actions/payments';
 import {
-  KosOmiPaymentSelector,
-  KOS_OMI_PAYMENT_METHODS,
+KosOmiPaymentSelector
 } from '@/components/payment/KosOmiPaymentMethods';
 import dynamic from 'next/dynamic';
+import {
+ShieldCheck,
+CreditCard,
+Clock,
+CheckCircle2,
+AlertCircle,
+XCircle,ArrowLeft,
+BedDouble,Lock,Receipt
+} from 'lucide-react';
 
 // Dynamic import untuk modal pembayaran Midtrans Snap (Task 3.6 Performa & Optimasi)
 const PaymentModal = dynamic(
   () => import('@/components/calon/PaymentModal').then((mod) => mod.PaymentModal),
   { ssr: false }
 );
-import {
-  ShieldCheck,
-  CreditCard,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  ArrowRight,
-  ArrowLeft,
-  BedDouble,
-  Building,
-  User,
-  Calendar,
-  Lock,
-  ExternalLink,
-  Receipt,
-  RotateCcw,
-} from 'lucide-react';
 
 interface PaymentInvoiceClientProps {
   invoice: PaymentInvoice;
@@ -77,18 +65,6 @@ export const PaymentInvoiceClient: React.FC<PaymentInvoiceClientProps> = ({
       router.refresh();
     } else {
       setPaymentError(res.message || 'Gagal mengirim konfirmasi pembayaran.');
-    }
-  };
-
-  const handleResetToUnpaid = async () => {
-    setIsPayingDirect(true);
-    setPayFeedback(null);
-    setPaymentError(null);
-    const res = await resetPaymentToUnpaidAction(invoice.invoiceCode);
-    setIsPayingDirect(false);
-    if (res.success && res.payment) {
-      setInvoice(res.payment);
-      router.refresh();
     }
   };
 

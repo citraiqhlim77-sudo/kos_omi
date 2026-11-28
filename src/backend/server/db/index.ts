@@ -1,13 +1,12 @@
-import type { Room, RoomFilterOptions, RoomStatus } from '@/types/room';
-import type { CalonUser, Reservation, PaymentInvoice, CreateReservationInput } from '@/types/reservation';
+import type { Room,RoomFilterOptions,RoomStatus } from '@/types/room';
+import type { CalonUser,Reservation,PaymentInvoice,CreateReservationInput } from '@/types/reservation';
 import type { PaymentMethodType } from '@/types/finance';
-import { ALL_ROOMS } from '@/data/rooms';
 import { createAuditLog } from '@/lib/audit';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 
 function toPaymentMethodType(methodOrType?: string): PaymentMethodType {
@@ -67,21 +66,6 @@ declare global {
   var __kosOmiDbState: DatabaseState | undefined;
 }
 
-function initializeState(): DatabaseState {
-  const initialRooms: Room[] = JSON.parse(JSON.stringify(ALL_ROOMS)).map((r: Room) => ({
-    ...r,
-    status: 'TERSEDIA' as RoomStatus,
-  }));
-
-  return {
-    rooms: initialRooms,
-    users: [],
-    reservations: [],
-    payments: [],
-    auditLogs: [],
-    isInitialized: true,
-  };
-}
 
 // Dapatkan instance database terpadu yang tersimpan secara persisten di disk
 function getDb(): DatabaseState {

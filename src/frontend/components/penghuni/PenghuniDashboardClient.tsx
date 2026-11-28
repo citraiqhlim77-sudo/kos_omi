@@ -1,37 +1,25 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
-import { MonthlyBill, TenantProfile } from '@/types/billing';
-import { Room, ROOM_TYPE_LABELS } from '@/types/room';
+import { MonthlyBill,TenantProfile } from '@/types/billing';
+import { Room } from '@/types/room';
 import { formatRupiah } from '@/data/rooms';
 import {
-  payMonthlyBillAction,
-  fetchTenantProfileAction,
-  fetchCurrentMonthlyBillAction,
-  fetchMonthlyBillsAction,
+payMonthlyBillAction
 } from '@/actions/billing';
-import { getClientSession } from '@/lib/auth-client';
 import {
-  CreditCard,
-  Clock,
-  CheckCircle2,
-  Calendar,
-  BedDouble,
-  Receipt,
-  History,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  FileText,
-  User,
-  Zap,
-  Wifi,
-  Phone,
-  X,
-  QrCode,
-  Building2,
+CreditCard,
+Clock,
+CheckCircle2,BedDouble,
+Receipt,
+History,
+ArrowRight,
+ShieldCheck,
+AlertCircle,Phone,
+X,
+QrCode,
+Building2
 } from 'lucide-react';
 
 interface PenghuniDashboardClientProps {

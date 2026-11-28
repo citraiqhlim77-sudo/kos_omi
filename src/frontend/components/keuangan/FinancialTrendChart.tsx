@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { MonthlyTrendData } from '@/types/finance';
 import { formatRupiah } from '@/data/rooms';
 
@@ -13,19 +13,6 @@ export const FinancialTrendChart: React.FC<FinancialTrendChartProps> = ({ data }
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const maxIncome = 90000000; // Skala maksimal Rp 90 Juta
-  const chartHeight = 240;
-
-  // Generate path untuk line kurva total
-  const points = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * 100;
-    const y = chartHeight - (d.totalIncome / maxIncome) * chartHeight;
-    return `${x},${y}`;
-  });
-
-  const pathD = `M ${points.map((p, i) => {
-    const [x, y] = p.split(',');
-    return `${i === 0 ? 'M' : 'L'} ${x}% ${y}`;
-  }).join(' ')}`;
 
   return (
     <div className="bg-white p-6 sm:p-7 rounded-2xl border border-zinc-200 space-y-6">
@@ -113,8 +100,6 @@ export const FinancialTrendChart: React.FC<FinancialTrendChartProps> = ({ data }
         <div className="relative h-60 flex items-end justify-between gap-1 sm:gap-2 px-10 z-10">
           {data.map((item, idx) => {
             const totalPct = (item.totalIncome / maxIncome) * 100;
-            const rentPct = (item.rentIncome / maxIncome) * 100;
-            const bookingPct = (item.bookingIncome / maxIncome) * 100;
             const isHovered = hoverIndex === idx || activePoint?.month === item.month;
 
             return (

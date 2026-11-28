@@ -1,11 +1,10 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { AdminNav } from '@/components/admin/AdminNav';
 import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient';
 import {
-  fetchAdminUsersAction,
-  fetchAuditLogsAction,
-  fetchNotificationLogsAction,
+fetchAdminUsersAction,
+fetchAuditLogsAction,
+fetchNotificationLogsAction,
 } from '@/actions/admin';
 import { fetchRoomStatsAction } from '@/actions/rooms';
 

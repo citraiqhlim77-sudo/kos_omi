@@ -6,13 +6,13 @@ import { PaymentTransaction } from '@/types/finance';
 import { formatPaymentCategoryLabel } from '@/lib/reports/labels';
 import { formatRupiah } from '@/data/rooms';
 import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  ShieldCheck,
-  AlertTriangle,
-  FileText,
-  User,
+ArrowLeft,
+CheckCircle2,
+Clock,
+ShieldCheck,
+AlertTriangle,
+FileText,
+User,
 } from 'lucide-react';
 
 interface TransaksiDetailClientProps {

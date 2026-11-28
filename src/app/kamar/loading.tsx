@@ -1,5 +1,4 @@
-import React from 'react';
-import { Skeleton, RoomCardSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton,RoomCardSkeleton } from '@/components/ui/Skeleton';
 
 export default function KamarLoading() {
   return (

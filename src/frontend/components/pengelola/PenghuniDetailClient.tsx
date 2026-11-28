@@ -1,26 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import NextLink from 'next/link';
-import Image from 'next/image';
 import { TenancyRecord } from '@/types/tenancy';
 import { formatRupiah } from '@/data/rooms';
 import {
-  ArrowLeft,
-  Phone,
-  Mail,
-  ShieldCheck,
-  Calendar,
-  BedDouble,
-  User,
-  CreditCard,
-  AlertTriangle,
-  CheckCircle2,
-  Receipt,
-  FileCheck,
-  Eye,
-  LogOut,
-  Sparkles,
+ArrowLeft,
+Phone,AlertTriangle,Receipt,LogOut
 } from 'lucide-react';
 
 interface PenghuniDetailClientProps {
@@ -30,8 +16,6 @@ interface PenghuniDetailClientProps {
 export const PenghuniDetailClient: React.FC<PenghuniDetailClientProps> = ({
   tenant,
 }) => {
-  const [previewKtp, setPreviewKtp] = useState(false);
-
   const hasUnpaid = tenant.unpaidBillsCount > 0;
 
   return (

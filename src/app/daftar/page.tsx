@@ -1,34 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
-  Lock,
-  Mail,
-  User,
-  Phone,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  FileCheck,
+Lock,
+Mail,
+User,
+Phone,
+Eye,
+EyeOff,
+ArrowRight,
+ShieldCheck,
+CheckCircle2,
+AlertCircle
 } from 'lucide-react';
 import { setClientSession } from '@/lib/auth-client';
 import { registerAction } from '@/actions/auth';
 import {
-  validateEmail,
-  validateFullName,
-  validatePassword,
-  validatePhone,
-  calculatePasswordStrength,
+validateEmail,
+validateFullName,
+validatePassword,
+validatePhone,
+calculatePasswordStrength,
 } from '@/lib/validations/auth';
 import { AuthUser } from '@/types/auth';
 
 export default function RegisterPage() {
-  const router = useRouter();
 
   // Form State
   const [fullName, setFullName] = useState('');

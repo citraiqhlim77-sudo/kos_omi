@@ -4,13 +4,10 @@ import React from 'react';
 import { OperationalDecisionAnalytics } from '@/types/finance';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Building2,
-  CheckCircle2,
-  TrendingUp,
-  Lightbulb,
-  Layers,
-  ShieldCheck,
-  UserCheck,
+Lightbulb,
+Layers,
+ShieldCheck,
+UserCheck
 } from 'lucide-react';
 
 interface OperationalDecisionAnalyticsPanelProps {

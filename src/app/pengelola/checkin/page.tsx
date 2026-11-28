@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { CheckinManagerClient } from '@/components/pengelola/CheckinManagerClient';

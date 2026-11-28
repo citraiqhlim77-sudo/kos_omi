@@ -1,4 +1,4 @@
-import { hash, compare } from 'bcryptjs';
+import { hash,compare } from 'bcryptjs';
 
 // PRD Bab 10 & Task 2.2: bcryptjs dengan cost factor 12.
 export const BCRYPT_COST = 12;

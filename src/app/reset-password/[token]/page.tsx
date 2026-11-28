@@ -1,24 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-  KeyRound,
-  ShieldCheck,
+Lock,
+Eye,
+EyeOff,
+ArrowRight,
+CheckCircle2,
+AlertCircle,
+KeyRound,
+ShieldCheck,
 } from 'lucide-react';
-import { calculatePasswordStrength, validatePassword } from '@/lib/validations/auth';
+import { calculatePasswordStrength,validatePassword } from '@/lib/validations/auth';
 import { resetPasswordAction } from '@/actions/auth';
 
 export default function ResetPasswordPage() {
   const params = useParams();
-  const router = useRouter();
   const token = typeof params?.token === 'string' ? params.token : 'token-tidak-diketahui';
 
   // Form State

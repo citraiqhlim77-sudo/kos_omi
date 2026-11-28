@@ -1,16 +1,16 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
 import {
-  Phone,
-  User,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle,
-  ShieldCheck,
-  KeyRound,
-  MessageCircle,
+Phone,
+User,
+ArrowLeft,
+CheckCircle2,
+AlertCircle,
+ShieldCheck,
+KeyRound,
+MessageCircle,
 } from 'lucide-react';
 import { forgotPasswordAction } from '@/actions/auth';
 

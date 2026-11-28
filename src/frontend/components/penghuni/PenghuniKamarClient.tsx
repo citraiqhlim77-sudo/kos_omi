@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import Image from 'next/image';
 import { TenantProfile } from '@/types/billing';
 import { Room } from '@/types/room';
@@ -9,12 +9,12 @@ import { fetchTenantProfileAction } from '@/actions/billing';
 import { fetchRoomByCodeAction } from '@/actions/rooms';
 import { getClientSession } from '@/lib/auth-client';
 import {
-  Zap,
-  Wifi,
-  ShieldCheck,
-  CheckCircle2,
-  Phone,
-  Sparkles,
+Zap,
+Wifi,
+ShieldCheck,
+CheckCircle2,
+Phone,
+Sparkles,
 } from 'lucide-react';
 
 interface PenghuniKamarClientProps {

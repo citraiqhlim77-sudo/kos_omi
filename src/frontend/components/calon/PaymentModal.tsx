@@ -1,20 +1,18 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React,{ useState,useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { PaymentInvoice, Reservation } from '@/types/reservation';
+import { PaymentInvoice,Reservation } from '@/types/reservation';
 import { formatRupiah } from '@/data/rooms';
 import {
-  submitPaymentConfirmationAction,
-  getOrCreateSnapTokenAction,
+submitPaymentConfirmationAction,
+getOrCreateSnapTokenAction,
 } from '@/actions/payments';
 import { loadSnapScript } from '@/lib/payment/snap-client';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
-  X,
-  Clock,
-  ArrowRight,
-  AlertCircle,
+X,ArrowRight,
+AlertCircle
 } from 'lucide-react';
 
 interface PaymentModalProps {

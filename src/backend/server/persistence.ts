@@ -2,22 +2,22 @@
 import path from 'node:path';
 import os from 'node:os';
 import bcrypt from 'bcryptjs';
-import { desc, eq, or } from 'drizzle-orm';
-import type { Room, RoomStatus } from '@/types/room';
-import type { CalonUser, Reservation, PaymentInvoice } from '@/types/reservation';
-import type { TenancyRecord, CheckinCandidate } from '@/types/tenancy';
-import type { MonthlyBill, TenantProfile } from '@/types/billing';
-import type { PaymentTransaction, OverdueBill } from '@/types/finance';
+import { desc,eq,or } from 'drizzle-orm';
+import type { Room,RoomStatus } from '@/types/room';
+import type { CalonUser,Reservation,PaymentInvoice } from '@/types/reservation';
+import type { TenancyRecord,CheckinCandidate } from '@/types/tenancy';
+import type { MonthlyBill,TenantProfile } from '@/types/billing';
+import type { PaymentTransaction,OverdueBill } from '@/types/finance';
 import type {
-  AdminUserRecord,
-  AdminSettings,
-  AuditLogRecord,
-  NotificationLogRecord,
+AdminUserRecord,
+AdminSettings,
+AuditLogRecord,
+NotificationLogRecord,
 } from '@/types/admin';
 import { ALL_ROOMS } from '@/data/rooms';
 import { buildRealTenants2026 } from '@/data/real-tenants-2026';
-import { STAFF_SEED_USERS, DEFAULT_PASSWORD_HASH, type SeedUser } from '@/db/seed';
-import { getNeonDb, schema } from '@/db';
+import { STAFF_SEED_USERS,DEFAULT_PASSWORD_HASH,type SeedUser } from '@/db/seed';
+import { getNeonDb,schema } from '@/db';
 
 export const SEED_DEFAULT_PASSWORD = 'Password123!';
 const STORE_SCHEMA_VERSION = 2;

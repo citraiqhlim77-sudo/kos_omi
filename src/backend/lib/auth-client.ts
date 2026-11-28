@@ -1,5 +1,5 @@
-import { AuthUser, DemoAccount, UserRole } from '@/types/auth';
-import { DEMO_ACCOUNTS, getRoleDashboardPath } from '@/data/auth-demo';
+import { AuthUser,UserRole } from '@/types/auth';
+import { DEMO_ACCOUNTS } from '@/data/auth-demo';
 
 const AUTH_STORAGE_KEY = 'kos_omi_auth_session';
 

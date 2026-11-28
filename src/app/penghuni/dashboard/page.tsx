@@ -1,13 +1,12 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { PenghuniNav } from '@/components/penghuni/PenghuniNav';
 import { PenghuniDashboardClient } from '@/components/penghuni/PenghuniDashboardClient';
 import { SocialDonationBanner } from '@/components/penghuni/SocialDonationBanner';
 import { fetchActiveSocialAnnouncementsAction } from '@/actions/rent-schedule';
 import {
-  fetchCurrentMonthlyBillAction,
-  fetchMonthlyBillsAction,
-  fetchTenantProfileAction,
+fetchCurrentMonthlyBillAction,
+fetchMonthlyBillsAction,
+fetchTenantProfileAction,
 } from '@/actions/billing';
 import { fetchRoomByCodeAction } from '@/actions/rooms';
 

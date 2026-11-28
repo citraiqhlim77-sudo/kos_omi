@@ -1,18 +1,18 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { MonthlyBill, TenantProfile } from '@/types/billing';
+import { MonthlyBill,TenantProfile } from '@/types/billing';
 import { formatRupiah } from '@/data/rooms';
 import { payMonthlyBillAction } from '@/actions/billing';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
-  Printer,
-  ArrowLeft,
-  CheckCircle2,
-  ShieldCheck,
-  CreditCard,
-  X,
+Printer,
+ArrowLeft,
+CheckCircle2,
+ShieldCheck,
+CreditCard,
+X,
 } from 'lucide-react';
 
 interface TagihanDetailClientProps {
@@ -27,7 +27,7 @@ export const TagihanDetailClient: React.FC<TagihanDetailClientProps> = ({
   const [bill, setBill] = useState<MonthlyBill>(initialBill);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');
-  const [isPaymentValid, setIsPaymentValid] = useState<boolean>(false);
+  const [, setIsPaymentValid] = useState<boolean>(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

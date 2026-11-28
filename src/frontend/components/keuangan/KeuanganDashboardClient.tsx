@@ -2,11 +2,19 @@
 
 import React from 'react';
 import NextLink from 'next/link';
-import { FinanceDashboardStats, PaymentTransaction } from '@/types/finance';
+import { FinanceDashboardStats,PaymentTransaction } from '@/types/finance';
 import { formatPaymentCategoryLabel } from '@/lib/reports/labels';
 import { formatRupiah } from '@/data/rooms';
 import { OperationalDecisionAnalyticsPanel } from '@/components/keuangan/OperationalDecisionAnalyticsPanel';
 import dynamic from 'next/dynamic';
+import {
+DollarSign,CreditCard,
+Clock,Receipt,
+FileSpreadsheet,
+AlertCircle,
+Building2,ShieldCheck,
+ArrowRight
+} from 'lucide-react';
 
 // Dynamic import untuk komponen grafik finansial (Recharts / SVG Visualization)
 const FinancialTrendChart = dynamic(
@@ -29,22 +37,6 @@ const FinancialTrendChart = dynamic(
     ),
   }
 );
-import {
-  DollarSign,
-  TrendingUp,
-  CreditCard,
-  Clock,
-  ArrowUpRight,
-  Receipt,
-  FileSpreadsheet,
-  AlertCircle,
-  Building2,
-  QrCode,
-  ShieldCheck,
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-} from 'lucide-react';
 
 interface KeuanganDashboardClientProps {
   stats: FinanceDashboardStats;

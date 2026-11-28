@@ -1,17 +1,17 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import {
-  MapPin,
-  Phone,
-  Mail,
-  Clock,
-  Send,
-  CheckCircle2,
-  MessageSquare,
-  Building,
-  ExternalLink,
+MapPin,
+Phone,
+Mail,
+Clock,
+Send,
+CheckCircle2,
+MessageSquare,
+Building,
+ExternalLink,
 } from 'lucide-react';
 
 export function KontakClient() {

@@ -1,7 +1,7 @@
-import NextAuth, { CredentialsSignin } from 'next-auth';
+import NextAuth,{ CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from '@/auth.config';
-import { describeCredentialsFailure, verifyCredentials } from '@/lib/auth/credentials';
+import { describeCredentialsFailure,verifyCredentials } from '@/lib/auth/credentials';
 
 /**
  * Error login dengan pesan Bahasa Indonesia di field `code`,

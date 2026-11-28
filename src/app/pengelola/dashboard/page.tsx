@@ -1,32 +1,23 @@
-import React from 'react';
 import { Metadata } from 'next';
 import NextLink from 'next/link';
-import { fetchRoomStatsAction, fetchRoomsAction } from '@/actions/rooms';
+import { fetchRoomStatsAction,fetchRoomsAction } from '@/actions/rooms';
 import { fetchAllReservationsAction } from '@/actions/reservations';
 import {
-  fetchCheckinCandidatesAction,
-  fetchRegisteredCalonAccountsAction,
+fetchCheckinCandidatesAction,
+fetchRegisteredCalonAccountsAction,
 } from '@/actions/tenancy';
 import { getOccupancyAnalytics } from '@/lib/reports/revenue';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import {
-  BedDouble,
-  Users,
-  CalendarCheck,
-  LogIn,
-  LogOut,
-  Wrench,
-  ArrowRight,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Layers,
-  ChevronRight,
-  Lightbulb,
+BedDouble,
+Users,
+CalendarCheck,
+LogIn,
+LogOut,
+Wrench,
+ArrowRight,AlertCircle,Clock,ChevronRight,
+Lightbulb
 } from 'lucide-react';
-import { ROOM_STATUS_LABELS, ROOM_TYPE_LABELS } from '@/types/room';
-import { formatRupiah } from '@/data/rooms';
 
 export const dynamic = 'force-dynamic';
 

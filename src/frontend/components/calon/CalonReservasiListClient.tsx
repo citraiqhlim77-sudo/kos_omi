@@ -1,23 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
-import { Reservation, ReservationStatus } from '@/types/reservation';
+import { Reservation,ReservationStatus } from '@/types/reservation';
 import { fetchMyReservationsAction } from '@/actions/reservations';
 import { getClientSession } from '@/lib/auth-client';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Calendar,
-  Clock,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  FileText,
-  User,
-  BedDouble,
-  CreditCard,
+ArrowRight,BedDouble
 } from 'lucide-react';
 
 interface CalonReservasiListClientProps {

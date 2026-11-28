@@ -1,6 +1,5 @@
-import React from 'react';
 import NextLink from 'next/link';
-import { ShieldX, ArrowLeft, UserCheck, Home } from 'lucide-react';
+import { ShieldX,ArrowLeft,UserCheck,Home } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth-server';
 import { getRoleDashboardPath } from '@/lib/auth-store';
 

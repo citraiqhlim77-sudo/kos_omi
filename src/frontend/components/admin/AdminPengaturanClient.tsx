@@ -1,15 +1,15 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import { AdminSettings } from '@/types/admin';
 import { updateAdminSettingsAction } from '@/actions/admin';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Save,
-  CheckCircle2,
-  Building2,
-  Calendar,
-  Clock,
+Save,
+CheckCircle2,
+Building2,
+Calendar,
+Clock,
 } from 'lucide-react';
 
 interface AdminPengaturanClientProps {

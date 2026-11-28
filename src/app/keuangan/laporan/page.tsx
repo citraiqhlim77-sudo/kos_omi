@@ -1,11 +1,10 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { KeuanganNav } from '@/components/keuangan/KeuanganNav';
 import { KeuanganLaporanClient } from '@/components/keuangan/KeuanganLaporanClient';
 import {
-  fetchDailyReportAction,
-  fetchMonthlyReportAction,
-  fetchOperationalAnalyticsAction,
+fetchDailyReportAction,
+fetchMonthlyReportAction,
+fetchOperationalAnalyticsAction,
 } from '@/actions/finance';
 
 export const dynamic = 'force-dynamic';

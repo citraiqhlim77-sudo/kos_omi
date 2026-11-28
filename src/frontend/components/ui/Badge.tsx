@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RoomStatus } from '@/types/room';
-import type { ReservationStatus, PaymentStatus } from '@/types/reservation';
-import { CheckCircle2, Clock, UserCheck, AlertCircle, FileCheck, XCircle } from 'lucide-react';
+import type { ReservationStatus,PaymentStatus } from '@/types/reservation';
+import { CheckCircle2,Clock,UserCheck,AlertCircle,FileCheck,XCircle } from 'lucide-react';
 
 interface BadgeProps {
   status: RoomStatus;

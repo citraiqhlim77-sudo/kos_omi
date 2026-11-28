@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NextLink from 'next/link';
-import { LogOut, Home, Loader2 } from 'lucide-react';
+import { LogOut,Home,Loader2 } from 'lucide-react';
 import { clearClientSession } from '@/lib/auth-client';
 import { logoutAction } from '@/actions/auth';
 

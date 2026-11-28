@@ -1,24 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TenantProfile } from '@/types/billing';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { updateTenantProfileAction } from '@/actions/billing';
 import { changeUserPasswordAction } from '@/actions/auth';
-import { getClientSession, setClientSession } from '@/lib/auth-client';
+import { getClientSession,setClientSession } from '@/lib/auth-client';
 import {
-  Mail,
-  Phone,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  Save,
-  KeyRound,
-  IdCard,
-  Eye,
-  EyeOff,
-  Sparkles,
+Mail,
+Phone,
+ShieldCheck,
+CheckCircle2,
+AlertCircle,
+Save,
+KeyRound,
+IdCard,
+Eye,
+EyeOff,
+Sparkles,
 } from 'lucide-react';
 
 interface PenghuniProfilClientProps {
@@ -31,7 +31,7 @@ export const PenghuniProfilClient: React.FC<PenghuniProfilClientProps> = ({
   const router = useRouter();
   const [profile, setProfile] = useState<TenantProfile>(initialProfile);
   const [name, setName] = useState(initialProfile.name || '');
-  const [nik, setNik] = useState(
+  const [nik] = useState(
     initialProfile.nik && !initialProfile.nik.startsWith('2026') ? initialProfile.nik : ''
   );
   const [email, setEmail] = useState(initialProfile.email || '');

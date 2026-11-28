@@ -1,25 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React,{ useState,useMemo } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Reservation, ReservationStatus } from '@/types/reservation';
+import { Reservation,ReservationStatus } from '@/types/reservation';
 import { approveReservationAction } from '@/actions/reservations';
-import { settlePaymentAction, resetPaymentToUnpaidAction } from '@/actions/payments';
+import { settlePaymentAction,resetPaymentToUnpaidAction } from '@/actions/payments';
 import { formatRupiah } from '@/data/rooms';
 import {
-  Search,
-  Filter,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  ArrowRight,
-  ShieldCheck,
-  User,
-  BedDouble,
-  Eye,
-  SlidersHorizontal,
-  Bell,
+Search,CheckCircle2,XCircle,
+ArrowRight,BedDouble,Bell
 } from 'lucide-react';
 
 interface ReservasiManagerClientProps {

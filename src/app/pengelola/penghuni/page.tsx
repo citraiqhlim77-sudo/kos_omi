@@ -1,10 +1,9 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
 import { PenghuniManagerClient } from '@/components/pengelola/PenghuniManagerClient';
 import {
-  fetchAllTenantsAction,
-  fetchRegisteredCalonAccountsAction,
+fetchAllTenantsAction,
+fetchRegisteredCalonAccountsAction,
 } from '@/actions/tenancy';
 
 export const dynamic = 'force-dynamic';

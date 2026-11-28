@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Receipt, History, BedDouble, User, Home, Menu, X } from 'lucide-react';
+import { LayoutDashboard,Receipt,History,BedDouble,User,Home,Menu,X } from 'lucide-react';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { LiveNotifBell } from '@/components/layout/LiveNotifBell';
-import { getClientSession, setClientSession } from '@/lib/auth-client';
+import { getClientSession,setClientSession } from '@/lib/auth-client';
 import { fetchTenantProfileAction } from '@/actions/billing';
 
 export const PenghuniNav: React.FC = () => {

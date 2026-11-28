@@ -9,22 +9,22 @@
  */
 
 import {
-  renderReservationCreatedEmail,
-  renderReservationApprovedEmail,
-  renderReservationRejectedEmail,
-  renderPaymentSuccessEmail,
-  renderBillingReminderH3Email,
-  renderBillingReminderH0Email,
-  renderOverdueBillingEmail,
-  renderCheckinSuccessEmail,
-  renderCheckoutSuccessEmail,
-  ReservationEmailData,
-  ReservationApprovedEmailData,
-  ReservationRejectedEmailData,
-  PaymentSuccessEmailData,
-  BillingReminderEmailData,
-  CheckinEmailData,
-  CheckoutEmailData,
+renderReservationCreatedEmail,
+renderReservationApprovedEmail,
+renderReservationRejectedEmail,
+renderPaymentSuccessEmail,
+renderBillingReminderH3Email,
+renderBillingReminderH0Email,
+renderOverdueBillingEmail,
+renderCheckinSuccessEmail,
+renderCheckoutSuccessEmail,
+ReservationEmailData,
+ReservationApprovedEmailData,
+ReservationRejectedEmailData,
+PaymentSuccessEmailData,
+BillingReminderEmailData,
+CheckinEmailData,
+CheckoutEmailData,
 } from './templates';
 
 export type EmailTemplateType =
@@ -78,7 +78,7 @@ async function recordNotificationLog(params: {
   sentAt?: Date | null;
   recipientName?: string;
 }) {
-  const { userId, template, recipient, status, attempts, errorMessage, sentAt, recipientName } = params;
+  const { template, recipient, status, attempts, errorMessage, sentAt, recipientName } = params;
 
   // 1. Simpan ke store terpadu & Neon PostgreSQL untuk dasbor /admin/notifikasi
   try {

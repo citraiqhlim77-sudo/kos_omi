@@ -1,27 +1,27 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
 import { MonthlyBill } from '@/types/billing';
 import { formatRupiah } from '@/data/rooms';
 import { payMonthlyBillAction } from '@/actions/billing';
 import {
-  type RoomRentScheduleItem,
-  requestRentExtensionAction,
+type RoomRentScheduleItem,
+requestRentExtensionAction,
 } from '@/actions/rent-schedule';
 import { KosOmiPaymentSelector } from '@/components/payment/KosOmiPaymentMethods';
 import {
-  Receipt,
-  Search,
-  CreditCard,
-  CheckCircle2,
-  ArrowRight,
-  ShieldCheck,
-  X,
-  CalendarClock,
-  AlertTriangle,
-  MessageCircle,
-  Clock,
+Receipt,
+Search,
+CreditCard,
+CheckCircle2,
+ArrowRight,
+ShieldCheck,
+X,
+CalendarClock,
+AlertTriangle,
+MessageCircle,
+Clock,
 } from 'lucide-react';
 
 interface PenghuniTagihanClientProps {
@@ -42,7 +42,7 @@ export const PenghuniTagihanClient: React.FC<PenghuniTagihanClientProps> = ({
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<MonthlyBill | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string>('bri');
-  const [isPaymentValid, setIsPaymentValid] = useState<boolean>(false);
+  const [, setIsPaymentValid] = useState<boolean>(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

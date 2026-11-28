@@ -1,34 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
-import { Reservation, PaymentInvoice, ReservationStatus } from '@/types/reservation';
+import { Reservation } from '@/types/reservation';
 import { formatRupiah } from '@/data/rooms';
 import dynamic from 'next/dynamic';
+import {
+ArrowLeft,Clock,CheckCircle2,
+AlertCircle,
+XCircle,
+CreditCard,KeyRound
+} from 'lucide-react';
 
 // Dynamic import untuk modal pembayaran Midtrans Snap (Task 3.6 Performa & Optimasi)
 const PaymentModal = dynamic(
   () => import('@/components/calon/PaymentModal').then((mod) => mod.PaymentModal),
   { ssr: false }
 );
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  CreditCard,
-  BedDouble,
-  User,
-  Phone,
-  Mail,
-  FileText,
-  Building,
-  KeyRound,
-  ExternalLink,
-} from 'lucide-react';
 
 interface ReservationTimelineClientProps {
   reservation: Reservation;
@@ -44,7 +32,6 @@ export const ReservationTimelineClient: React.FC<ReservationTimelineClientProps>
   const invoice = reservation.payment;
 
   // Calculate timeline states
-  const isStep1Done = true; // Created
   const isStep2Done = status === 'APPROVED' || status === 'PAID';
   const isStep2Rejected = status === 'REJECTED';
   const isStep3Done = Boolean(invoice && (status === 'APPROVED' || status === 'PAID'));

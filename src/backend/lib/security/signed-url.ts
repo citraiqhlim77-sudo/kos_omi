@@ -8,7 +8,7 @@
  * 4. Verifikasi tanda tangan dengan proteksi timing attack (timingSafeEqual)
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac,timingSafeEqual } from 'crypto';
 
 const SIGNED_URL_SECRET =
   process.env.AUTH_SECRET || 'kos-omi-ktp-signed-url-secret-minimum-32-chars';

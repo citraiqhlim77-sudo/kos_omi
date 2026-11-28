@@ -1,4 +1,4 @@
-import { Room, RoomType, RoomStatus } from '@/types/room';
+import { Room,RoomType,RoomStatus } from '@/types/room';
 
 // Koleksi foto kamar kos mahasiswi menggunakan aset lokal /rooms/kamar-1.png s/d /rooms/kamar-67.png (100% bebas 404)
 export const AESTHETIC_ROOM_PHOTOS = [

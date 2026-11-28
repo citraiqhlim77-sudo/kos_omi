@@ -3,23 +3,19 @@ import NextLink from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
 import {
-  ShieldCheck,
-  Users,
-  MapPin,
-  CheckCircle2,
-  ArrowRight,
-  Phone,
-  Layers,
-  Bed,
-  ShowerHead,
-  BookOpen,
-  UtensilsCrossed,
-  Camera,
-  Wifi,
-  Dumbbell,
-  Bike,
-  ExternalLink,
-  Navigation,
+ShieldCheck,MapPin,ArrowRight,
+Phone,
+Layers,
+Bed,
+ShowerHead,
+BookOpen,
+UtensilsCrossed,
+Camera,
+Wifi,
+Dumbbell,
+Bike,
+ExternalLink,
+Navigation
 } from 'lucide-react';
 
 export async function generateMetadata(): Promise<Metadata> {

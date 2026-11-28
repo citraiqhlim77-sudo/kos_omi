@@ -60,7 +60,6 @@ class ZodString extends ZodType<string> {
   private minLength?: { val: number; msg?: string };
   private maxLength?: { val: number; msg?: string };
   private regexPattern?: { val: RegExp; msg?: string };
-  private isEmail = false;
 
   min(length: number, message?: string) {
     this.minLength = { val: length, msg: message };
@@ -78,7 +77,6 @@ class ZodString extends ZodType<string> {
   }
 
   email(message?: string) {
-    this.isEmail = true;
     this.regexPattern = {
       val: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       msg: message || 'Format alamat email tidak valid',

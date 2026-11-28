@@ -1,20 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import NextLink from 'next/link';
 import { MonthlyBill } from '@/types/billing';
 import { formatRupiah } from '@/data/rooms';
 import {
-  History,
-  Search,
-  Calendar,
-  Receipt,
-  ArrowRight,
-  CheckCircle2,
-  Download,
-  CreditCard,
-  Building2,
-  FileText,
+History,
+Search,CheckCircle2,FileText
 } from 'lucide-react';
 
 interface PenghuniRiwayatClientProps {

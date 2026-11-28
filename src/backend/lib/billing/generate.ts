@@ -12,18 +12,18 @@
 import { MonthlyBill } from '@/types/billing';
 import { dbAddAuditLog } from '@/server/db';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,
+flushPostgresSync,
+loadPersistentStore,
+savePersistentStore,
 } from '@/server/persistence';
 import { revalidatePath } from 'next/cache';
-import { db as drizzleDb, schema } from '@/db';
+import { db as drizzleDb,schema } from '@/db';
 import { eq } from '@/db/drizzle';
 import {
-  dispatchBillingReminderH3,
-  dispatchBillingReminderH0,
-  dispatchBillingOverdue,
+dispatchBillingReminderH3,
+dispatchBillingReminderH0,
+dispatchBillingOverdue,
 } from '@/lib/notify/dispatch';
 
 export interface GenerateBillingOptions {
@@ -82,7 +82,7 @@ export interface BillingTenancy {
 }
 
 // Data default tenancy aktif Kos Omi (sesuai Bab 9 Data Dummy PRD)
-const DEFAULT_TENANCIES: BillingTenancy[] = [
+export const DEFAULT_TENANCIES: BillingTenancy[] = [
   {
     id: 'ten-001',
     userId: 'usr-rina',

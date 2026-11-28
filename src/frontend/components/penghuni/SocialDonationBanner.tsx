@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React,{ useState } from 'react';
 import {
-  type SocialAnnouncement,
-  submitPenghuniSocialDonationAction,
+type SocialAnnouncement,
+submitPenghuniSocialDonationAction,
 } from '@/actions/rent-schedule';
-import { HeartHandshake, X, CheckCircle2, Copy, Check } from 'lucide-react';
+import { HeartHandshake,X,CheckCircle2,Copy,Check } from 'lucide-react';
 
 interface SocialDonationBannerProps {
   announcements: SocialAnnouncement[];

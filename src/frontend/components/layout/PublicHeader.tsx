@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import NextLink from 'next/link';
 import {
-  Home,
-  BedDouble,
-  Info,
-  HelpCircle,
-  Phone,
-  Menu,
-  X,
-  ArrowRight,
-  ShieldCheck,
-  LayoutDashboard,
+Home,
+BedDouble,
+Info,
+HelpCircle,
+Phone,
+Menu,
+X,
+ArrowRight,
+ShieldCheck,
+LayoutDashboard,
 } from 'lucide-react';
 import { getClientSession } from '@/lib/auth-client';
 import { AuthUser } from '@/types/auth';

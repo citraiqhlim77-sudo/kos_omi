@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React,{ useState,useEffect,useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
-import { getClientSession, setClientSession } from '@/lib/auth-client';
-import { updateCalonProfileAction, changeUserPasswordAction } from '@/actions/auth';
-import { User, Phone, Mail, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { getClientSession,setClientSession } from '@/lib/auth-client';
+import { updateCalonProfileAction,changeUserPasswordAction } from '@/actions/auth';
+import { User,Lock,CheckCircle2,AlertCircle } from 'lucide-react';
 
 interface CalonProfilClientProps {
   initialUser: {

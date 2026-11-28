@@ -10,27 +10,27 @@
  */
 
 import {
-  sendReservationCreatedNotification,
-  sendReservationApprovedNotification,
-  sendReservationRejectedNotification,
-  sendPaymentSuccessNotification,
-  sendBillingReminderH3Notification,
-  sendBillingReminderH0Notification,
-  sendBillingOverdueNotification,
-  sendCheckinSuccessNotification,
-  sendCheckoutSuccessNotification,
+sendReservationCreatedNotification,
+sendReservationApprovedNotification,
+sendReservationRejectedNotification,
+sendPaymentSuccessNotification,
+sendBillingReminderH3Notification,
+sendBillingReminderH0Notification,
+sendBillingOverdueNotification,
+sendCheckinSuccessNotification,
+sendCheckoutSuccessNotification,
 } from './email';
 
 import {
-  sendReservationCreatedWA,
-  sendReservationApprovedWA,
-  sendReservationRejectedWA,
-  sendPaymentSuccessWA,
-  sendBillingReminderH3WA,
-  sendBillingReminderH0WA,
-  sendBillingOverdueWA,
-  sendCheckinSuccessWA,
-  sendCheckoutSuccessWA,
+sendReservationCreatedWA,
+sendReservationApprovedWA,
+sendReservationRejectedWA,
+sendPaymentSuccessWA,
+sendBillingReminderH3WA,
+sendBillingReminderH0WA,
+sendBillingOverdueWA,
+sendCheckinSuccessWA,
+sendCheckoutSuccessWA,
 } from './whatsapp';
 
 export interface DispatchNotificationResult {

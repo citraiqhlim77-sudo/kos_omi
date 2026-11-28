@@ -1,32 +1,29 @@
 'use server';
 
 import {
-  PaymentTransaction,
-  FinanceDashboardStats,
-  DailyReportRow,
-  MonthlyReportRow,
-  OverdueBill,
-  MonthlyTrendData,
-  GatewayReconciliationResult,
-  GatewayReconciliationItem,
-  OperationalDecisionAnalytics,
+PaymentTransaction,
+FinanceDashboardStats,
+DailyReportRow,
+MonthlyReportRow,
+OverdueBill,
+MonthlyTrendData,
+GatewayReconciliationResult,
+GatewayReconciliationItem,
+OperationalDecisionAnalytics,
 } from '@/types/finance';
 import {
-  defaultFallbackTransactions,
-  getOperationalDecisionAnalytics,
-  getSuccessfulTransactions,
-  getSyncedTransactionsList,
-  getJakartaDateComponents,
+getOperationalDecisionAnalytics,
+getSuccessfulTransactions,
+getSyncedTransactionsList,
+getJakartaDateComponents,
 } from '@/lib/reports/revenue';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth-server';
 import { dispatchBillingOverdue } from '@/lib/notify/dispatch';
 import { createAuditLog } from '@/lib/audit';
 import {
-  ensurePostgresHydrated,
-  flushPostgresSync,
-  loadPersistentStore,
-  savePersistentStore,
+ensurePostgresHydrated,loadPersistentStore,
+savePersistentStore
 } from '@/server/persistence';
 
 // Global state in-memory
@@ -37,11 +34,7 @@ declare global {
   var __kosOmiOverdueBills: OverdueBill[] | undefined;
 }
 
-const initialTransactions: PaymentTransaction[] = [
-  ...defaultFallbackTransactions.filter((tx) => tx.orderId !== 'INV-202611-1'),
-];
 
-const initialOverdueBills: OverdueBill[] = [];
 
 const monthlyTrendMock: MonthlyTrendData[] = [
   { month: '2026-09', label: 'Sep 2026', totalIncome: 0, rentIncome: 0, bookingIncome: 0, transactionCount: 0 },

@@ -1,4 +1,4 @@
-import { DemoAccount, UserRole } from '@/types/auth';
+import { DemoAccount,UserRole } from '@/types/auth';
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {

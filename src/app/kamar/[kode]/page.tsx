@@ -1,37 +1,35 @@
-import React from 'react';
 import { Metadata } from 'next';
 import NextLink from 'next/link';
 import Image from 'next/image';
-import { fetchRoomByCodeAction, fetchRoomsAction } from '@/actions/rooms';
+import { fetchRoomByCodeAction,fetchRoomsAction } from '@/actions/rooms';
 import { formatRupiah } from '@/data/rooms';
-import { ROOM_TYPE_LABELS } from '@/types/room';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { RoomPhotoGallery } from '@/components/kamar/RoomPhotoGallery';
 import { RoomBookingCta } from '@/components/kamar/RoomBookingCta';
 import { getCurrentUser } from '@/lib/auth-server';
 import { ensurePostgresHydrated } from '@/server/persistence';
+import {
+Maximize2,
+Bed,
+ShowerHead,
+Wifi,
+ShieldCheck,
+Calendar,
+Lock,
+ArrowRight,
+ChevronRight,
+CheckCircle2,
+Clock,
+Phone,
+Building,
+ArrowLeft,
+AlertCircle,
+Users,
+Dumbbell,
+} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-import {
-  Maximize2,
-  Bed,
-  ShowerHead,
-  Wifi,
-  ShieldCheck,
-  Calendar,
-  Lock,
-  ArrowRight,
-  ChevronRight,
-  CheckCircle2,
-  Clock,
-  Phone,
-  Building,
-  ArrowLeft,
-  AlertCircle,
-  Users,
-  Dumbbell,
-} from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ kode: string }>;

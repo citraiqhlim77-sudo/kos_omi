@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { fetchRoomsAction } from '@/actions/rooms';
 import { PengelolaNav } from '@/components/pengelola/PengelolaNav';
