@@ -52,15 +52,41 @@ export const PublicHeader: React.FC = () => {
   const isOnCalonPortal = Boolean(pathname) && pathname!.startsWith('/calon');
   const dashboardHref = sessionUser?.dashboardPath || '/calon/dashboard';
 
+  const getRolePrimaryLinks = () => {
+    switch (sessionUser?.role) {
+      case 'ADMIN':
+        return [
+          { href: '/admin/log-aktivitas', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
+          { href: '/admin/pengaturan', label: 'Profil Saya', icon: LayoutDashboard },
+        ];
+      case 'PENGELOLA':
+        return [
+          { href: '/pengelola/reservasi', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
+          { href: '/pengelola/dashboard', label: 'Profil Saya', icon: LayoutDashboard },
+        ];
+      case 'KEUANGAN':
+        return [
+          { href: '/keuangan/transaksi', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
+          { href: '/keuangan/dashboard', label: 'Profil Saya', icon: LayoutDashboard },
+        ];
+      case 'PENGHUNI':
+        return [
+          { href: '/penghuni/tagihan', label: 'Tagihan & Pembayaran', icon: ShieldCheck },
+          { href: '/penghuni/profil', label: 'Profil Saya', icon: LayoutDashboard },
+        ];
+      case 'CALON_PENGHUNI':
+      default:
+        return [
+          { href: '/calon/dashboard', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
+          { href: '/calon/profil', label: 'Profil Saya', icon: LayoutDashboard },
+        ];
+    }
+  };
+
   const navLinks = [
     { href: '/', label: 'Beranda', icon: Home },
     { href: '/kamar', label: 'Katalog Kamar', icon: BedDouble },
-    ...(sessionUser || isOnCalonPortal
-      ? [
-          { href: '/calon/dashboard', label: 'Reservasi & Pembayaran', icon: ShieldCheck },
-          { href: '/calon/profil', label: 'Profil Saya', icon: LayoutDashboard },
-        ]
-      : []),
+    ...(sessionUser || isOnCalonPortal ? getRolePrimaryLinks() : []),
     { href: '/tentang', label: 'Tentang Kos', icon: Info },
     { href: '/faq', label: 'FAQ', icon: HelpCircle },
     { href: '/kontak', label: 'Kontak', icon: Phone },
